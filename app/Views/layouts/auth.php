@@ -19,7 +19,7 @@ use App\Core\Translator;
     <div class="dev-banner"><span class="dev-banner__dot" aria-hidden="true"></span><?= e(__('app.demo_banner_auth')) ?></div>
 <?php endif; ?>
 <div class="auth-locale">
-    <?php \App\Core\View::partial('partials/language-switcher', ['variant' => 'labeled']) ?>
+    <?php \App\Core\View::partial('partials/language-switcher', ['variant' => 'labeled', 'returnTo' => '/login']) ?>
 </div>
 <main id="main" class="auth-layout">
     <?= $content ?>
