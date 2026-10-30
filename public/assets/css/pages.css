@@ -974,12 +974,23 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 .section-heading__title { color: var(--color-ink); font-size: var(--font-size-title-3); font-weight: 700; }
 .section-heading__note { margin-block-start: var(--space-1); color: var(--color-ink-secondary); font-size: var(--font-size-footnote); }
 
-.client-record-layout { display: grid; gap: var(--space-5); }
+.client-record-layout { display: grid; gap: var(--space-5); align-items: start; }
+.client-record-main,
+.client-record-side { display: grid; gap: var(--space-4); min-inline-size: 0; }
 .client-overview-grid,
-.client-associated-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: var(--space-4); }
+.client-associated-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--space-4); }
 .client-overview-grid > .card,
 .client-associated-card { min-inline-size: 0; }
-.client-documents-card { grid-column: 1 / -1; }
+.client-record-side .form-grid,
+.client-record-side .contact-edit-form .form-grid { grid-template-columns: minmax(0, 1fr); }
+/* Colonne étroite : libellé au-dessus de la valeur pour rester lisible. */
+.client-record-side .detail-list__item { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+.client-record-side .contact-edit-form,
+.client-record-side .contact-new-form { padding-inline: var(--space-3); }
+.contact-new-details { margin-block-start: var(--space-4); }
+.contact-new-details__summary { list-style: none; cursor: pointer; }
+.contact-new-details__summary::-webkit-details-marker { display: none; }
+.contact-new-details[open] > .contact-new-details__summary { margin-block-end: var(--space-2); }
 .project-detail-grid { grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.75fr); }
 .detail-list__item--stack { grid-template-columns: minmax(0, 1fr); }
 .detail-list__item--stack dd { font-weight: 500; line-height: 1.6; }
@@ -1026,6 +1037,8 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 .is-disabled { opacity: 0.55; }
 
 @media (min-width: 1100px) {
+    /* Fiche client : coordonnées et contacts à 30 % (à droite), projets et documents à 70 %. */
+    .client-record-layout { grid-template-columns: minmax(0, 70fr) minmax(20rem, 30fr); }
     .client-form,
     .project-form { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     .client-form > .form-actions,
@@ -1033,8 +1046,6 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 }
 
 @media (max-width: 900px) {
-    .client-overview-grid,
-    .client-associated-grid,
     .project-detail-grid,
     .phase-settings-grid,
     .custom-fields-settings-grid { grid-template-columns: minmax(0, 1fr); }
@@ -1245,5 +1256,23 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 
     .project-image-upload .button {
         inline-size: 100%;
+    }
+}
+
+/* Sélecteur de langue de l'écran de connexion */
+.auth-locale {
+    position: fixed;
+    z-index: 6;
+    inset-block-start: var(--space-4);
+    inset-inline-end: var(--space-4);
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 760px) {
+    .auth-locale {
+        position: static;
+        justify-content: center;
+        padding-block-start: var(--space-4);
     }
 }

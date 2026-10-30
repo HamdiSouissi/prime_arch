@@ -36,7 +36,7 @@ final class SettingsController
         $governorateId = ctype_digit((string) ($values['governorate_id'] ?? ''))
             ? (int) $values['governorate_id']
             : 0;
-        $context = (new ViewContext())->authenticated('Réglages du cabinet', 'settings');
+        $context = (new ViewContext())->authenticated(__('settings.title'), 'settings');
 
         return Response::html(View::render('pages/app/settings', $context + [
             'settings' => $values,

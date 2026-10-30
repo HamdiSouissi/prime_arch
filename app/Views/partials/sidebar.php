@@ -11,13 +11,13 @@ $brandUrl = !empty($showDesignNav)
     ? url('/design/dashboard')
     : (!empty($authenticated) ? url('/dashboard') : url('/'));
 ?>
-<aside class="sidebar" aria-label="Navigation principale">
-    <a class="sidebar-brand" href="<?= e($brandUrl) ?>" aria-label="Prime Arch, tableau de bord">
+<aside class="sidebar" aria-label="<?= e(__('common.main_navigation')) ?>">
+    <a class="sidebar-brand" href="<?= e($brandUrl) ?>" aria-label="<?= e(__('app.brand_home')) ?>">
         <img class="sidebar-brand__logo" src="<?= e(asset('img/logo-placeholder.svg')) ?>" alt="" width="44" height="44">
-        <span class="sidebar-brand__name">Prime Arch<span class="sidebar-brand__caption">Studio d'architecture</span></span>
+        <span class="sidebar-brand__name">Prime Arch<span class="sidebar-brand__caption"><?= e(__('app.brand_caption')) ?></span></span>
     </a>
-    <nav class="sidebar-nav" aria-label="Navigation principale">
-        <p class="sidebar-section-label">Espace de travail</p>
+    <nav class="sidebar-nav" aria-label="<?= e(__('common.main_navigation')) ?>">
+        <p class="sidebar-section-label"><?= e(__('common.workspace')) ?></p>
         <ul class="sidebar-list" role="list">
             <?php foreach ($items as $item): ?>
                 <?php
@@ -42,7 +42,7 @@ $brandUrl = !empty($showDesignNav)
     </nav>
     <?php if (!empty($showWorkspace)): ?>
         <div class="sidebar-footer">
-            <div class="sidebar-workspace" aria-label="<?= e('Espace ' . ($workspace['name'] ?? '')) ?>">
+            <div class="sidebar-workspace" aria-label="<?= e(__('app.workspace_label', ['name' => (string) ($workspace['name'] ?? '')])) ?>">
                 <span class="sidebar-workspace__mark" aria-hidden="true">
                     <svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#building"></use></svg>
                 </span>

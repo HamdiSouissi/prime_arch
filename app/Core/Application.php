@@ -60,7 +60,7 @@ final class Application
         if (Config::get('app.debug')) {
             echo '<pre>' . htmlspecialchars((string) $e, ENT_QUOTES, 'UTF-8') . '</pre>';
         } else {
-            echo 'Une erreur est survenue.';
+            echo __('app.error_generic');
         }
     }
 }

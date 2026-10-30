@@ -22,7 +22,7 @@ final class CsrfMiddleware
 
         $token = $request->input('_token');
         if (!Csrf::verify(is_string($token) ? $token : null)) {
-            return Response::html('Jeton CSRF invalide.', 419);
+            return Response::html(__('common.csrf_invalid'), 419);
         }
         return null;
     }

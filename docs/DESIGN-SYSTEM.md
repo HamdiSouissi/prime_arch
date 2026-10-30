@@ -140,3 +140,14 @@ Un module hérite automatiquement des tokens et composants parce que son écran 
 ```
 
 Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table` avant d’en créer une variante. Garder les propriétés directionnelles logiques et tester chaque écran avec `dir="rtl"`. Les modules ne chargent ni CDN ni bibliothèque UI externe ; préférer le sprite d’icônes partagé et les interactions JavaScript natives. Une feuille de module doit rester scoped (`.module-<slug> …`) et ne pas modifier les éléments du cœur.
+## Interface bilingue (français / arabe)
+
+- `app/Core/Translator.php` expose la langue active, les langues prises en charge et la direction du texte.
+- Le sélecteur partagé `app/Views/partials/language-switcher.php` poste vers `/locale` ; `App\Controllers\LocaleController`
+  valide la langue, la conserve en session et renvoie vers un chemin interne sûr.
+- Le sélecteur est présent dans la barre supérieure (`partials/topbar.php`) et sur l'écran de connexion (`layouts/auth.php`).
+- Toute nouvelle chaîne visible doit être ajoutée dans `lang/fr.php` **et** `lang/ar.php` avec la même clé.
+- Les éléments directionnels utilisent les propriétés logiques (`margin-inline`, `inset-inline`, `padding-block`) afin que
+  le passage à `dir="rtl"` reste correct sans feuille de style dédiée.
+- Les messages produits côté navigateur sont exposés par `app/Views/partials/i18n.php` (JSON `#app-i18n`) et lus dans
+  `public/assets/js/ui.js` via la fonction `t()`.

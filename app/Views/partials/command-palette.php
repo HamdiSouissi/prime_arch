@@ -8,11 +8,11 @@ foreach (($commands ?? []) as $command) {
 }
 ?>
 <dialog class="command-dialog" id="command-palette" data-command-palette aria-labelledby="command-palette-title">
-    <h2 class="u-sr-only" id="command-palette-title">Recherche globale</h2>
+    <h2 class="u-sr-only" id="command-palette-title"><?= e(__('common.global_search')) ?></h2>
     <div class="command-search">
         <svg class="icon icon--large" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg>
-        <input type="search" placeholder="Rechercher une page, un client, un projet…" aria-label="Recherche globale" data-command-search autocomplete="off">
-        <button class="button button--small button--secondary" type="button" data-modal-close>Échap</button>
+        <input type="search" placeholder="<?= e(__('common.search_placeholder')) ?>" aria-label="<?= e(__('common.global_search')) ?>" data-command-search autocomplete="off">
+        <button class="button button--small button--secondary" type="button" data-modal-close><?= e(__('common.escape')) ?></button>
     </div>
     <div class="command-list">
         <?php foreach ($commandGroups as $group => $groupCommands): ?>
@@ -24,6 +24,6 @@ foreach (($commands ?? []) as $command) {
                 </a>
             <?php endforeach; ?>
         <?php endforeach; ?>
-        <p class="command-empty" data-command-empty hidden>Aucun résultat. Essayez un autre terme.</p>
+        <p class="command-empty" data-command-empty hidden><?= e(__('common.no_results')) ?></p>
     </div>
 </dialog>

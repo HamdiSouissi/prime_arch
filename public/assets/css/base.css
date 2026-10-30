@@ -87,6 +87,15 @@ small,
     font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
+/* Arabe : pas d'interlettrage négatif et interlignage légèrement plus ample. */
+[dir="rtl"] body {
+    line-height: 1.7;
+}
+
+[dir="rtl"] :is(h1, h2, h3, h4, h5, h6, .button, .badge, .sidebar-link, .topbar-search) {
+    letter-spacing: normal;
+}
+
 [dir="rtl"] input[type="email"],
 [dir="rtl"] input[type="tel"],
 [dir="rtl"] input[type="number"],

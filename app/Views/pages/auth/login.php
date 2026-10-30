@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 ?>
-<section class="auth-aside" aria-label="Présentation de Prime Arch">
+<section class="auth-aside" aria-label="<?= e(__('auth.aside_label')) ?>">
     <a class="auth-aside__brand" href="<?= e(url(!empty($demoMode) ? '/design/dashboard' : '/')) ?>">
         <img src="<?= e(asset('img/logo-placeholder.svg')) ?>" alt="" width="48" height="48">
         <span><?= e(config('app.name')) ?></span>
     </a>
     <div class="auth-aside__message">
-        <p class="page-header__eyebrow">Votre cabinet, tout simplement</p>
-        <h1>Plus de temps pour concevoir.</h1>
-        <p>Les projets, l’équipe et les honoraires réunis dans un espace calme et clair.</p>
+        <p class="page-header__eyebrow"><?= e(__('auth.hero_eyebrow')) ?></p>
+        <h1><?= e(__('auth.hero_title')) ?></h1>
+        <p><?= e(__('auth.hero_text')) ?></p>
     </div>
-    <p class="auth-aside__footer">Un espace pensé pour les architectes tunisiens · Tunis · Sfax · Sousse</p>
+    <p class="auth-aside__footer"><?= e(__('auth.hero_footer')) ?></p>
 </section>
 <section class="auth-form-area">
     <div class="auth-card">
@@ -39,6 +39,6 @@ declare(strict_types=1);
                 <svg class="icon icon--small icon--directional" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#arrow-right"></use></svg>
             </button>
         </form>
-        <p class="auth-card__footer">Besoin d’aide ? <a href="mailto:support@primearch.tn">Contacter l’équipe Prime Arch</a></p>
+        <p class="auth-card__footer"><?= e(__('auth.help')) ?> <a href="mailto:support@primearch.tn"><?= e(__('auth.contact_support')) ?></a></p>
     </div>
 </section>

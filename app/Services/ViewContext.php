@@ -51,10 +51,10 @@ final class ViewContext
             if ($item['available']) {
                 $commands[] = [
                     'label' => $item['label'],
-                    'description' => 'Ouvrir la section',
+                    'description' => __('common.open_section'),
                     'url' => $item['url'],
                     'icon' => $item['icon'],
-                    'group' => 'Navigation',
+                    'group' => __('common.navigation'),
                 ];
             }
         }
@@ -66,8 +66,8 @@ final class ViewContext
             'navigation' => $items,
             'workspace' => [
                 'name' => $settings['name'],
-                'location' => $settings['postal_code'] !== '' ? $settings['postal_code'] : 'Espace sécurisé',
-                'plan' => (string) ($user['role_label'] ?? ''),
+                'location' => $settings['postal_code'] !== '' ? $settings['postal_code'] : __('app.secure_workspace'),
+                'plan' => role_label((string) ($user['role_slug'] ?? ''), (string) ($user['role_label'] ?? '')),
             ],
             'userProfile' => [
                 'name' => (string) ($user['name'] ?? ''),

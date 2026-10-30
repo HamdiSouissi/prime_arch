@@ -12,9 +12,9 @@ $currentUserId = Auth::id();
 ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => __('users.title'),
-    'subtitle' => 'Les comptes sont créés par un administrateur. Aucun lien d’inscription public n’est disponible.',
-    'eyebrow' => 'Sécurité du cabinet',
-    'secondaryAction' => ['label' => 'Journal d’audit', 'icon' => 'clock', 'url' => url('/admin/audit')],
+    'subtitle' => __('users.intro'),
+    'eyebrow' => __('users.eyebrow'),
+    'secondaryAction' => ['label' => __('users.audit_link'), 'icon' => 'clock', 'url' => url('/admin/audit')],
 ]) ?>
 
 <?php if (!empty($notice)): ?>
@@ -51,7 +51,7 @@ $currentUserId = Auth::id();
                 <label class="field__label" for="new-user-role"><?= e(__('users.role')) ?></label>
                 <select class="field__control" id="new-user-role" name="role" required>
                     <?php foreach ($roles as $role): ?>
-                        <option value="<?= e($role['slug']) ?>" <?= ($values['role'] ?? 'read_only') === $role['slug'] ? 'selected' : '' ?>><?= e($role['label']) ?></option>
+                        <option value="<?= e($role['slug']) ?>" <?= ($values['role'] ?? 'read_only') === $role['slug'] ? 'selected' : '' ?>><?= e(role_label((string) $role['slug'], (string) $role['label'])) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -62,14 +62,14 @@ $currentUserId = Auth::id();
     <section class="card" aria-labelledby="users-table-title">
         <div class="card-header">
             <div>
-                <h2 class="card-header__title" id="users-table-title">Comptes du cabinet</h2>
-                <p class="section-heading__note"><?= e((string) count($users)) ?> utilisateur(s)</p>
+                <h2 class="card-header__title" id="users-table-title"><?= e(__('users.accounts_title')) ?></h2>
+                <p class="section-heading__note"><?= e(__('users.count', ['count' => (string) count($users)])) ?></p>
             </div>
         </div>
         <?php if ($users === []): ?>
             <?php View::partial('partials/empty-state', [
-                'title' => 'Aucun compte utilisateur',
-                'description' => 'Créez un premier compte pour votre équipe depuis le formulaire.',
+                'title' => __('users.no_accounts_title'),
+                'description' => __('users.no_accounts_help'),
                 'image' => asset('img/empty-clients.svg'),
                 'imageAlt' => '',
             ]) ?>
@@ -91,9 +91,9 @@ $currentUserId = Auth::id();
                         $lastLoginTimestamp = !empty($user['last_login_at']) ? strtotime((string) $user['last_login_at']) : false;
                         ?>
                         <tr>
-                            <td><strong><?= e($user['name']) ?></strong><?php if ($isSelf): ?><span class="users-self-label"> · Vous</span><?php endif; ?></td>
+                            <td><strong><?= e($user['name']) ?></strong><?php if ($isSelf): ?><span class="users-self-label"><?= e(__('users.you_hint')) ?></span><?php endif; ?></td>
                             <td><a href="<?= e('mailto:' . $user['email']) ?>"><?= e($user['email']) ?></a></td>
-                            <td><?= e($user['role_label']) ?></td>
+                            <td><?= e(role_label((string) $user['role_slug'], (string) $user['role_label'])) ?></td>
                             <td><span class="badge <?= !empty($user['is_active']) ? 'badge--success' : 'badge--neutral' ?>"><?= e(!empty($user['is_active']) ? __('common.enabled') : __('common.disabled')) ?></span></td>
                             <td><?= e($lastLoginTimestamp !== false ? date('d/m/Y H:i', $lastLoginTimestamp) : __('users.never')) ?></td>
                             <td>
@@ -103,7 +103,7 @@ $currentUserId = Auth::id();
                                         <label class="u-sr-only" for="role-<?= e((string) $user['id']) ?>"><?= e(__('users.role')) ?> — <?= e($user['name']) ?></label>
                                         <select class="field__control" id="role-<?= e((string) $user['id']) ?>" name="role">
                                             <?php foreach ($roles as $role): ?>
-                                                <option value="<?= e($role['slug']) ?>" <?= $role['slug'] === $user['role_slug'] ? 'selected' : '' ?>><?= e($role['label']) ?></option>
+                                                <option value="<?= e($role['slug']) ?>" <?= $role['slug'] === $user['role_slug'] ? 'selected' : '' ?>><?= e(role_label((string) $role['slug'], (string) $role['label'])) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                         <input type="hidden" name="is_active" value="0">

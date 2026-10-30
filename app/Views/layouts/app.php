@@ -34,10 +34,10 @@ if ($commands === []) {
         }
         $commands[] = [
             'label' => $navigationItem['label'],
-            'description' => 'Ouvrir la section',
+            'description' => __('common.open_section'),
             'url' => $navigationItem['url'],
             'icon' => $navigationItem['icon'],
-            'group' => 'Navigation',
+            'group' => __('common.navigation'),
         ];
     }
 }
@@ -63,9 +63,9 @@ if ($isDesignPreview) {
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body>
-<a class="skip-link" href="#main">Aller au contenu principal</a>
+<a class="skip-link" href="#main"><?= e(__('common.skip_to_content')) ?></a>
 <?php if (!empty($devOnly)): ?>
-    <div class="dev-banner"><span class="dev-banner__dot" aria-hidden="true"></span>DEV ONLY · Écrans de démonstration — données fictives, aucune écriture</div>
+    <div class="dev-banner"><span class="dev-banner__dot" aria-hidden="true"></span><?= e(__('app.demo_banner')) ?></div>
 <?php endif; ?>
 <div class="app-shell" data-app-shell>
     <?php View::partial('partials/sidebar', [
@@ -88,7 +88,7 @@ if ($isDesignPreview) {
             <?= $content ?>
         </main>
     </div>
-    <button class="mobile-menu-backdrop" type="button" data-mobile-menu-backdrop aria-label="Fermer la navigation" aria-hidden="true" tabindex="-1"></button>
+    <button class="mobile-menu-backdrop" type="button" data-mobile-menu-backdrop aria-label="<?= e(__('common.close_navigation')) ?>" aria-hidden="true" tabindex="-1"></button>
 </div>
 <?php View::partial('partials/tabbar', ['items' => $navigation, 'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home')]) ?>
 <?php if ($isDesignPreview): ?>
@@ -98,6 +98,7 @@ if ($isDesignPreview) {
     <?php View::partial('partials/command-palette', ['commands' => $commands]) ?>
 <?php endif; ?>
 <?php View::partial('partials/toast', ['toastMessage' => $toastMessage ?? null]) ?>
+<?php \App\Core\View::partial('partials/i18n') ?>
 <script type="module" src="<?= e(asset('js/app.js')) ?>"></script>
 </body>
 </html>

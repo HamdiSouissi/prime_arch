@@ -15,8 +15,7 @@ final class Translator
 
     public static function setLocale(string $locale): void
     {
-        $supported = (array) Config::get('app.locales', ['fr', 'ar']);
-        self::$locale = in_array($locale, $supported, true) ? $locale : 'fr';
+        self::$locale = self::isSupported($locale) ? $locale : 'fr';
         self::addPath(BASE_PATH . '/lang');
     }
 
@@ -25,10 +24,34 @@ final class Translator
         return self::$locale;
     }
 
+    /**
+     * Langues prises en charge, dans l'ordre d'affichage du sélecteur.
+     *
+     * @return array<int,string>
+     */
+    public static function locales(): array
+    {
+        $supported = (array) Config::get('app.locales', ['fr', 'ar']);
+        $supported = array_values(array_filter($supported, 'is_string'));
+        return $supported === [] ? ['fr'] : $supported;
+    }
+
+    /** Indique si une langue est prise en charge. */
+    public static function isSupported(string $locale): bool
+    {
+        return in_array($locale, self::locales(), true);
+    }
+
     /** Direction du texte selon la langue : "rtl" pour l'arabe. */
     public static function direction(): string
     {
         return self::$locale === 'ar' ? 'rtl' : 'ltr';
+    }
+
+    /** Direction d'une langue donnée, indépendamment de la langue active. */
+    public static function directionOf(string $locale): string
+    {
+        return $locale === 'ar' ? 'rtl' : 'ltr';
     }
 
     /**
@@ -42,6 +65,12 @@ final class Translator
                 self::$messages[$locale] = (self::$messages[$locale] ?? []) + (array) require $file;
             }
         }
+    }
+
+    /** Indique si une clé existe dans la langue active ou dans le repli français. */
+    public static function has(string $key): bool
+    {
+        return isset(self::$messages[self::$locale][$key]) || isset(self::$messages['fr'][$key]);
     }
 
     public static function get(string $key, array $replace = []): string

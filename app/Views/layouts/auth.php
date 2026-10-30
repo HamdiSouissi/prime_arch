@@ -14,14 +14,18 @@ use App\Core\Translator;
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body>
-<a class="skip-link" href="#main">Aller au contenu principal</a>
+<a class="skip-link" href="#main"><?= e(__('common.skip_to_content')) ?></a>
 <?php if (!empty($devOnly)): ?>
-    <div class="dev-banner"><span class="dev-banner__dot" aria-hidden="true"></span>DEV ONLY · Écran de démonstration — aucune donnée n'est transmise</div>
+    <div class="dev-banner"><span class="dev-banner__dot" aria-hidden="true"></span><?= e(__('app.demo_banner_auth')) ?></div>
 <?php endif; ?>
+<div class="auth-locale">
+    <?php \App\Core\View::partial('partials/language-switcher', ['variant' => 'labeled']) ?>
+</div>
 <main id="main" class="auth-layout">
     <?= $content ?>
 </main>
 <?php \App\Core\View::partial('partials/toast') ?>
+<?php \App\Core\View::partial('partials/i18n') ?>
 <script type="module" src="<?= e(asset('js/app.js')) ?>"></script>
 </body>
 </html>

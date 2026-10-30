@@ -12,8 +12,8 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
 ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => __('settings.title'),
-    'subtitle' => 'Identité du cabinet, adresse et paramètres applicables aux futurs documents.',
-    'eyebrow' => 'Espace sécurisé',
+    'subtitle' => __('settings.subtitle'),
+    'eyebrow' => __('app.secure_workspace'),
     'secondaryAction' => !empty($canManageUsers) ? ['label' => __('settings.admin_users'), 'icon' => 'people', 'url' => url('/admin/users')] : null,
     'primaryAction' => !empty($canViewRates) ? ['label' => __('finance.rates_title'), 'icon' => 'currency', 'url' => url('/settings/hourly-rates')] : null,
 ]) ?>
@@ -34,7 +34,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
             <div class="card-header">
                 <div>
                     <h2 class="card-header__title" id="settings-cabinet-title"><?= e(__('settings.cabinet')) ?></h2>
-                    <p class="section-heading__note">Ces informations seront reprises dans les documents du cabinet.</p>
+                    <p class="section-heading__note"><?= e(__('settings.intro')) ?></p>
                 </div>
             </div>
             <div class="settings-form">
@@ -76,7 +76,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
                     <div class="field">
                         <label class="field__label" for="cabinet-governorate"><?= e(__('settings.governorate')) ?></label>
                         <select class="field__control" id="cabinet-governorate" name="governorate_id" data-governorate-select>
-                            <option value="">Choisir un gouvernorat</option>
+                            <option value=""><?= e(__('settings.choose_governorate')) ?></option>
                             <?php foreach ($governorates as $governorate): ?>
                                 <option value="<?= e((string) $governorate['id']) ?>" <?= (string) ($settings['governorate_id'] ?? '') === (string) $governorate['id'] ? 'selected' : '' ?>><?= e(Translator::locale() === 'ar' ? $governorate['name_ar'] : $governorate['name_fr']) ?></option>
                             <?php endforeach; ?>
@@ -86,7 +86,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
                     <div class="field">
                         <label class="field__label" for="cabinet-delegation"><?= e(__('settings.delegation')) ?></label>
                         <select class="field__control" id="cabinet-delegation" name="delegation_id" data-delegation-select data-selected="<?= e($settings['delegation_id'] ?? '') ?>">
-                            <option value="">Choisir une délégation</option>
+                            <option value=""><?= e(__('settings.choose_delegation')) ?></option>
                             <?php foreach ($delegations as $delegation): ?>
                                 <option value="<?= e((string) $delegation['id']) ?>" <?= (string) ($settings['delegation_id'] ?? '') === (string) $delegation['id'] ? 'selected' : '' ?>><?= e(Translator::locale() === 'ar' ? $delegation['name_ar'] : $delegation['name_latin']) ?></option>
                             <?php endforeach; ?>
@@ -103,7 +103,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
                     <?php if (!empty($errors['postal_code'])): ?><span class="field__hint field__hint--error"><?= e($errors['postal_code']) ?></span><?php endif; ?>
                 </div>
                 <div class="settings-logo-row">
-                    <img src="<?= e($logoUrl ?? asset('img/logo-placeholder.svg')) ?>" alt="Logo du cabinet" width="64" height="64">
+                    <img src="<?= e($logoUrl ?? asset('img/logo-placeholder.svg')) ?>" alt="<?= e(__('settings.logo_alt')) ?>" width="64" height="64">
                     <div>
                         <strong><?= e(__('settings.logo')) ?></strong>
                         <p class="muted text-footnote"><?= e(__('settings.logo_help')) ?></p>
@@ -128,7 +128,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
                 <div class="field">
                     <label class="field__label" for="vat-rates"><?= e(__('settings.vat_rates')) ?></label>
                     <input class="field__control" id="vat-rates" name="vat_rates" inputmode="numeric" maxlength="80" value="<?= e($settings['vat_rates'] ?? '19,13,7,0') ?>" required>
-                    <span class="field__hint"><?= e('Exemple : 19,13,7,0. Chaque taux doit être un entier entre 0 et 100.') ?></span>
+                    <span class="field__hint"><?= e(__('settings.vat_rates_help')) ?></span>
                     <?php if (!empty($errors['vat_rates'])): ?><span class="field__hint field__hint--error"><?= e($errors['vat_rates']) ?></span><?php endif; ?>
                 </div>
                 <div class="foundation-settings__grid">
@@ -158,7 +158,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
         <?php if (!empty($canManage)): ?>
             <div class="form-actions"><button class="button button--primary" type="submit"><?= e(__('settings.save')) ?></button></div>
         <?php else: ?>
-            <p class="muted text-footnote">Vous disposez d'un accès en lecture seule à ces réglages.</p>
+            <p class="muted text-footnote"><?= e(__('settings.readonly')) ?></p>
         <?php endif; ?>
     </fieldset>
 </form>
@@ -167,11 +167,11 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
     <section class="card settings-panel margin-block-start-6" aria-labelledby="settings-modules-title">
         <div class="card-header">
             <div>
-                <h2 class="card-header__title" id="settings-modules-title">Modules et extensions</h2>
-                <p class="section-heading__note">Installez des extensions vérifiées et gérez leurs dépendances.</p>
+                <h2 class="card-header__title" id="settings-modules-title"><?= e(__('settings.modules_title')) ?></h2>
+                <p class="section-heading__note"><?= e(__('settings.modules_text')) ?></p>
             </div>
-            <a class="button button--secondary button--small" href="<?= e(url('/settings/modules')) ?>">Gérer les modules</a>
+            <a class="button button--secondary button--small" href="<?= e(url('/settings/modules')) ?>"><?= e(__('settings.modules_action')) ?></a>
         </div>
-        <p class="muted text-footnote">Seuls les administrateurs peuvent téléverser et activer du code de module.</p>
+        <p class="muted text-footnote"><?= e(__('settings.modules_admin_hint')) ?></p>
     </section>
 <?php endif; ?>

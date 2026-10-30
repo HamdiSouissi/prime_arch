@@ -7,10 +7,10 @@ $modules = is_array($modules ?? null) ? $modules : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 ?>
 <?php View::partial('partials/page-header', [
-    'pageTitle' => 'Modules',
-    'eyebrow' => 'Extensions du cabinet',
-    'subtitle' => 'Installez et gérez des modules de confiance sans modifier les fonctionnalités du noyau.',
-    'secondaryAction' => ['label' => $modulesBackLabel ?? 'Réglages du cabinet', 'icon' => 'settings', 'url' => $modulesBackUrl ?? url('/settings')],
+    'pageTitle' => __('modules.title'),
+    'eyebrow' => __('settings.modules_title'),
+    'subtitle' => __('settings.modules_text'),
+    'secondaryAction' => ['label' => $modulesBackLabel ?? __('settings.title'), 'icon' => 'settings', 'url' => $modulesBackUrl ?? url('/settings')],
 ]) ?>
 
 <?php if (!empty($notice)): ?>
@@ -26,35 +26,35 @@ $errors = is_array($errors ?? null) ? $errors : [];
 <section class="card stack-md" aria-labelledby="upload-module-heading">
     <div class="card-header">
         <div>
-            <h2 class="card-header__title" id="upload-module-heading">Installer un module</h2>
-            <p class="section-heading__note">Archive ZIP avec un dossier racine unique, un manifeste module.json et un point d’entrée PHP.</p>
+            <h2 class="card-header__title" id="upload-module-heading"><?= e(__('modules.install_title')) ?></h2>
+            <p class="section-heading__note"><?= e(__('modules.install_help')) ?></p>
         </div>
-        <span class="badge badge--info">25 Mo maximum</span>
+        <span class="badge badge--info"><?= e(__('modules.max_size')) ?></span>
     </div>
     <form method="post" action="<?= e(url('/settings/modules/install')) ?>" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <label class="upload-dropzone" data-upload-zone data-upload-real for="module-zip">
             <span class="upload-dropzone__icon"><svg class="icon icon--large" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#upload-cloud"></use></svg></span>
-            <span class="upload-dropzone__title">Choisir une archive de module</span>
-            <span class="upload-dropzone__hint"><span data-upload-name>Fichier .zip uniquement · extraction privée dans storage/modules/</span></span>
-            <span class="button button--secondary button--small">Parcourir</span>
-            <input class="u-sr-only" id="module-zip" name="module_zip" type="file" accept=".zip,application/zip" required aria-label="Choisir une archive ZIP de module">
+            <span class="upload-dropzone__title"><?= e(__('modules.choose_archive')) ?></span>
+            <span class="upload-dropzone__hint"><span data-upload-name><?= e(__('modules.file_help')) ?></span></span>
+            <span class="button button--secondary button--small"><?= e(__('modules.browse')) ?></span>
+            <input class="u-sr-only" id="module-zip" name="module_zip" type="file" accept=".zip,application/zip" required aria-label="<?= e(__('modules.choose_archive_label')) ?>">
         </label>
         <div class="stack-md margin-block-start-4">
             <label class="check-label">
                 <input type="checkbox" name="trusted_code" value="1" required>
-                Je confirme que cette archive vient d’une source de confiance et j’accepte l’exécution de son code PHP.
+                <?= e(__('modules.confirm_source')) ?>
             </label>
-            <button class="button button--primary" type="submit">Vérifier et installer</button>
+            <button class="button button--primary" type="submit"><?= e(__('modules.verify_install')) ?></button>
         </div>
     </form>
 </section>
 
-<section class="module-grid margin-block-start-6" aria-label="Modules installés">
+<section class="module-grid margin-block-start-6" aria-label="<?= e(__('modules.installed_label')) ?>">
     <?php if ($modules === []): ?>
         <section class="card empty-state">
-            <h2 class="text-headline">Aucun module installé</h2>
-            <p class="muted text-footnote">Les modules vérifiés apparaîtront ici après leur installation.</p>
+            <h2 class="text-headline"><?= e(__('modules.none_title')) ?></h2>
+            <p class="muted text-footnote"><?= e(__('modules.none_help')) ?></p>
         </section>
     <?php endif; ?>
 
@@ -66,12 +66,12 @@ $errors = is_array($errors ?? null) ? $errors : [];
         $enabled = (bool) ($module['is_enabled'] ?? false);
         $canActivate = $available && $compatible && $missingDependencies === [];
         $status = !$available
-            ? 'Code indisponible'
+            ? __('modules.status_unavailable')
             : (!$compatible
-                ? 'Version incompatible'
+                ? __('modules.status_incompatible')
                 : ($missingDependencies !== []
-                    ? 'Dépendance requise'
-                    : ($enabled ? 'Activé' : 'Désactivé')));
+                    ? __('modules.status_dependency')
+                    : ($enabled ? __('common.enabled') : __('common.disabled'))));
         $tone = !$available || !$compatible
             ? 'error'
             : ($missingDependencies !== [] ? 'warning' : ($enabled ? 'success' : 'neutral'));
@@ -87,26 +87,26 @@ $errors = is_array($errors ?? null) ? $errors : [];
                 </div>
                 <span class="badge badge--<?= e($tone) ?>"><?= e($status) ?></span>
             </div>
-            <p class="module-card__description"><?= e($module['description'] !== '' ? $module['description'] : 'Aucune description fournie.') ?></p>
+            <p class="module-card__description"><?= e($module['description'] !== '' ? $module['description'] : __('modules.no_description')) ?></p>
             <div class="stack-md">
-                <?php if (!empty($module['author'])): ?><p class="muted text-footnote">Auteur : <?= e($module['author']) ?></p><?php endif; ?>
-                <?php if (!empty($module['dependencies'])): ?><p class="muted text-footnote">Dépendances : <?= e(implode(', ', $module['dependencies'])) ?></p><?php endif; ?>
-                <?php if ($missingDependencies !== []): ?><p class="field__hint field__hint--error">À activer d’abord : <?= e(implode(', ', $missingDependencies)) ?></p><?php endif; ?>
+                <?php if (!empty($module['author'])): ?><p class="muted text-footnote"><?= e(__('modules.author')) ?> : <?= e($module['author']) ?></p><?php endif; ?>
+                <?php if (!empty($module['dependencies'])): ?><p class="muted text-footnote"><?= e(__('modules.dependencies')) ?> : <?= e(implode(', ', $module['dependencies'])) ?></p><?php endif; ?>
+                <?php if ($missingDependencies !== []): ?><p class="field__hint field__hint--error"><?= e(__('modules.activate_first')) ?> : <?= e(implode(', ', $missingDependencies)) ?></p><?php endif; ?>
                 <?php if (!$available): ?><p class="field__hint field__hint--error"><?= e($module['availability_error']) ?></p><?php endif; ?>
                 <?php if (!$compatible): ?><p class="field__hint field__hint--error"><?= e($module['compatibility_error']) ?></p><?php endif; ?>
-                <?php if (!empty($module['archive_sha256'])): ?><p class="muted text-footnote">SHA-256 : <code><?= e(substr((string) $module['archive_sha256'], 0, 16)) ?>…</code></p><?php endif; ?>
+                <?php if (!empty($module['archive_sha256'])): ?><p class="muted text-footnote"><?= e(__('modules.checksum')) ?> : <code><?= e(substr((string) $module['archive_sha256'], 0, 16)) ?>…</code></p><?php endif; ?>
             </div>
             <div class="module-card__footer">
-                <span class="muted text-footnote">Les migrations réussies et les données sont conservées à la désactivation.</span>
+                <span class="muted text-footnote"><?= e(__('modules.data_retained')) ?></span>
                 <?php if ($enabled): ?>
                     <form method="post" action="<?= e(url('/settings/modules/' . rawurlencode((string) $module['slug']) . '/deactivate')) ?>">
                         <?= csrf_field() ?>
-                        <button class="button button--small button--secondary" type="submit">Désactiver</button>
+                        <button class="button button--small button--secondary" type="submit"><?= e(__('modules.deactivate')) ?></button>
                     </form>
                 <?php else: ?>
                     <form method="post" action="<?= e(url('/settings/modules/' . rawurlencode((string) $module['slug']) . '/activate')) ?>">
                         <?= csrf_field() ?>
-                        <button class="button button--small button--primary" type="submit" <?= $canActivate ? '' : 'disabled' ?>>Activer</button>
+                        <button class="button button--small button--primary" type="submit" <?= $canActivate ? '' : 'disabled' ?>><?= e(__('modules.activate')) ?></button>
                     </form>
                 <?php endif; ?>
             </div>
@@ -117,8 +117,8 @@ $errors = is_array($errors ?? null) ? $errors : [];
 <section class="card module-note margin-block-start-6">
     <span class="module-note__icon"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#shield"></use></svg></span>
     <div>
-        <h2 class="text-headline">Sécurité des extensions</h2>
-        <p class="muted text-footnote">Une extension PHP s’exécute avec les droits du serveur : elle n’est pas sandboxée. Les contrôles ZIP bloquent les chemins traversants, liens symboliques, archives chiffrées et tailles excessives, mais ne peuvent pas rendre sûr un code malveillant. Installez uniquement des archives dont vous connaissez la provenance et dont vous avez vérifié le contenu.</p>
-        <p class="muted text-footnote">Désactiver un module arrête son chargement au prochain démarrage de requête; cela ne désinstalle pas son code, ne supprime pas ses tables et ne détruit aucune donnée.</p>
+        <h2 class="text-headline"><?= e(__('modules.security_title')) ?></h2>
+        <p class="muted text-footnote"><?= e(__('modules.security_text')) ?></p>
+        <p class="muted text-footnote"><?= e(__('modules.deactivate_help')) ?></p>
     </div>
 </section>

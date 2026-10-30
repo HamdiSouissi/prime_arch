@@ -41,6 +41,22 @@ if (!function_exists('config')) {
     }
 }
 
+if (!function_exists('current_path')) {
+    /**
+     * Chemin de la requête en cours, sans la query string ni le sous-dossier d'installation.
+     * Utilisé par exemple pour revenir sur la même page après un changement de langue.
+     */
+    function current_path(): string
+    {
+        $uri = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $base = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? ''))), '/');
+        if ($base !== '' && str_starts_with($uri, $base)) {
+            $uri = substr($uri, strlen($base)) ?: '/';
+        }
+        return '/' . trim($uri, '/');
+    }
+}
+
 if (!function_exists('__')) {
     /** Traduction d'une clé (ex. __('nav.home')). */
     function __(string $key, array $replace = []): string
@@ -54,6 +70,20 @@ if (!function_exists('csrf_field')) {
     function csrf_field(): string
     {
         return '<input type="hidden" name="_token" value="' . e(Csrf::token()) . '">';
+    }
+}
+
+if (!function_exists('role_label')) {
+    /**
+     * Libellé traduit d'un rôle ; repli sur le libellé stocké en base (rôles personnalisés).
+     */
+    function role_label(string $slug, string $fallback = ''): string
+    {
+        $key = 'role.' . $slug;
+        if ($slug !== '' && Translator::has($key)) {
+            return __($key);
+        }
+        return $fallback !== '' ? $fallback : $slug;
     }
 }
 

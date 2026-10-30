@@ -22,47 +22,47 @@ use App\Core\View;
 
 <div class="stats-grid stats-grid--three foundation-stats">
     <?php View::partial('partials/stat-card', [
-        'label' => 'Compte connecté',
+        'label' => __('dashboard.stat_account'),
         'value' => $userName ?? '',
         'icon' => 'user',
         'tone' => 'blue',
-        'note' => 'Session sécurisée et protégée contre les requêtes CSRF',
+        'note' => __('dashboard.stat_account_note'),
     ]) ?>
     <?php View::partial('partials/stat-card', [
-        'label' => 'Rôle attribué',
+        'label' => __('dashboard.stat_role'),
         'value' => $roleLabel ?? '',
         'icon' => 'shield',
         'tone' => 'mint',
-        'note' => 'Permissions appliquées côté serveur',
+        'note' => __('dashboard.stat_role_note'),
     ]) ?>
     <?php View::partial('partials/stat-card', [
-        'label' => 'Référentiel géographique',
+        'label' => __('dashboard.stat_geography'),
         'value' => ($geographyCounts['governorates'] ?? 0) . ' / ' . ($geographyCounts['delegations'] ?? 0),
         'icon' => 'map-pin',
         'tone' => 'coral',
-        'note' => 'Gouvernorats / délégations préchargés',
+        'note' => __('dashboard.stat_geography_note'),
     ]) ?>
 </div>
 
-<section class="foundation-grid" aria-label="Actions des fondations">
+<section class="foundation-grid" aria-label="<?= e(__('dashboard.actions_label')) ?>">
     <article class="card foundation-action">
         <span class="foundation-action__icon"><svg class="icon"><use href="<?= e(asset('img/icons.svg')) ?>#building"></use></svg></span>
         <div>
-            <h2 class="card-header__title">Identité du cabinet</h2>
-            <p class="muted text-footnote">Coordonnées, matricule fiscal, logo et paramètres fiscaux configurables.</p>
+            <h2 class="card-header__title"><?= e(__('dashboard.settings_card_title')) ?></h2>
+            <p class="muted text-footnote"><?= e(__('dashboard.settings_card_text')) ?></p>
         </div>
-        <a class="button button--secondary" href="<?= e(url('/settings')) ?>">Ouvrir les réglages</a>
+        <a class="button button--secondary" href="<?= e(url('/settings')) ?>"><?= e(__('dashboard.settings_card_action')) ?></a>
     </article>
     <?php if (!empty($canManageUsers)): ?>
         <article class="card foundation-action">
             <span class="foundation-action__icon foundation-action__icon--mint"><svg class="icon"><use href="<?= e(asset('img/icons.svg')) ?>#people"></use></svg></span>
             <div>
-                <h2 class="card-header__title">Utilisateurs et rôles</h2>
-                <p class="muted text-footnote">Créez des comptes et attribuez uniquement les permissions nécessaires.</p>
+                <h2 class="card-header__title"><?= e(__('dashboard.users_card_title')) ?></h2>
+                <p class="muted text-footnote"><?= e(__('dashboard.users_card_text')) ?></p>
             </div>
-            <a class="button button--secondary" href="<?= e(url('/admin/users')) ?>">Gérer les accès</a>
+            <a class="button button--secondary" href="<?= e(url('/admin/users')) ?>"><?= e(__('dashboard.users_card_action')) ?></a>
         </article>
     <?php endif; ?>
 </section>
 
-<p class="foundation-footnote"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#info"></use></svg> Les taux fiscaux sont des paramètres indicatifs ; validez-les avec votre expert-comptable et l'OAT avant toute facturation.</p>
+<p class="foundation-footnote"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#info"></use></svg> <?= e(__('dashboard.fiscal_warning')) ?></p>

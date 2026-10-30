@@ -316,3 +316,20 @@
         }
     }
 }
+
+/* Sélecteur de langue en thème sombre */
+@media (prefers-color-scheme: dark) {
+    .language-switcher {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface);
+    }
+
+    .language-switcher__option {
+        color: var(--color-ink-secondary);
+    }
+
+    .language-switcher__option[aria-pressed="true"] {
+        color: #0E1524;
+        background: var(--color-primary);
+    }
+}

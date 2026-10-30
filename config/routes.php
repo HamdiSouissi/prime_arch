@@ -12,6 +12,7 @@ use App\Controllers\DesignController;
 use App\Controllers\GeographyController;
 use App\Controllers\HomeController;
 use App\Controllers\HourlyRateController;
+use App\Controllers\LocaleController;
 use App\Controllers\MediaController;
 use App\Controllers\ModuleAssetController;
 use App\Controllers\ModuleController;
@@ -33,6 +34,7 @@ use App\Middleware\CsrfMiddleware;
 return function (Router $router): void {
     $router->get('/', [AuthController::class, 'home']);
     $router->get('/health', [HomeController::class, 'index']);
+    $router->post('/locale', [LocaleController::class, 'update'], [CsrfMiddleware::class]);
 
     $router->get('/login', [AuthController::class, 'showLogin']);
     $router->post('/login', [AuthController::class, 'login'], [CsrfMiddleware::class]);

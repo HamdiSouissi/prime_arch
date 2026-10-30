@@ -19,9 +19,9 @@ final class ModuleController
 {
     public function index(Request $request): Response
     {
-        $context = (new ViewContext())->authenticated('Modules', 'settings');
+        $context = (new ViewContext())->authenticated(__('modules.title'), 'settings');
         $context['modulesBackUrl'] = Auth::can('settings.view') ? url('/settings') : url('/admin/users');
-        $context['modulesBackLabel'] = Auth::can('settings.view') ? 'Réglages du cabinet' : 'Gestion des utilisateurs';
+        $context['modulesBackLabel'] = Auth::can('settings.view') ? __('settings.title') : __('users.title');
         return Response::html(View::render('pages/settings/modules-admin', $context + [
             'modules' => (new ModuleService())->all(),
             'notice' => Session::pullFlash('modules.notice'),

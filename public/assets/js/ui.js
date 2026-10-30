@@ -1,5 +1,30 @@
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+/**
+ * Messages traduits fournis par le serveur (français / arabe) sous forme de JSON.
+ * Voir le bloc #app-i18n dans les layouts.
+ */
+const messages = (() => {
+    const node = document.getElementById("app-i18n");
+    if (!node) return {};
+    try {
+        return JSON.parse(node.textContent ?? "{}");
+    } catch {
+        return {};
+    }
+})();
+
+/** Traduit une clé JS avec repli et remplacement des jetons :name. */
+function t(key, fallback = "", values = {}) {
+    let text = typeof messages[key] === "string" ? messages[key] : fallback;
+    Object.entries(values).forEach(([name, value]) => {
+        text = text.replaceAll(`:${name}`, String(value));
+    });
+    return text;
+}
+
+const htmlLocale = () => document.documentElement.lang || "fr";
+
 function openDialog(dialog) {
     if (!(dialog instanceof HTMLDialogElement)) return;
     if (typeof dialog.showModal === "function") {
@@ -116,7 +141,7 @@ function addCustomField(form) {
     const name = nameInput?.value.trim();
     const value = valueInput?.value.trim();
     if (!list || !name || !value) {
-        showToast("Renseignez le nom et la valeur du champ.", "warning");
+        showToast(t("js.custom_field_required", "Renseignez le nom et la valeur du champ."), "warning");
         return false;
     }
 
@@ -132,7 +157,7 @@ function addCustomField(form) {
     const remove = document.createElement("button");
     remove.className = "button button--ghost button--icon";
     remove.type = "button";
-    remove.setAttribute("aria-label", `Supprimer le champ ${name}`);
+    remove.setAttribute("aria-label", t("js.remove_field_named", `Supprimer le champ ${name}`, { name }));
     remove.dataset.customFieldRemove = "";
     const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     icon.setAttribute("class", "icon");
@@ -144,7 +169,7 @@ function addCustomField(form) {
     row.append(label, content, remove);
     list.append(row);
     form.reset();
-    showToast("Champ personnalisé ajouté.");
+    showToast(t("js.custom_field_added", "Champ personnalisé ajouté."));
     return true;
 }
 
@@ -158,7 +183,7 @@ function initCommandPalette() {
         const query = input?.value.trim().toLocaleLowerCase("fr") ?? "";
         let visibleCount = 0;
         items.forEach((item) => {
-            const matches = item.textContent.toLocaleLowerCase("fr").includes(query);
+            const matches = item.textContent.toLocaleLowerCase(htmlLocale()).includes(query);
             item.hidden = !matches;
             if (matches) visibleCount += 1;
         });
@@ -294,8 +319,10 @@ function initTimer() {
     const setRunning = (running) => {
         timer.classList.toggle("is-running", running);
         toggle.setAttribute("aria-pressed", String(running));
-        toggle.querySelector("[data-timer-label]").textContent = running ? "Mettre en pause" : "Démarrer le chronomètre";
-        if (status) status.textContent = running ? "Chronomètre en cours" : "Prêt à démarrer";
+        toggle.querySelector("[data-timer-label]").textContent = running
+            ? t("js.timer_pause", "Mettre en pause")
+            : t("js.timer_start", "Démarrer le chronomètre");
+        if (status) status.textContent = running ? t("js.timer_running", "Chronomètre en cours") : t("js.timer_ready", "Prêt à démarrer");
         if (running) intervalId = window.setInterval(() => { seconds += 1; render(); }, 1000);
         else window.clearInterval(intervalId);
     };
@@ -307,7 +334,7 @@ function initTimer() {
         setRunning(false);
         seconds = 0;
         render();
-        showToast("Chronomètre réinitialisé.");
+        showToast(t("js.timer_reset", "Chronomètre réinitialisé."));
     });
     render();
 }
@@ -320,9 +347,7 @@ function initGeographySelects() {
     const postalOptions = form?.querySelector("[data-postal-options]");
     if (!form || !governorate || !delegation) return;
 
-    const chooseDelegation = document.documentElement.lang === "ar"
-        ? "اختر معتمدية…"
-        : "Choisir une délégation…";
+    const chooseDelegation = t("js.choose_delegation", "Choisir une délégation…");
     const setPlaceholder = (select, label) => {
         select.replaceChildren(new Option(label, ""));
     };
@@ -352,7 +377,7 @@ function initGeographySelects() {
                 postalOptions.append(option);
             });
         } catch {
-            showToast("Les codes postaux ne sont pas disponibles pour ce gouvernorat ou cette délégation.", "info");
+            showToast(t("js.postal_unavailable", "Les codes postaux ne sont pas disponibles pour ce gouvernorat ou cette délégation."), "info");
         }
     };
     const loadDelegations = async (governorateId, selectedId = "") => {
@@ -389,7 +414,7 @@ function initGeographySelects() {
             await loadPostalCodes(delegation.value);
         } catch {
             delegation.disabled = true;
-            showToast("Impossible de charger les délégations. Réessayez.", "error");
+            showToast(t("js.delegations_error", "Impossible de charger les délégations. Réessayez."), "error");
         }
     };
 
@@ -437,7 +462,7 @@ function initVatRatesSelect() {
             .filter((rate) => /^(?:100|[1-9]?[0-9])$/.test(rate));
         defaultSelect.replaceChildren();
         if (rates.length === 0) {
-            const placeholder = new Option("Choisir un taux", "");
+            const placeholder = new Option(t("js.choose_rate", "Choisir un taux"), "");
             placeholder.disabled = true;
             placeholder.selected = true;
             defaultSelect.append(placeholder);
@@ -573,14 +598,14 @@ function initUpload() {
         if (!file) return;
         if (!file.name.toLowerCase().endsWith(".zip")) {
             input.value = "";
-            if (name) name.textContent = "Fichier .zip uniquement";
-            showToast("Choisissez une archive au format .zip.", "warning");
+            if (name) name.textContent = t("js.upload_zip_only", "Fichier .zip uniquement");
+            showToast(t("js.archive_zip_required", "Choisissez une archive au format .zip."), "warning");
             return;
         }
         if (file.size > 25_000_000) {
             input.value = "";
-            if (name) name.textContent = "Archive de 25 Mo maximum";
-            showToast("L’archive dépasse la limite de 25 Mo.", "warning");
+            if (name) name.textContent = t("js.archive_too_large_label", "Archive de 25 Mo maximum");
+            showToast(t("js.archive_too_large", "L’archive dépasse la limite de 25 Mo."), "warning");
             return;
         }
         if (fromDrop) {
@@ -589,14 +614,14 @@ function initUpload() {
                 transfer.items.add(file);
                 input.files = transfer.files;
             } catch {
-                showToast("Utilisez le bouton Parcourir pour sélectionner l’archive.", "warning");
+                showToast(t("js.archive_browse_hint", "Utilisez le bouton Parcourir pour sélectionner l’archive."), "warning");
                 return;
             }
         }
         if (name) name.textContent = file.name;
         showToast(isPreview
-            ? "Archive prête pour la prévisualisation. Aucun téléversement n'est effectué."
-            : "Archive sélectionnée. Elle sera vérifiée côté serveur avant l’installation.", "info");
+            ? t("js.archive_preview_ready", "Archive prête pour la prévisualisation. Aucun téléversement n’est effectué.")
+            : t("js.archive_selected", "Archive sélectionnée. Elle sera vérifiée côté serveur avant l’installation."), "info");
     };
     input.addEventListener("change", () => showFile(input.files?.[0]));
     ["dragenter", "dragover"].forEach((type) => zone.addEventListener(type, (event) => {
@@ -650,10 +675,12 @@ export function initUI() {
             const moduleCard = switchButton.closest(".module-card");
             const moduleName = moduleCard?.querySelector(".module-card__title")?.textContent.trim();
             if (moduleName) {
-                switchButton.setAttribute("aria-label", `${checked ? "Désactiver" : "Activer"} le module ${moduleName}`);
+                switchButton.setAttribute("aria-label", checked
+                    ? t("js.module_deactivate_label", `Désactiver le module ${moduleName}`, { name: moduleName })
+                    : t("js.module_activate_label", `Activer le module ${moduleName}`, { name: moduleName }));
                 const badge = moduleCard.querySelector(".module-card__footer .badge");
                 if (badge) {
-                    badge.textContent = checked ? "Activé" : "Désactivé";
+                    badge.textContent = checked ? t("js.activated", "Activé") : t("js.deactivated", "Désactivé");
                     badge.classList.toggle("badge--success", checked);
                     badge.classList.toggle("badge--neutral", !checked);
                 }
@@ -663,13 +690,13 @@ export function initUI() {
         const toastButton = target.closest("[data-toast-message]");
         if (toastButton) {
             if (toastButton instanceof HTMLAnchorElement && toastButton.getAttribute("href")?.startsWith("#")) event.preventDefault();
-            showToast(toastButton.dataset.toastMessage || "Action terminée.", toastButton.dataset.toastTone || "success");
+            showToast(toastButton.dataset.toastMessage || t("js.action_done", "Action terminée."), toastButton.dataset.toastTone || "success");
         }
 
         const removeField = target.closest("[data-custom-field-remove]");
         if (removeField) {
             removeField.closest("[data-custom-field]")?.remove();
-            showToast("Champ personnalisé supprimé.");
+            showToast(t("js.custom_field_removed", "Champ personnalisé supprimé."));
         }
 
         const printButton = target.closest("[data-print]");
@@ -694,7 +721,7 @@ export function initUI() {
             if (addCustomField(form)) closeDialog(form.closest("dialog"));
         } else if (form.matches("[data-demo-form]")) {
             event.preventDefault();
-            showToast("Démo uniquement : aucune donnée n'a été enregistrée.", "info");
+            showToast(t("js.demo_only", "Démo uniquement : aucune donnée n’a été enregistrée."), "info");
         } else {
             form.classList.add("is-submitting");
             form.setAttribute("aria-busy", "true");

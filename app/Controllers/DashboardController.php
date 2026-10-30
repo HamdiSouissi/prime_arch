@@ -24,10 +24,10 @@ final class DashboardController
 
         $user = Auth::user() ?? [];
         $settings = (new CabinetSettings())->get();
-        $context = (new ViewContext())->authenticated('Tableau de bord', 'dashboard');
+        $context = (new ViewContext())->authenticated(__('nav.dashboard'), 'dashboard');
         return Response::html(View::render('pages/app/dashboard', $context + [
             'userName' => (string) ($user['name'] ?? ''),
-            'roleLabel' => (string) ($user['role_label'] ?? ''),
+            'roleLabel' => role_label((string) ($user['role_slug'] ?? ''), (string) ($user['role_label'] ?? '')),
             'cabinetName' => $settings['name'],
             'geographyCounts' => (new GeographyRepository())->counts(),
         ]));

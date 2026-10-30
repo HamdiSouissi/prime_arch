@@ -459,7 +459,24 @@
     }
 
     .topbar-search {
-        inline-size: clamp(10rem, 30vw, 18rem);
+        inline-size: clamp(8rem, 26vw, 15rem);
+    }
+
+    .topbar-search__keys {
+        display: none;
+    }
+
+    .language-switcher {
+        padding-inline: 0.2rem;
+    }
+
+    .language-switcher__icon {
+        display: none;
+    }
+
+    .language-switcher__option {
+        min-inline-size: 1.9rem;
+        font-size: 0.7rem;
     }
 }
 
@@ -554,6 +571,21 @@
     .topbar__actions {
         flex: 1;
         justify-content: flex-end;
+    }
+
+    .language-switcher {
+        padding-inline: 0.2rem;
+    }
+
+    .language-switcher__icon {
+        display: none;
+    }
+
+    .language-switcher__option {
+        min-inline-size: 1.9rem;
+        min-block-size: 1.85rem;
+        padding-inline: 0.35rem;
+        font-size: 0.7rem;
     }
 
     .topbar-search {

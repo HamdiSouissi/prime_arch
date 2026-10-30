@@ -1,107 +1,55 @@
 <?php
 declare(strict_types=1);
 
+use App\Core\Translator;
 use App\Core\View;
 
 $entries = is_array($entries ?? null) ? $entries : [];
-$eventLabels = [
-    'auth.login.succeeded' => 'Connexion réussie',
-    'auth.login.failed' => 'Échec de connexion',
-    'auth.login.throttled' => 'Connexion limitée',
-    'auth.logout' => 'Déconnexion',
-    'users.created' => 'Compte créé',
-    'users.access.updated' => 'Accès utilisateur modifié',
-    'clients.created' => 'Client créé',
-    'clients.updated' => 'Client modifié',
-    'clients.contact.created' => 'Contact client ajouté',
-    'clients.contact.updated' => 'Contact client modifié',
-    'clients.contact.deleted' => 'Contact client supprimé',
-    'projects.created' => 'Projet créé',
-    'projects.updated' => 'Projet modifié',
-    'projects.plan.updated' => 'Plan de projet modifié',
-    'projects.phase.status.updated' => 'Statut de phase modifié',
-    'projects.phase.progress.updated' => 'Progression de phase modifiée',
-    'projects.image.uploaded' => 'Image de projet téléversée',
-    'project_phases.created' => 'Phase de mission créée',
-    'project_phases.updated' => 'Phase de mission modifiée',
-    'custom_fields.created' => 'Champ personnalisé créé',
-    'custom_fields.updated' => 'Champ personnalisé modifié',
-    'custom_fields.toggled' => 'Champ personnalisé activé/désactivé',
-    'finance.rates.created' => 'Taux horaire ajouté',
-    'documents.templates.created' => 'Modèle de document créé',
-    'documents.templates.updated' => 'Modèle de document modifié',
-    'documents.created' => 'Brouillon créé',
-    'documents.updated' => 'Brouillon modifié',
-    'documents.issued' => 'Document émis',
-    'documents.payment.added' => 'Règlement ajouté',
-    'documents.draft.deleted' => 'Brouillon supprimé',
-    'settings.updated' => 'Réglages du cabinet modifiés',
-    'time.created' => 'Saisie de temps créée',
-    'time.updated' => 'Saisie de temps modifiée',
-    'modules.installed' => 'Module installé',
-    'modules.activated' => 'Module activé',
-    'modules.deactivated' => 'Module désactivé',
-    'backup.created' => 'Sauvegarde créée',
-    'backup.restored' => 'Sauvegarde restaurée',
-];
-$detailLabels = [
-    'role' => 'Rôle',
-    'is_active' => 'Compte actif',
-    'result' => 'Résultat',
-    'document_type' => 'Type de document',
-    'status' => 'Statut',
-    'module' => 'Module',
-    'files' => 'Fichiers',
-    'tables' => 'Tables',
-    'client_id' => 'Client',
-    'contact_action' => 'Action',
-    'entity_type' => 'Type de fiche',
-    'field_type' => 'Type de champ',
-    'is_required' => 'Obligatoire',
-    'sort_order' => 'Ordre',
-    'project_id' => 'Projet',
-    'phase_action' => 'Action de phase',
-    'progress_percent' => 'Progression (%)',
-    'mime_type' => 'Format image',
-    'width' => 'Largeur (px)',
-    'height' => 'Hauteur (px)',
-    'user_id' => 'Compte utilisateur',
-    'effective_from' => 'Date d’effet',
-    'locale' => 'Langue',
-];
+/**
+ * Libellé traduit d'un événement d'audit, avec repli sur la clé technique.
+ */
+$eventLabel = static function (string $key): string {
+    return $key !== '' && Translator::has('audit.event.' . $key) ? __('audit.event.' . $key) : $key;
+};
+/**
+ * Libellé traduit d'un détail d'audit, avec repli sur le nom du champ.
+ */
+$detailLabel = static function (string $key): string {
+    return Translator::has('audit.detail.' . $key) ? __('audit.detail.' . $key) : $key;
+};
 ?>
 <?php View::partial('partials/page-header', [
-    'pageTitle' => 'Journal d’audit',
-    'subtitle' => 'Événements de sécurité et actions de gestion, sans contenu des formulaires ni adresse IP brute.',
-    'eyebrow' => 'Sécurité du cabinet',
+    'pageTitle' => __('audit.title'),
+    'subtitle' => __('audit.subtitle'),
+    'eyebrow' => __('audit.eyebrow'),
     'secondaryAction' => ['label' => __('users.title'), 'icon' => 'people', 'url' => url('/admin/users')],
 ]) ?>
 
 <section class="card" aria-labelledby="audit-list-title">
     <div class="card-header">
         <div>
-            <h2 class="card-header__title" id="audit-list-title">Événements récents</h2>
+            <h2 class="card-header__title" id="audit-list-title"><?= e(__('audit.recent')) ?></h2>
             <p class="section-heading__note">
-                <?= e((string) ($total ?? 0)) ?> événement(s) · affichage de 50 par page
+                <?= e(__('audit.count', ['count' => (string) ($total ?? 0)])) ?>
             </p>
         </div>
     </div>
     <?php if ($entries === []): ?>
         <?php View::partial('partials/empty-state', [
-            'title' => 'Aucun événement enregistré',
-            'description' => 'Les nouvelles actions de sécurité apparaîtront ici après la migration du journal.',
+            'title' => __('audit.empty_title'),
+            'description' => __('audit.empty_help'),
             'image' => asset('img/empty-projects.svg'),
             'imageAlt' => '',
         ]) ?>
     <?php else: ?>
-        <div class="table-wrap" role="region" aria-label="Table des événements d’audit" tabindex="0">
+        <div class="table-wrap" role="region" aria-label="<?= e(__('audit.table_label')) ?>" tabindex="0">
             <table class="data-table audit-table">
                 <thead><tr>
-                    <th scope="col">Date et heure</th>
-                    <th scope="col">Événement</th>
-                    <th scope="col">Compte</th>
-                    <th scope="col">Objet</th>
-                    <th scope="col">Détails</th>
+                    <th scope="col"><?= e(__('audit.date')) ?></th>
+                    <th scope="col"><?= e(__('audit.event')) ?></th>
+                    <th scope="col"><?= e(__('audit.account')) ?></th>
+                    <th scope="col"><?= e(__('audit.subject')) ?></th>
+                    <th scope="col"><?= e(__('audit.details')) ?></th>
                 </tr></thead>
                 <tbody>
                 <?php foreach ($entries as $entry): ?>
@@ -112,8 +60,8 @@ $detailLabels = [
                     ?>
                     <tr>
                         <td><?= e($timestamp !== false ? date('d/m/Y H:i:s', $timestamp) : '—') ?></td>
-                        <td><strong><?= e($eventLabels[$eventKey] ?? $eventKey) ?></strong></td>
-                        <td><?= e((string) ($entry['actor_name'] ?? 'Système')) ?></td>
+                        <td><strong><?= e($eventLabel($eventKey)) ?></strong></td>
+                        <td><?= e((string) ($entry['actor_name'] ?? __('audit.system'))) ?></td>
                         <td>
                             <?= e((string) ($entry['subject_type'] ?? '')) ?>
                             <?php if (!empty($entry['subject_id'])): ?>
@@ -127,8 +75,8 @@ $detailLabels = [
                                 <ul class="audit-details">
                                 <?php foreach ($details as $key => $value): ?>
                                     <li>
-                                        <span><?= e($detailLabels[$key] ?? (string) $key) ?> :</span>
-                                        <?= e(is_bool($value) ? ($value ? 'Oui' : 'Non') : (string) $value) ?>
+                                        <span><?= e($detailLabel((string) $key)) ?> :</span>
+                                        <?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (string) $value) ?>
                                     </li>
                                 <?php endforeach; ?>
                                 </ul>
@@ -143,15 +91,15 @@ $detailLabels = [
 </section>
 
 <?php if ((int) ($pageCount ?? 1) > 1): ?>
-    <nav class="pagination" aria-label="Pages du journal d’audit">
+    <nav class="pagination" aria-label="<?= e(__('audit.pagination_label')) ?>">
         <?php if ((int) $page > 1): ?>
             <a class="button button--secondary button--small"
-                href="<?= e(url('/admin/audit?page=' . ((int) $page - 1))) ?>">Précédent</a>
+                href="<?= e(url('/admin/audit?page=' . ((int) $page - 1))) ?>"><?= e(__('common.previous')) ?></a>
         <?php endif; ?>
-        <span aria-current="page">Page <?= e((string) $page) ?> sur <?= e((string) $pageCount) ?></span>
+        <span aria-current="page"><?= e(__('common.page', ['current' => (string) $page, 'total' => (string) $pageCount])) ?></span>
         <?php if ((int) $page < (int) $pageCount): ?>
             <a class="button button--secondary button--small"
-                href="<?= e(url('/admin/audit?page=' . ((int) $page + 1))) ?>">Suivant</a>
+                href="<?= e(url('/admin/audit?page=' . ((int) $page + 1))) ?>"><?= e(__('common.next')) ?></a>
         <?php endif; ?>
     </nav>
 <?php endif; ?>

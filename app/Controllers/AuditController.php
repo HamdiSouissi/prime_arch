@@ -22,7 +22,7 @@ final class AuditController
         $requestedPage = filter_var($request->query('page', 1), FILTER_VALIDATE_INT);
         $page = $requestedPage === false ? 1 : max(1, min(40_000, (int) $requestedPage));
         $result = (new AuditRepository())->paginate(50, ($page - 1) * 50);
-        $context = (new ViewContext())->authenticated('Journal d’audit', 'settings');
+        $context = (new ViewContext())->authenticated(__('audit.title'), 'settings');
 
         return Response::html(View::render('pages/app/audit', $context + [
             'entries' => $result['items'],

@@ -72,12 +72,21 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 - Marge supérieure PDF harmonisée à 48 mm pour les régénérations de tous types de documents ; documents associés listés sur la fiche client selon les permissions.
 - Images JPEG/PNG/WebP téléversées par projet, stockées hors webroot et servies après contrôle d’accès ; galerie pour les plans 2D et visuels de référence.
 - Permissions des rôles intégrés explicites et moindres privilèges ; les réglages de cabinet contenant des données sensibles sont réservés à l’administrateur.
+- Interface bilingue **français / arabe** : sélecteur de langue dans l’en-tête et sur la connexion, direction `rtl` automatique, libellés JavaScript traduits et rôles localisés.
 - Les tests de sécurité et de politique de permissions sont ajoutés, mais doivent encore être exécutés avec PHP/PHPUnit/MySQL. Aucune règle fiscale ou juridique tunisienne n’est déclarée conforme sans validation de l’expert-comptable et de l’OAT.
 - Procédures d’exploitation et limites : `docs/OPERATIONS.md`.
 
 Avant utilisation de la phase 3, les migrations `0006` à `0008` doivent avoir été exécutées avec succès ; les rôles intégrés doivent ensuite être resynchronisés avec `php bin/seed.php`. L’état d’exécution des migrations ne peut pas être déduit du code seul.
 
 Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
+
+## Langues de l'interface
+
+L'interface est bilingue **français / arabe**. Le sélecteur de langue est disponible dans l'en-tête de
+l'application et sur l'écran de connexion ; le choix est conservé en session et la direction du document
+(`ltr` / `rtl`) suit la langue active. Les traductions sont dans `lang/fr.php` et `lang/ar.php` (mêmes clés
+obligatoires) ; la langue par défaut se règle avec `APP_LOCALE`. Les libellés dynamiques du JavaScript sont
+fournis par le bloc `#app-i18n` (`app/Views/partials/i18n.php`).
 
 ## Tests
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** @var array<int,array{label:string,url:string,icon:string,key?:string,short?:string,available?:bool}> $items */
 /** @var string $activeNav */
 ?>
-<nav class="mobile-tabbar" aria-label="Navigation mobile">
+<nav class="mobile-tabbar" aria-label="<?= e(__('common.mobile_navigation')) ?>">
     <?php foreach (($items ?? []) as $item): ?>
         <?php
         $isCurrent = ($item['key'] ?? '') === ($activeNav ?? '');

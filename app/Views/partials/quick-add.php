@@ -6,10 +6,10 @@ declare(strict_types=1);
 <dialog class="dialog--sheet dialog--wide" id="quick-add-dialog" aria-labelledby="quick-add-title">
     <div class="dialog__header">
         <div>
-            <p class="page-header__eyebrow">Action rapide</p>
-            <h2 class="dialog__title" id="quick-add-title">Créer un nouvel élément</h2>
+            <p class="page-header__eyebrow"><?= e(__('common.quick_action')) ?></p>
+            <h2 class="dialog__title" id="quick-add-title"><?= e(__('common.create_item')) ?></h2>
         </div>
-        <button class="button button--icon button--ghost" type="button" data-modal-close aria-label="Fermer">
+        <button class="button button--icon button--ghost" type="button" data-modal-close aria-label="<?= e(__('common.close')) ?>">
             <svg class="icon"><use href="<?= e(asset('img/icons.svg')) ?>#x"></use></svg>
         </button>
     </div>
