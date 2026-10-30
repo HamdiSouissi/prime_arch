@@ -770,7 +770,8 @@
 @keyframes panel-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
 .document-toolbar { align-items: center; }
-.document-lines-wrap { margin-block-end: var(--space-4); box-shadow: none; }
+/* Même correctif que .table-wrap : le tableau des lignes (32 rem) ne doit pas élargir la page. */
+.document-lines-wrap { margin-block-end: var(--space-4); box-shadow: none; contain: layout; }
 .document-lines { min-inline-size: 32rem; }
 .document-legal { max-inline-size: 39rem; margin-block-start: var(--space-6); padding-block-start: var(--space-4); border-block-start: 1px solid var(--color-border); color: var(--color-ink-secondary); font-size: var(--font-size-caption); }
 .document-legal p + p { margin-block-start: var(--space-2); }

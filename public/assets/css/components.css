@@ -487,11 +487,15 @@ input[type="radio"] {
 
 /* Tableau de données */
 /* Conteneur de défilement des tableaux larges : il garde toujours la largeur de sa carte,
-   c'est le tableau qui défile à l'intérieur, jamais la page. */
+   c'est le tableau qui défile à l'intérieur, jamais la page.
+   `contain: layout` est indispensable : sans lui, la zone de débordement du tableau remonte
+   dans celle du document, le viewport mobile s'élargit à la largeur du tableau et la barre
+   d'onglets fixe — ancrée au viewport — apparaît décalée puis coupée sur le côté. */
 .table-wrap {
     inline-size: 100%;
     max-inline-size: 100%;
     min-inline-size: 0;
+    contain: layout;
     overflow-x: auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);

@@ -190,6 +190,16 @@ final class ResponsiveLayoutTest extends TestCase
         self::assertStringContainsString('min-inline-size: 0', $wrap);
         self::assertStringContainsString('max-inline-size: 100%', $wrap);
 
+        // 3 bis. Le conteneur confine sa mise en page : sans `contain: layout`, la zone de
+        //      débordement du tableau remonte jusqu'au document, le viewport mobile s'élargit
+        //      à la largeur du tableau et la barre fixe se décale.
+        self::assertStringContainsString('contain: layout', $wrap);
+        self::assertStringContainsString('contain: layout', self::file('/public/assets/css/pages.css'));
+
+        // 3 ter. À l'impression, le confinement est levé : le tableau se répartit sur les pages.
+        $print = self::file('/public/assets/css/print.css');
+        self::assertStringContainsString("contain: none", $print);
+
         // 4. La barre reste ancrée à la fenêtre, pas à la largeur du contenu.
         $tabbar = self::allRules($layout, '.mobile-tabbar');
         self::assertStringContainsString('position: fixed', $tabbar);

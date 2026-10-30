@@ -184,8 +184,11 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
   la page, elle, ne défile jamais horizontalement. `.table-wrap` porte `inline-size: 100%`, `max-inline-size: 100%` et
   `min-inline-size: 0` à toutes les largeurs.
 - **Les piles (`.stack-md`, `.stack-lg`) déclarent `grid-template-columns: minmax(0, 1fr)`.** Une piste de grille
-  implicite (`auto`) peut être élargie par le contenu d'un enfant : une carte de liste contenant un tableau de 42 rem
-  devenait plus large que l'écran, la page se mettait à défiler horizontalement et la barre d'onglets fixe, ancrée au
-  viewport, apparaissait décalée et coupée sur téléphone. La piste explicite `minmax(0, 1fr)` la rend compressible.
+  implicite (`auto`) peut être élargie par le contenu d'un enfant : la piste explicite la rend compressible.
   `.mobile-tabbar` porte en complément `inline-size: 100%` et `max-inline-size: 100%`.
+- **Les conteneurs de tableau portent `contain: layout`** (`.table-wrap`, `.document-lines-wrap`). Sans confinement,
+  la zone de débordement d'un tableau en `overflow-x: auto` remonte jusqu'à la zone de débordement du document : sur
+  mobile le **viewport s'élargit à la largeur du tableau** (mesuré : 945 px au lieu de 390 px) et toute barre
+  `position: fixed` — ancrée au viewport — apparaît décalée et coupée. `overflow-x: clip` sur `html`/`body` ne suffit
+  pas. À l'impression, `print.css` rétablit `contain: none` pour laisser le tableau se répartir sur les pages.
 - **Tests de garde** : `tests/ResponsiveLayoutTest.php` vérifie ces invariants sur le balisage et les feuilles de style.

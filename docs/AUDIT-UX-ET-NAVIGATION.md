@@ -389,34 +389,57 @@ rien du module. Le module ne crée aucune permission : il réutilise les droits 
 
 ## 9. Correctif — barre du bas sur les pages de liste
 
-Signalement : en mode téléphone, la barre de navigation du bas est mal placée ou coupée sur Clients et Documents,
-alors qu'elle est correcte ailleurs.
+Signalement : en mode téléphone, la barre de navigation du bas est décalée ou coupée sur Clients et Documents,
+alors qu'elle est correcte sur les autres pages.
 
-### 9.1 Diagnostic
+### 9.1 Diagnostic instrumenté
 
-Le balisage est identique partout : le layout rend la même barre (`partials/tabbar.php`), avec les six mêmes entrées
-depuis `ViewContext`, hors du conteneur de page. Rendu réel comparé page par page (Clients, Documents, Projets) :
-le `<nav class="mobile-tabbar">` est un enfant direct de `<body>`, mêmes six entrées, seul l'`aria-current` change.
-La différence ne pouvait donc venir que du **contenu**, et les deux pages incriminées sont précisément les deux seules
-pages principales qui contiennent un tableau large (`.data-table`, `min-inline-size: 42rem`) placé dans une carte-pile
-`.card.stack-md`, laquelle est une grille à piste implicite `auto`.
+Trois mesures ont été nécessaires ; les deux premières pistes étaient fausses.
 
-Sur un écran de 390 px, la piste `auto` prend la largeur minimale du contenu (672 px) : la carte déborde, le document
-devient plus large que la fenêtre, et la barre `position: fixed` — ancrée au viewport — apparaît décalée puis coupée
-sur le côté dès que la page se déplace horizontalement (comportement classique de Safari iOS).
+1. **Balisage** — rendu réel des trois pages en PHP 8.2, puis comparaison : le `<nav class="mobile-tabbar">` est un
+   enfant direct de `<body>`, mêmes six entrées, même ordre. Seul l'`aria-current` change. La barre n'est donc pas
+   en cause.
+2. **Largeur du contenu** — première hypothèse : la piste implicite `auto` de `.card.stack-md` élargie par le tableau
+   de 42 rem. C'était une fragilité réelle (corrigée : `grid-template-columns: minmax(0, 1fr)`), mais **pas la cause** :
+   après correction, la carte mesurait bien 366 px… et la barre restait à 945 px de large.
+3. **Cause réelle, mesurée dans Chromium** — page Clients chargée en viewport 390 px : `document.documentElement.clientWidth`
+   = 390, `body.scrollWidth` = 390, `.table-wrap` = 322 px **mais `documentElement.scrollWidth` = 945 px et
+   `window.innerWidth` = 945**. La zone de débordement du tableau, contenue dans `.table-wrap` en `overflow: auto`,
+   remonte malgré tout jusqu'à la zone de débordement du document : sur mobile, le **viewport s'élargit à la largeur
+   du tableau**. Or `.mobile-tabbar` est en `position: fixed`, donc ancrée au viewport : elle est calculée sur 945 px
+   et se retrouve décalée puis coupée. Pages sans tableau large : viewport = 390 px, barre correcte. `overflow-x: clip`
+   sur `html` et `body` n'y change rien (vérifié) : le clip ne s'applique pas à la zone de débordement du viewport.
 
-### 9.2 Correctif
+### 9.2 Correctif retenu
 
-| Fichier | Correctif |
-|---|---|
-| `public/assets/css/app.css` | `.stack-md` et `.stack-lg` déclarent `grid-template-columns: minmax(0, 1fr)` : la piste se comprime au lieu de suivre le contenu |
-| `public/assets/css/components.css` | `.table-wrap` porte `inline-size: 100%`, `max-inline-size: 100%` et `min-inline-size: 0` à toutes les largeurs |
-| `public/assets/css/layout.css` | `.mobile-tabbar` porte `inline-size: 100%` et `max-inline-size: 100%` : la barre suit la fenêtre, jamais la largeur du contenu |
-| `public/assets/css/base.css` | `html` rejoint `body` avec `overflow-x: clip` : le document ne défile jamais horizontalement, même sur les navigateurs qui ne propagent pas le clip du `body` |
+```
+.table-wrap { contain: layout; }   /* + inline-size/max-inline-size 100 %, min-inline-size 0, overflow-x auto */
+.document-lines-wrap { contain: layout; }
+```
 
-### 9.3 Garde-fous
+`contain: layout` isole la mise en page du conteneur : sa zone de débordement ne remonte plus jusqu'au document, le
+viewport reprend la largeur de l'écran et la barre fixe reste collée en bas, pleine largeur. Vérifié en comparaison
+A/B dans Chromium : sans confinement 945 px (Clients) et 819 px (Documents) ; avec, 390 px sur les deux.
 
-`tests/ResponsiveLayoutTest.php` ajoute `testWideTablesNeverWidenThePageNorMoveTheFixedTabbar` : clip horizontal sur
-`html` et `body`, piste `minmax(0, 1fr)` sur les piles, conteneur de tableau compressible, barre ancrée au viewport.
-11 assertions, rejouées hors PHPUnit : 11 / 11.
+Effet de bord traité : `contain: layout` empêche un bloc de se répartir sur plusieurs pages à l'impression ;
+`print.css` pose donc `contain: none` et `overflow: visible` sur ces deux conteneurs. Aucune autre conséquence :
+un défilement interne, un arrondi et une ombre restent rendus normalement.
 
+### 9.3 Mesures après correction
+
+| Largeur | Clients | Documents | Projets |
+|---|---|---|---|
+| 320 px | viewport 320, barre 320 à x = 0, collée en bas | idem | idem |
+| 360 px | idem | idem | idem |
+| 390 px | idem | idem | idem |
+| 430 px | idem | idem | idem |
+
+Contrôles complémentaires : le tableau défile toujours dans son cadre (`scrollWidth` 969 px pour `clientWidth` 322 px),
+la barre garde ses six onglets et ne recouvre pas les messages, aucune page ne défile horizontalement.
+
+### 9.4 Garde-fous
+
+`tests/ResponsiveLayoutTest.php` → `testWideTablesNeverWidenThePageNorMoveTheFixedTabbar` : clip horizontal sur `html`
+et `body`, piste `minmax(0, 1fr)` sur les piles, conteneur de tableau compressible, `contain: layout` sur les deux
+conteneurs de tableau, `contain: none` à l'impression, barre ancrée au viewport. 15 assertions, rejouées hors PHPUnit :
+15 / 15.

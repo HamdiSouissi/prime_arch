@@ -63,6 +63,14 @@
         font-size: 9pt;
     }
 
+    /* Le confinement de mise en page sert à l'écran mobile : à l'impression, un tableau
+       doit pouvoir se répartir sur plusieurs pages. */
+    .table-wrap,
+    .document-lines-wrap {
+        contain: none;
+        overflow: visible;
+    }
+
     .data-table th,
     .data-table td {
         padding-block: 6pt;
