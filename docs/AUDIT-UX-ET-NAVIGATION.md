@@ -188,7 +188,7 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 | 1 | **Menu desktop tronqué** : 18 entrées, pas de défilement (`layout.css:81`) | **fait au lot 0** : `overflow-y:auto` ; reste le regroupement et le repli | S |
 | 2 | **Palette vide de données** (6 entrées seulement) | recherche serveur + clavier + récents (§3.B) | M |
 | 3 | **Fiche projet sans passerelles modules** | filtres P1 + cartes de contexte | M |
-| 4 | **Tableau de bord réel inutilisable** : salutation, rôle, compteurs géographiques — aucun KPI métier (`pages/app/dashboard.php`, 68 lignes) quand la maquette montre 4 indicateurs, 3 échéances, un graphique | Reprendre la maquette en données réelles : projets en cours, encours client, échéances 14 jours, heures de la semaine, dernières activités | M |
+| 4 | **Tableau de bord réel inutilisable** : salutation, rôle, compteurs géographiques — aucun KPI métier (`pages/app/dashboard.php`, 68 lignes) quand la maquette montre 4 indicateurs, 3 échéances, un graphique | **fait au lot 4** : projets ouverts, reste à encaisser, heures de la semaine, clients actifs, échéances 14 jours (retards inclus), activité du journal — tout filtré par les droits | M |
 | 5 | **Aucun bouton « Nouveau » global en production** : le bouton et le tiroir d'actions rapides sont rendus **uniquement** en mode maquette (`layouts/app.php`, `if ($isDesignPreview)`) | **fait au lot 3** : bouton pour tous, actions réelles client / projet / devis / temps (pas de « dépense » : aucune fonction n'existe dans le noyau) | S |
 | 6 | **Fiches sans liens sortants** (documents) | §3.F | S |
 | 7 | **Le mode sombre est déclaré mais bridé** : `<meta name="color-scheme" content="light">` alors que `tokens.css` gère `light dark` → contrôles natifs et barres de défilement restent clairs en thème sombre | **fait au lot 0** : `light dark` + deux `theme-color` par média | S |
@@ -230,7 +230,7 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 | **Lot 1 — contexte** (3–5 jours) | filtres P1 + cartes de contexte dans projet / client / document + fil d'Ariane | M | **tous les trajets projet↔module passent à 1 clic** |
 | **Lot 2 — recherche** (3 jours) — **livré** | `/api/recherche`, palette à sections, récents, raccourcis | M | destination atteinte en 2 frappes, 0 clic |
 | **Lot 3 — coquille** (3 jours) — **livré** | menu groupé + mobile « Plus » + bouton global « Nouveau » | M | mobile : plus aucun trajet > 3 clics |
-| **Lot 4 — tableau de bord** (3–4 jours) | KPI réels, échéances 14 jours, activité, heures | M | première page utile |
+| **Lot 4 — tableau de bord** (3–4 jours) — **livré** | KPI réels, échéances 14 jours, activité, heures | M | première page utile |
 | **Lot 5 — garde-fou** (1–2 jours) | test PHPUnit de profondeur ≤ 3 + documentation | S | la règle ne peut plus régresser |
 
 Les lots 0 à 3 suffisent à **garantir 3 clics partout** ; les lots 4 et 5 rendent le résultat
@@ -556,3 +556,61 @@ Palette de navigation pilotée dans Chromium (rendu réel des vues, aucune base)
 nommé, filtre appliqué une seule fois, barre quatre onglets + « Plus », feuille complète, bouton « Nouveau » hors
 maquette avec routes réelles, icônes uniques, sections déclarées par les modules, lisibilité des libellés, traductions
 FR/AR.
+
+## 12. Lot 4 — tableau de bord livré
+
+### 12.1 Principe
+
+La page d'accueil cesse d'être un écran de fondation : `DashboardService` assemble quatre
+indicateurs, les échéances, la semaine de temps et le journal d'activité ; la vue ne calcule rien.
+Aucune valeur de démonstration ne subsiste (`Villa contemporaine`, `48 750,000 DT` et
+`url('/design/…')` ont disparu de la vue réelle).
+
+| Bloc | Source | Droits |
+|---|---|---|
+| Projets en cours (+ retards) | `projects` où `status ∈ planning/active/on_hold`, `target_end_date < today` | `projects.view` |
+| Reste à encaisser | `DocumentRepository::summary()` — total émis − règlements − avoirs | documents (6 permissions) |
+| Heures cette semaine | `time_entries` du lundi au dimanche, facturables comprises | `time.view/manage` |
+| Clients actifs (+ prospects) | `clients.status = active / prospect` | `clients.view` |
+| Projets à suivre (4) | échéance la plus proche, avancement pondéré par les phases | `projects.view` |
+| Prochaines échéances (6) | retards d'abord (factures au solde non nul), puis 14 jours : projets, factures, devis | `projects.view` / documents |
+| Heures de la semaine | 7 colonnes, hauteur relative au pic, jour courant souligné | `time.view/manage` |
+| Activité récente (6) | `audit_logs` restreint aux objets consultables (`client`, `project`, `document`, `time_entry`) | par famille |
+
+Le temps affiché est celui du compte connecté ; il devient celui de tout le cabinet pour
+`time.view_all` / `time.manage_all`. Un montant n'est jamais converti en flottant : la chaîne
+`DECIMAL` reste la source, et `DashboardService::hasAmount()` teste la présence d'un chiffre
+significatif au lieu de comparer à `0`.
+
+### 12.2 États vides et amorçage
+
+Un cabinet neuf n'affiche ni carte muette ni graphique plat : bannière « Faites démarrer le
+cabinet » (un bouton vers la création de client), état vide compact dans « Projets à suivre »,
+et une phrase par bloc (« Aucune échéance dans les 14 prochains jours. », « Aucune activité
+enregistrée pour le moment. »). La barre du graphique n'est dessinée que pour les jours saisis.
+
+### 12.3 Points d'extension
+
+`dashboard.cards` (`$cards`, `$user`) : un module ajoute ses propres cartes d'indicateurs, au
+même format que `partials/stat-card` (voir `docs/MODULES.md`). Aucun module livré n'est modifié.
+
+### 12.4 Mesures (Chromium, rendu réel des vues)
+
+| Contrôle | Résultat |
+|---|---|
+| Cartes d'indicateurs | 4, chacune cliquable vers sa liste |
+| Échéances | 2 lignes (retard + 5 jours), badge de ton `danger` puis `info` |
+| Graphique | 7 colonnes, barres seulement les jours saisis, jour courant accentué |
+| Activité | 3 lignes, lien direct pour les fiches, texte pour les contacts |
+| Débordement | `scrollWidth == innerWidth` à 1440 px et 390 px, FR et AR |
+| Montant long | « 48 750,500 DT » tient sur une ligne à 390 px (variante dense) |
+| Thème | clair, sombre et arabe (`dir="rtl"`) rendus sans régression |
+| Erreurs | 0 erreur PHP (300 fichiers), 0 erreur JS à l'ouverture |
+
+### 12.5 Garde-fous
+
+`tests/DashboardTest.php` — 13 cas : route protégée, contrôleur sans SQL, six requêtes
+préparées et bornées, permissions de chaque bloc, horizon de 14 jours avec retards, activité
+filtrée, cartes réelles et cliquables, filtre `dashboard.cards` appliqué une fois, semaine du
+lundi, vue sans donnée de démonstration, accessibilité, parité FR/AR des 48 clés, fonctions de
+formatage pures.

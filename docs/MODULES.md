@@ -146,6 +146,35 @@ Règles :
 
 Les extensions utilisent `HookManager` pour enregistrer des filtres (par exemple `sidebar.items`) et des actions/événements. Les événements émis par le noyau comprennent : `module.installed`, `module.activated`, `module.deactivated`, `module.booting` et `module.booted`. Les callbacks de hook sont du code PHP du module et s’exécutent avec les droits du processus PHP.
 
+### Carte du tableau de bord
+
+Le filtre `dashboard.cards` reçoit les cartes du noyau et l'utilisateur courant ; renvoyez la
+liste complétée. Chaque carte suit le format de `partials/stat-card` :
+
+```php
+HookManager::addFilter('dashboard.cards', static function (array $cards, array $user): array {
+    if (!\App\Core\Auth::can('permis.view')) {
+        return $cards;           // aucune donnée n'est exposée sans la permission du module
+    }
+    $cards[] = [
+        'key' => 'permis',
+        'label' => __('permis.card_title'),
+        'value' => (string) $openDossiers,
+        'icon' => 'shield',
+        'tone' => 'mint',
+        'note' => __('permis.card_note'),
+        'url' => url('/permis'),
+    ];
+
+    return $cards;
+});
+```
+
+- **Valeurs déjà formatées** : montants par `money_format_tnd()`, heures par
+  `\App\Services\DashboardService::formatHours()`. La vue n'applique aucun format.
+- **`url` facultatif** : sans elle la carte reste un `article`, avec elle devient un lien.
+- **`key` unique** : sert de repère de test et de future préférence d'affichage.
+
 ### Entrée de menu et sections
 
 Une entrée ajoutée par `sidebar.items` est un tableau :

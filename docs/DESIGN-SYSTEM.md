@@ -105,6 +105,25 @@ Les illustrations `empty-*.svg` restent vectorielles, légères et cohérentes a
 - Le bouton `Nouveau` ouvre une sheet d’actions rapides.
 - Les tabs, switches, vues grille/liste, saisie de champs personnalisés, toast, impressions et chronomètre fonctionnent en JavaScript vanilla. Les formulaires de démonstration affichent un toast et n’enregistrent rien.
 
+### Tableau de bord
+
+- **Cartes d'indicateurs** (`partials/stat-card`) : quatre au maximum dans le noyau, chacune
+  cliquable (`stat-card--link`) et reliée à la liste qu'elle résume. Une valeur longue
+  (montant) reçoit `stat-card__value--dense` : la taille descend et le nombre reste sur une
+  seule ligne, jamais coupé entre deux chiffres.
+- **Deux colonnes** (`.dashboard-grid`) : à gauche les projets et la semaine de temps, à droite
+  les échéances et l'activité ; sous 1 100 px, une seule colonne dans l'ordre de lecture.
+- **Échéances** (`.deadline-item`) : pastille date (jour + mois numériques, `aria-hidden`) et
+  badge de ton — `danger` pour un retard, `warning` à trois jours ou moins, `info` au-delà. Le
+  titre se replie sur deux lignes (`deadline-item--stacked`), la date complète reste annoncée
+  par un texte `u-sr-only`.
+- **Semaine** (`.week-chart`) : une colonne par jour, hauteur relative au pic de la semaine ;
+  un jour sans saisie n'affiche pas de barre, le jour courant est accentué
+  (`week-chart__day--today`). Le bloc est annoncé par `role="img"` et un libellé qui cite la
+  semaine.
+- **États vides** : `empty-state--compact` dans une carte, une phrase d'aide sinon — jamais de
+  carte muette ni de graphique plat.
+
 ## PDF mPDF
 
 `app/Views/pdf/base.php` centralise l’en-tête du cabinet, le destinataire, la référence, les mentions et la pagination `{PAGENO} / {nbpg}`. `quote.php`, `invoice.php` et `contract.php` fournissent le contenu. `public/assets/css/pdf.css` n’emploie ni flexbox, ni grid, ni variables CSS, ni `backdrop-filter` : tableaux et styles sobres compatibles mPDF, contraste imprimable en noir et blanc, direction héritée de `dir="rtl"` pour les documents arabes. Les montants, TVA, timbre fiscal et retenue à la source des exemples sont des données de démonstration.

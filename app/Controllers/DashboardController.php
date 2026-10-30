@@ -7,12 +7,15 @@ use App\Core\Auth;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
-use App\Models\GeographyRepository;
 use App\Services\CabinetSettings;
+use App\Services\DashboardService;
 use App\Services\ViewContext;
 
 /**
- * Tableau de bord du noyau Prime Arch.
+ * Tableau de bord du noyau : indicateurs réels, échéances et activité du cabinet (lot 4).
+ *
+ * Le contrôleur ne fait que trois choses : vérifier la permission, laisser le service
+ * assembler les données (chaque bloc est déjà filtré par droit), et rendre la vue.
  */
 final class DashboardController
 {
@@ -25,11 +28,11 @@ final class DashboardController
         $user = Auth::user() ?? [];
         $settings = (new CabinetSettings())->get();
         $context = (new ViewContext())->authenticated(__('nav.dashboard'), 'dashboard');
-        return Response::html(View::render('pages/app/dashboard', $context + [
+        $overview = (new DashboardService())->overview($user, Auth::id());
+
+        return Response::html(View::render('pages/app/dashboard', $context + $overview + [
             'userName' => (string) ($user['name'] ?? ''),
-            'roleLabel' => role_label((string) ($user['role_slug'] ?? ''), (string) ($user['role_label'] ?? '')),
             'cabinetName' => $settings['name'],
-            'geographyCounts' => (new GeographyRepository())->counts(),
         ]));
     }
 }

@@ -53,6 +53,7 @@
 }
 
 .card-header__action {
+    white-space: nowrap;
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
@@ -1040,6 +1041,16 @@ dialog[open] {
 }
 
 .empty-state__title { font-size: var(--font-size-title-3); }
+.empty-state--compact {
+    justify-items: start;
+    gap: var(--space-2);
+    padding-block: var(--space-5);
+    padding-inline: var(--space-4);
+    border-style: solid;
+    border-color: rgba(91, 112, 149, 0.12);
+    text-align: start;
+}
+.empty-state--compact .empty-state__description { font-size: var(--font-size-caption); }
 .empty-state__description { max-inline-size: 34rem; color: var(--color-ink-secondary); font-size: var(--font-size-footnote); }
 
 /* Menu déroulant */
