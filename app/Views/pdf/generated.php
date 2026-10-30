@@ -59,10 +59,10 @@ ob_start();
 <table class="pdf-table">
     <thead>
         <tr>
-            <th><?= e(__('documents.pdf.description')) ?></th>
-            <th class="pdf-quantity"><?= e(__('documents.pdf.quantity')) ?></th>
-            <th class="pdf-number-cell"><?= e(__('documents.pdf.unit_price')) ?></th>
-            <th class="pdf-number-cell"><?= e(__('documents.pdf.line_total')) ?></th>
+            <th scope="col"><?= e(__('documents.pdf.description')) ?></th>
+            <th scope="col" class="pdf-quantity"><?= e(__('documents.pdf.quantity')) ?></th>
+            <th scope="col" class="pdf-number-cell"><?= e(__('documents.pdf.unit_price')) ?></th>
+            <th scope="col" class="pdf-number-cell"><?= e(__('documents.pdf.line_total')) ?></th>
         </tr>
     </thead>
     <tbody>

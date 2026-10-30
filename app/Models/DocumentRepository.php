@@ -34,6 +34,7 @@ final class DocumentRepository
         $statement = $this->pdo->prepare(
             'SELECT d.id, d.document_number, d.document_type, d.status, d.locale, d.title,
                     d.issue_date, d.due_date, d.total_amount, d.created_at,
+                    d.client_id, d.project_id,
                     c.display_name AS client_name, p.name AS project_name,
                     COALESCE((SELECT SUM(pay.amount) FROM document_payments pay
                               WHERE pay.document_id = d.id), 0) AS paid_amount,

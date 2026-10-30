@@ -185,13 +185,13 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 
 | # | Constat (preuve) | Amélioration proposée | Effort |
 |---|---|---|---|
-| 1 | **Menu desktop tronqué** : 18 entrées, pas de défilement (`layout.css:81`) | `overflow-y:auto` + groupes + repli | S |
+| 1 | **Menu desktop tronqué** : 18 entrées, pas de défilement (`layout.css:81`) | **fait au lot 0** : `overflow-y:auto` ; reste le regroupement et le repli | S |
 | 2 | **Palette vide de données** (6 entrées seulement) | recherche serveur + clavier + récents (§3.B) | M |
 | 3 | **Fiche projet sans passerelles modules** | filtres P1 + cartes de contexte | M |
 | 4 | **Tableau de bord réel inutilisable** : salutation, rôle, compteurs géographiques — aucun KPI métier (`pages/app/dashboard.php`, 68 lignes) quand la maquette montre 4 indicateurs, 3 échéances, un graphique | Reprendre la maquette en données réelles : projets en cours, encours client, échéances 14 jours, heures de la semaine, dernières activités | M |
 | 5 | **Aucun bouton « Nouveau » global en production** : le bouton et le tiroir d'actions rapides sont rendus **uniquement** en mode maquette (`layouts/app.php`, `if ($isDesignPreview)`) | Rendre le bouton visible pour tous, avec menu : client / projet / devis / temps / dépense | S |
 | 6 | **Fiches sans liens sortants** (documents) | §3.F | S |
-| 7 | **Le mode sombre est déclaré mais bridé** : `<meta name="color-scheme" content="light">` alors que `tokens.css` gère `light dark` → contrôles natifs et barres de défilement restent clairs en thème sombre | `content="light dark"` + `theme-color` par média | S |
+| 7 | **Le mode sombre est déclaré mais bridé** : `<meta name="color-scheme" content="light">` alors que `tokens.css` gère `light dark` → contrôles natifs et barres de défilement restent clairs en thème sombre | **fait au lot 0** : `light dark` + deux `theme-color` par média | S |
 | 8 | **Filtres incohérents** : listes du noyau avec bouton « Filtrer » (soumission), certains écrans en filtrage instantané (`initFilters`) | Filtrage instantané partout, bouton supprimé, état dans l'URL | S |
 
 ### 4.2 Priorité moyenne
@@ -201,8 +201,8 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 | 9 | 119 classes CSS (31 % du système) ne servent **qu'aux maquettes** : `project-tabs`, `document-preview`, `segmented-control`, `dropdown`, `week-chart`, `timer-card`… | Soit les utiliser dans l'app réelle (onglets de fiche projet, aperçu document), soit les retirer | M |
 | 10 | CSS chargé en cascade d'`@import` (8 requêtes bloquantes, 128 Ko non minifiés) | Concaténer/minifier au déploiement, ou 8 `<link>` ordonnés + `preload` | S |
 | 11 | 57 couleurs en dur + 110 `rgba()` hors jetons → `dark.css` doit rattraper 8 Ko d'exceptions | Ajouter jetons translucides (`--surface-glass`, `--overlay`) et vider `dark.css` | M |
-| 12 | 103 `<th>` sur 436 sans `scope` (dont `documents/show.php` : 12) | Ajout systématique + `<caption>` en `u-sr-only` sur les tableaux de données | S |
-| 13 | `aria-current="false"` (valeur invalide) dans `sidebar.php` et `tabbar.php` | Omettre l'attribut quand ce n'est pas la page courante | S |
+| 12 | 38 `<th>` sur 371 sans `scope` (dont `documents/show.php` : 10) | ~~Ajout systématique~~ **fait au lot 0** ; reste `<caption>` en `u-sr-only` sur les tableaux de données | S |
+| 13 | `aria-current="false"` (valeur invalide) dans `sidebar.php` et `tabbar.php` | **fait au lot 0** : attribut omis hors page courante | S |
 | 14 | Tables de 42 rem minimum sur mobile : défilement horizontal systématique | Sous 760 px, basculer les listes en cartes empilées (le CSS `project-cards` existe déjà) | M |
 | 15 | Aucun tri de colonnes | En-têtes `th` cliquables (`?tri=montant&sens=desc`), indicateur visuel | M |
 | 16 | Pagination « précédent / suivant » seule | Ajouter « 1 … n », la taille de page et le total | S |
@@ -252,7 +252,7 @@ d'accroche que les modules consommeront, le lot 0 est purement correctif.
 | Classes CSS définies / utilisées hors maquettes | 385 / 266 |
 | Contrastes | minimum 4,61:1 (texte tertiaire) — conforme AA |
 | Cibles tactiles | 44 px minimum — conforme |
-| `th` sans `scope` | 103 sur 436 |
+| `th` sans `scope` | 38 sur 371 (mesure exacte : la première estimation comptait aussi les balises `<thead>`) |
 | Routes GET | 37 (noyau, dont 4 techniques) + 12 modules |
 
 ### 6.2 Fichiers clés
@@ -268,3 +268,47 @@ d'accroche que les modules consommeront, le lot 0 est purement correctif.
 `docs/design/maquette-navigation.html` — maquette statique autonome (aucune dépendance) montrant,
 côte à côte, la navigation actuelle et la navigation proposée : menu groupé défilant, fil
 d'Ariane, cartes de contexte projet, palette enrichie, barre mobile avec « Plus ».
+
+---
+
+## 7. Lot 0 — correctifs livrés
+
+Aucune vue métier n'est modifiée ; les douze modules restent intacts. Six correctifs :
+
+| # | Correctif | Fichiers | Preuve |
+|---|---|---|---|
+| 1 | **Menu défilant** : la barre latérale ne coupe plus les derniers modules | `public/assets/css/layout.css` | `.sidebar-nav` porte `flex: 1 1 auto`, `min-block-size: 0`, `overflow-y: auto`, `overscroll-behavior: contain`, `scrollbar-width: thin`, `scrollbar-gutter: stable` ; la marque et le pied de barre sont en `flex: 0 0 auto` et ne se compriment plus |
+| 2 | **Thèmes annoncés** : contrôles natifs et barres de défilement suivent le thème | `app/Views/layouts/app.php`, `app/Views/layouts/auth.php` | `color-scheme: light dark` + `theme-color` clair (`#F4F7FF`) et sombre (`#111821`) par média |
+| 3 | **`aria-current` valide** | `app/Views/partials/sidebar.php`, `app/Views/partials/tabbar.php` | attribut émis seulement sur la page courante ; plus aucune valeur `false` |
+| 4 | **En-têtes de tableau** : portée explicite pour les lecteurs d'écran | 7 vues (documents, clients, PDF) | 38 `<th>` complétés, 0 restant sans `scope` sur 371 |
+| 5 | **Palette de commandes** : recherche réelle et pilotage complet au clavier | `public/assets/js/ui.js`, `app/Views/partials/command-palette.php`, `app/Views/partials/topbar.php` | accents ignorés (`normalizeSearch`), groupes vides masqués, `↑ ↓` `Début` `Fin` `Échap`, roving `tabindex`, un seul élément tabulable, raccourci affiché selon la plateforme (`⌘` / `Ctrl`) |
+| 6 | **Fin des culs-de-sac** : client et projet d'un document mènent à leur fiche | `app/Models/DocumentRepository.php`, `app/Controllers/DocumentController.php`, `app/Views/pages/documents/{index,show}.php` | `client_id`/`project_id` sélectionnés ; liens affichés seulement si `clients.view` / `projects.view` |
+
+### 7.1 Effet sur la règle des 3 clics
+
+| Trajet | Avant | Après lot 0 |
+|---|---|---|
+| Module n° 12 depuis n'importe quel écran, fenêtre de 768 px | **inaccessible** | 2 clics |
+| Client d'un document | cul-de-sac | 1 clic |
+| Projet d'un document | cul-de-sac | 1 clic |
+| Toute fiche de menu via la palette | 1 clic + saisie approximative | 2 frappes (0 clic) |
+
+Restent hors lot 0 (lots 1 à 5) : passerelles projet ↔ modules, fil d'Ariane, recherche serveur
+dans la palette, menu groupé, barre mobile « Plus », tableau de bord métier.
+
+### 7.2 Garde-fous ajoutés
+
+`tests/NavigationAccessibilityTest.php` fige les six correctifs : défilement du menu, palette au
+clavier et sans accents, raccourci selon la plateforme, absence d'`aria-current` invalide, double
+`color-scheme`, `scope` sur tous les `<th>` des vues, liens client/projet des documents et
+sélection des identifiants de relation. Ces tests sont statiques : ni base de données, ni
+navigateur.
+
+### 7.3 Vérifications exécutées
+
+| Contrôle | Résultat |
+|---|---|
+| Analyse syntaxique PHP (277 fichiers) | 0 erreur |
+| Palette de commandes dans un DOM réel (jsdom) | 13 vérifications, 0 échec |
+| Assertions de `NavigationAccessibilityTest` rejouées | 28 vérifications, 0 échec |
+| Modules livrés touchés | aucun |

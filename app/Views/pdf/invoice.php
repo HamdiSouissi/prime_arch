@@ -12,7 +12,7 @@ $lines = $lines ?? [
 ob_start();
 ?>
 <table class="pdf-table">
-    <thead><tr><th>Désignation</th><th class="pdf-quantity">Quantité</th><th class="pdf-number-cell">Prix unitaire HT</th><th class="pdf-number-cell">Total HT</th></tr></thead>
+    <thead><tr><th scope="col">Désignation</th><th scope="col" class="pdf-quantity">Quantité</th><th scope="col" class="pdf-number-cell">Prix unitaire HT</th><th scope="col" class="pdf-number-cell">Total HT</th></tr></thead>
     <tbody><?php foreach ($lines as $line): ?><tr><td><?= e($line['description'] ?? '') ?></td><td class="pdf-quantity"><?= e($line['quantity'] ?? '') ?></td><td class="pdf-number-cell"><?= e($line['unit'] ?? '') ?></td><td class="pdf-number-cell"><?= e($line['amount'] ?? '') ?></td></tr><?php endforeach; ?></tbody>
 </table>
 <table class="pdf-totals">

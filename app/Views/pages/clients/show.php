@@ -39,7 +39,7 @@ $addressParts = array_filter([
                 <?php if ($projects === []): ?>
                     <?php View::partial('partials/empty-state', ['title' => __('clients.no_projects'), 'description' => __('clients.no_projects_help')]) ?>
                 <?php else: ?>
-                    <div class="table-wrap"><table class="data-table"><thead><tr><th><?= e(__('projects.name')) ?></th><th><?= e(__('projects.status.label')) ?></th><th><?= e(__('project_phases.current')) ?></th></tr></thead><tbody>
+                    <div class="table-wrap"><table class="data-table"><thead><tr><th scope="col"><?= e(__('projects.name')) ?></th><th scope="col"><?= e(__('projects.status.label')) ?></th><th scope="col"><?= e(__('project_phases.current')) ?></th></tr></thead><tbody>
                         <?php foreach ($projects as $project): ?>
                             <tr><td><a class="table-primary" href="<?= e(url('/projects/' . $project['id'])) ?>"><span class="table-primary__text"><span class="table-primary__name"><?= e($project['name']) ?></span><span class="table-primary__meta"><?= e($project['reference']) ?></span></span></a></td><td><span class="badge badge--<?= e(match ($project['status']) { 'active' => 'info', 'completed' => 'success', 'cancelled' => 'neutral', 'on_hold' => 'warning', default => 'neutral' }) ?>"><?= e(__('projects.status.' . $project['status'])) ?></span></td><td><?= e($project['current_phase'] !== '' ? $project['current_phase'] : '—') ?></td></tr>
                         <?php endforeach; ?>

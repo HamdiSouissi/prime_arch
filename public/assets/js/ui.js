@@ -176,22 +176,89 @@ function addCustomField(form) {
 function initCommandPalette() {
     const dialog = document.querySelector("[data-command-palette]");
     const input = dialog?.querySelector("[data-command-search]");
+    const list = dialog?.querySelector(".command-list");
     const items = Array.from(dialog?.querySelectorAll("[data-command-item]") ?? []);
     const empty = dialog?.querySelector("[data-command-empty]");
 
+    // Libellé du groupe (« Navigation », « Actions »…) : il est masqué quand aucun de
+    // ses éléments ne correspond à la recherche, pour éviter les titres vides.
+    const groupOf = new Map();
+    items.forEach((item) => {
+        let label = item.previousElementSibling;
+        while (label && !label.classList.contains("command-list__label")) label = label.previousElementSibling;
+        groupOf.set(item, label);
+    });
+
+    const visibleItems = () => items.filter((item) => !item.hidden);
+
     const filterItems = () => {
-        const query = input?.value.trim().toLocaleLowerCase("fr") ?? "";
-        let visibleCount = 0;
+        // Recherche insensible à la casse et aux accents (« devis » trouve « Dêvis »).
+        const query = normalizeSearch(input?.value.trim() ?? "");
         items.forEach((item) => {
-            const matches = item.textContent.toLocaleLowerCase(htmlLocale()).includes(query);
-            item.hidden = !matches;
-            if (matches) visibleCount += 1;
+            item.hidden = query !== "" && !normalizeSearch(item.textContent).includes(query);
         });
-        if (empty) empty.hidden = visibleCount > 0;
+        const visible = visibleItems();
+        if (empty) empty.hidden = visible.length > 0;
+        groupOf.forEach((label, item) => {
+            if (!label) return;
+            const siblings = items.filter((candidate) => groupOf.get(candidate) === label);
+            label.hidden = siblings.every((candidate) => candidate.hidden);
+        });
+        if (visible.length > 0) {
+            visible[0].tabIndex = 0;
+            visible.slice(1).forEach((item) => { item.tabIndex = -1; });
+        }
+    };
+
+    // Navigation au clavier dans la liste : les flèches déplacent le focus réel sur les
+    // liens, donc Entrée ouvre la destination choisie sans code supplémentaire.
+    const focusAt = (index) => {
+        const visible = visibleItems();
+        if (visible.length === 0) return;
+        const target = visible[(index + visible.length) % visible.length];
+        visible.forEach((item) => { item.tabIndex = -1; });
+        target.tabIndex = 0;
+        target.focus({ preventScroll: true });
+        // `scrollIntoView` n’existe pas dans tous les environnements (tests, vieux moteurs).
+        target.scrollIntoView?.({ block: "nearest" });
     };
 
     input?.addEventListener("input", filterItems);
+    input?.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            focusAt(0);
+        } else if (event.key === "Home") {
+            event.preventDefault();
+            focusAt(0);
+        } else if (event.key === "End") {
+            event.preventDefault();
+            focusAt(visibleItems().length - 1);
+        }
+    });
+
+    // Sur un élément de la liste : flèches, retour à la recherche, échappement.
+    if (list) {
+        list.addEventListener("keydown", (event) => {
+            const current = event.target instanceof Element ? event.target.closest("[data-command-item]") : null;
+            if (!current) return;
+            const visible = visibleItems();
+            const index = visible.indexOf(current);
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                focusAt(index + (event.key === "ArrowDown" ? 1 : -1));
+            } else if (event.key === "Home" || event.key === "End") {
+                event.preventDefault();
+                focusAt(event.key === "Home" ? 0 : visible.length - 1);
+            } else if (event.key === "Escape" && input) {
+                event.preventDefault();
+                input.focus();
+            }
+        });
+    }
+
     dialog?.addEventListener("close", () => {
+        // Le navigateur rend déjà le focus au déclencheur : on ne fait que vider la recherche.
         if (input) input.value = "";
         filterItems();
     });
@@ -202,6 +269,16 @@ function initCommandPalette() {
             openDialog(dialog);
             window.setTimeout(() => input?.focus(), 0);
         }
+    });
+
+    filterItems();
+}
+
+function initShortcutHints() {
+    // Le raccourci réel fonctionne avec ⌘ ou Ctrl : l'affichage suit la plateforme.
+    const isApple = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgentData?.platform ?? navigator.platform ?? "");
+    document.querySelectorAll("[data-shortcut-modifier]").forEach((element) => {
+        element.textContent = isApple ? "⌘" : "Ctrl";
     });
 }
 
@@ -844,6 +921,7 @@ export function initUI() {
     });
 
     initCommandPalette();
+    initShortcutHints();
     initLocalClock();
     initTabKeyboard();
     initLargeTitles();

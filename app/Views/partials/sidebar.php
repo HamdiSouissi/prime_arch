@@ -26,7 +26,7 @@ $brandUrl = !empty($showDesignNav)
                 ?>
                 <li>
                     <?php if ($isAvailable): ?>
-                        <a class="sidebar-link" href="<?= e($item['url']) ?>" aria-current="<?= e($isCurrent ? 'page' : 'false') ?>" title="<?= e($item['label']) ?>">
+                        <a class="sidebar-link" href="<?= e($item['url']) ?>"<?= $isCurrent ? ' aria-current="page"' : '' ?> title="<?= e($item['label']) ?>">
                             <svg class="icon sidebar-icon" aria-hidden="true" focusable="false"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($item['icon'] ?? 'grid') ?>"></use></svg>
                             <span class="sidebar-link__label"><?= e($item['label']) ?></span>
                         </a>

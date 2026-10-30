@@ -42,6 +42,7 @@
 
 .sidebar-brand {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: var(--space-3);
     min-block-size: 3.75rem;
@@ -78,8 +79,17 @@
     letter-spacing: 0.01em;
 }
 
+/* Le menu ne doit jamais être tronqué : avec les douze modules, la liste dépasse la
+   hauteur de la fenêtre. Elle défile donc dans la barre latérale, l'identité du
+   cabinet restant fixée en bas. */
 .sidebar-nav {
+    flex: 1 1 auto;
     min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    padding-inline-end: var(--space-1);
 }
 
 .sidebar-section-label {
@@ -170,6 +180,7 @@
 
 .sidebar-footer {
     display: grid;
+    flex: 0 0 auto;
     gap: var(--space-3);
     margin-block-start: auto;
     padding-block-start: var(--space-5);

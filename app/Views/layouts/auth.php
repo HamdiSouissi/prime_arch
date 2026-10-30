@@ -8,8 +8,9 @@ use App\Core\Translator;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="color-scheme" content="light">
-    <meta name="theme-color" content="#F4F7FF">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#F4F7FF" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#111821" media="(prefers-color-scheme: dark)">
     <title><?= e(($title ?? '') !== '' ? $title . ' — ' : '') ?><?= e(config('app.name')) ?></title>
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>

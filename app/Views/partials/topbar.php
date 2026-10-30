@@ -28,10 +28,10 @@ $profileLabel = $profileName !== ''
             <svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#menu"></use></svg>
         </button>
         <?php if (!empty($showDesignActions) || !empty($showAppActions)): ?>
-            <button class="topbar-search" type="button" data-command-open aria-haspopup="dialog" aria-controls="command-palette" aria-label="<?= e(__('common.global_search')) ?>" title="<?= e(__('common.global_search')) ?>">
+            <button class="topbar-search" type="button" data-command-open aria-haspopup="dialog" aria-controls="command-palette" aria-keyshortcuts="Control+K Meta+K" aria-label="<?= e(__('common.global_search')) ?>" title="<?= e(__('common.global_search')) ?>">
                 <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg>
                 <span class="topbar-search__label"><?= e(__('common.search_in', ['name' => (string) config('app.name')])) ?></span>
-                <kbd class="topbar-search__keys" aria-hidden="true"><span>⌘</span><span>K</span></kbd>
+                <kbd class="topbar-search__keys" aria-hidden="true"><span data-shortcut-modifier>Ctrl</span><span>K</span></kbd>
             </button>
         <?php endif; ?>
         <?php \App\Core\View::partial('partials/language-switcher') ?>

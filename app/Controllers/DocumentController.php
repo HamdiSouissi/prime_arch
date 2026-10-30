@@ -51,6 +51,9 @@ final class DocumentController
             'notice' => Session::pullFlash('documents.notice'),
             'clients' => $repository->clientOptions(),
             'canCreate' => Auth::can('documents.create') || Auth::can('documents.manage'),
+            // Liens vers les fiches liées : jamais vers un écran que l'utilisateur ne peut pas ouvrir.
+            'canViewClients' => Auth::can('clients.view'),
+            'canViewProjects' => Auth::can('projects.view'),
             'canManageTemplates' => Auth::can('documents.templates.manage') || Auth::can('settings.manage'),
         ]));
     }
@@ -204,6 +207,8 @@ final class DocumentController
             'canIssue' => Auth::can('documents.issue'),
             'canManagePayments' => Auth::can('documents.payments.manage'),
             'canCreate' => Auth::can('documents.create') || Auth::can('documents.manage'),
+            'canViewClients' => Auth::can('clients.view'),
+            'canViewProjects' => Auth::can('projects.view'),
         ]));
     }
 

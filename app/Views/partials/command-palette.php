@@ -14,7 +14,7 @@ foreach (($commands ?? []) as $command) {
         <input type="search" placeholder="<?= e(__('common.search_placeholder')) ?>" aria-label="<?= e(__('common.global_search')) ?>" data-command-search autocomplete="off">
         <button class="button button--small button--secondary" type="button" data-modal-close><?= e(__('common.escape')) ?></button>
     </div>
-    <div class="command-list">
+    <div class="command-list" role="group" aria-label="<?= e(__('common.global_search')) ?>">
         <?php foreach ($commandGroups as $group => $groupCommands): ?>
             <p class="command-list__label"><?= e($group) ?></p>
             <?php foreach ($groupCommands as $command): ?>
@@ -24,6 +24,6 @@ foreach (($commands ?? []) as $command) {
                 </a>
             <?php endforeach; ?>
         <?php endforeach; ?>
-        <p class="command-empty" data-command-empty hidden><?= e(__('common.no_results')) ?></p>
+        <p class="command-empty" data-command-empty role="status" hidden><?= e(__('common.no_results')) ?></p>
     </div>
 </dialog>

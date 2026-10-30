@@ -48,7 +48,7 @@ $query = array_filter([
     <?php if ($documents === []): ?>
         <div class="empty-state"><span class="empty-state__icon"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#file-text"></use></svg></span><h3 class="empty-state__title"><?= e(__('documents.empty_title')) ?></h3><p class="empty-state__copy"><?= e(__('documents.empty_body')) ?></p><?php if (!empty($canCreate)): ?><a class="button button--primary" href="<?= e(url('/documents/new')) ?>"><?= e(__('documents.new')) ?></a><?php endif; ?></div>
     <?php else: ?>
-        <div class="table-wrap"><table class="data-table"><thead><tr><th><?= e(__('documents.number')) ?></th><th><?= e(__('documents.title_field')) ?></th><th><?= e(__('documents.client')) ?></th><th><?= e(__('documents.project')) ?></th><th><?= e(__('documents.issue_date')) ?></th><th><?= e(__('documents.total')) ?></th><th><?= e(__('documents.status_label')) ?></th><th><span class="u-sr-only"><?= e(__('common.actions')) ?></span></th></tr></thead><tbody>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th scope="col"><?= e(__('documents.number')) ?></th><th scope="col"><?= e(__('documents.title_field')) ?></th><th scope="col"><?= e(__('documents.client')) ?></th><th scope="col"><?= e(__('documents.project')) ?></th><th scope="col"><?= e(__('documents.issue_date')) ?></th><th scope="col"><?= e(__('documents.total')) ?></th><th scope="col"><?= e(__('documents.status_label')) ?></th><th scope="col"><span class="u-sr-only"><?= e(__('common.actions')) ?></span></th></tr></thead><tbody>
             <?php foreach ($documents as $item): ?>
                 <?php
                 $number = trim((string) ($item['document_number'] ?? '')) !== ''
@@ -63,8 +63,8 @@ $query = array_filter([
                 <tr>
                     <td><a class="table-link" href="<?= e(url('/documents/' . (int) $item['id'])) ?>"><?= e($number) ?></a><span class="table-meta"><?= e(__('documents.type.' . $item['document_type'])) ?></span></td>
                     <td><?= e($item['title']) ?></td>
-                    <td><?= e($item['client_name']) ?></td>
-                    <td><?= e(($item['project_name'] ?? '') !== '' ? $item['project_name'] : '—') ?></td>
+                    <td><?php if (!empty($canViewClients) && (int) ($item['client_id'] ?? 0) > 0): ?><a class="table-link" href="<?= e(url('/clients/' . (int) $item['client_id'])) ?>"><?= e($item['client_name']) ?></a><?php else: ?><?= e($item['client_name']) ?><?php endif; ?></td>
+                    <td><?php if (($item['project_name'] ?? '') !== '' && !empty($canViewProjects) && (int) ($item['project_id'] ?? 0) > 0): ?><a class="table-link" href="<?= e(url('/projects/' . (int) $item['project_id'])) ?>"><?= e($item['project_name']) ?></a><?php else: ?><?= e(($item['project_name'] ?? '') !== '' ? $item['project_name'] : '—') ?><?php endif; ?></td>
                     <td><?= e($item['issue_date'] ?? '—') ?></td>
                     <td class="u-numeric"><?= e(money_format_tnd((string) $item['total_amount'])) ?></td>
                     <td><span class="badge badge--<?= e($statusTone) ?>"><?= e(__('documents.status.' . $item['status'])) ?></span></td>
