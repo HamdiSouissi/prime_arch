@@ -1,0 +1,87 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Traductions arabes du module « comptabilite-export ».
+ */
+return [
+    'comptabilite.title' => 'الدفاتر المحاسبية',
+    'comptabilite.index_title' => 'الدفاتر المحاسبية',
+    'comptabilite.eyebrow' => 'المحاسبة والتصدير',
+    'comptabilite.intro' => 'دفتر المبيعات ودفتر التحصيلات للشهر، مع الأداء على القيمة المضافة والطابع والخصم من المنبع، جاهزان لمحاسبك.',
+    'comptabilite.readonly_notice' => 'وحدة للقراءة فقط: لا تُنشئ ولا تعدّل ولا تحذف أي بيانات، ولا تطبّق أي نسبة. المبالغ مصدرها حصريًا الوثائق الصادرة والخلاصات المسجَّلة في النظام.',
+    'comptabilite.unknown_journal' => 'دفتر غير معروف: اختر «المبيعات» أو «التحصيلات».',
+
+    'comptabilite.period_title' => 'الفترة المحاسبية',
+    'comptabilite.period_range' => 'من :from إلى :to',
+    'comptabilite.year' => 'السنة المالية',
+    'comptabilite.month' => 'الشهر',
+    'comptabilite.month.1' => 'جانفي',
+    'comptabilite.month.2' => 'فيفري',
+    'comptabilite.month.3' => 'مارس',
+    'comptabilite.month.4' => 'أفريل',
+    'comptabilite.month.5' => 'ماي',
+    'comptabilite.month.6' => 'جوان',
+    'comptabilite.month.7' => 'جويلية',
+    'comptabilite.month.8' => 'أوت',
+    'comptabilite.month.9' => 'سبتمبر',
+    'comptabilite.month.10' => 'أكتوبر',
+    'comptabilite.month.11' => 'نوفمبر',
+    'comptabilite.month.12' => 'ديسمبر',
+
+    'comptabilite.statistics' => 'تلخيص الفترة',
+    'comptabilite.stat.sales' => 'المبيعات بالضريبة',
+    'comptabilite.stat.documents_note' => ':count وثيقة صادرة',
+    'comptabilite.stat.vat' => 'الأداء على القيمة المضافة المحصَّل',
+    'comptabilite.stat.stamp_note' => 'الطابع: :amount',
+    'comptabilite.stat.payments' => 'التحصيلات',
+    'comptabilite.stat.payments_note' => ':count خلاصة',
+    'comptabilite.stat.outstanding' => 'رصيد الفترة',
+    'comptabilite.stat.outstanding_note' => 'المبيعات بالضريبة − التحصيلات',
+
+    'comptabilite.export_title' => 'تصدير للمحاسب',
+    'comptabilite.export_help' => 'ملف CSV لكل دفتر ولكل فترة، دون إعادة إدخال أو إعادة حساب.',
+    'comptabilite.export_sales' => 'تصدير دفتر المبيعات',
+    'comptabilite.export_payments' => 'تصدير دفتر التحصيلات',
+    'comptabilite.export_format' => 'ملف CSV بترميز UTF-8، فاصل منقوطة، مبالغ بثلاث مراتب عشرية بنقطة عشرية، وصيغ الجداول محيَّدة: يُستورد الملف مباشرة في برنامج محاسبة.',
+
+    'comptabilite.sales_title' => 'دفتر المبيعات',
+    'comptabilite.sales_help' => 'الفواتير والبطاقات الدائنة الصادرة خلال الفترة، حسب تاريخ الإصدار. تُخصم البطاقات الدائنة.',
+    'comptabilite.sales_note' => 'المسوّدات والوثائق الملغاة لا تظهر في الدفتر. المبلغ الإجمالي بالضريبة يطابق المطبوع على كل وثيقة (دون ضريبة + ضريبة + طابع − خصم).',
+    'comptabilite.empty_sales_title' => 'لا توجد وثيقة صادرة في الفترة',
+    'comptabilite.empty_sales_help' => 'أصدر فاتورة أو بطاقة دائنة لتغذية دفتر المبيعات.',
+
+    'comptabilite.vat_title' => 'توزيع الأداء على القيمة المضافة',
+    'comptabilite.vat_help' => 'الأساس والضريبة مجمَّعان حسب النسبة، بعد خصم البطاقات الدائنة. لا تطبّق الوحدة أي نسبة.',
+    'comptabilite.no_vat' => 'لا يوجد أداء على القيمة المضافة لتوزيعه في الفترة.',
+    'comptabilite.vat_rate' => 'نسبة الأداء',
+    'comptabilite.vat' => 'الأداء على القيمة المضافة',
+
+    'comptabilite.payments_title' => 'دفتر التحصيلات',
+    'comptabilite.payments_help' => 'الخلاصات المسجَّلة خلال الفترة، حسب تاريخ الدفع.',
+    'comptabilite.empty_payments_title' => 'لا توجد تحصيلات في الفترة',
+    'comptabilite.empty_payments_help' => 'تظهر هنا الخلاصات المسجَّلة على الفواتير.',
+
+    'comptabilite.date' => 'التاريخ',
+    'comptabilite.document' => 'الوثيقة',
+    'comptabilite.type' => 'النوع',
+    'comptabilite.client' => 'الحريف',
+    'comptabilite.tax_id' => 'المعرّف الجبائي',
+    'comptabilite.project' => 'المشروع',
+    'comptabilite.base' => 'الأساس دون ضريبة',
+    'comptabilite.stamp' => 'الطابع',
+    'comptabilite.withholding' => 'الخصم من المنبع',
+    'comptabilite.total' => 'المجموع بالضريبة',
+    'comptabilite.totals' => 'المجاميع',
+    'comptabilite.method' => 'طريقة الخلاص',
+    'comptabilite.reference' => 'المرجع',
+    'comptabilite.amount' => 'المبلغ',
+
+    'comptabilite.document_type.invoice' => 'فاتورة',
+    'comptabilite.document_type.credit_note' => 'بطاقة دائنة',
+    'comptabilite.method.cash' => 'نقدًا',
+    'comptabilite.method.bank_transfer' => 'تحويل بنكي',
+    'comptabilite.method.cheque' => 'شيك',
+    'comptabilite.method.card' => 'بطاقة',
+    'comptabilite.method.other' => 'أخرى',
+];

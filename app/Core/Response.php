@@ -48,5 +48,21 @@ final class Response
         echo $this->body;
     }
 
-    // TODO : download() pour les PDF (storage/pdf), cookies, cache HTTP.
+    /** Retourne un contenu binaire en téléchargement privé, sans servir le fichier depuis public/. */
+    public static function download(
+        string $contents,
+        string $filename,
+        string $contentType = 'application/octet-stream',
+        string $disposition = 'attachment'
+    ): self {
+        $filename = basename(str_replace('\\', '/', $filename));
+        $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $filename) ?: 'download';
+        $disposition = in_array($disposition, ['inline', 'attachment'], true) ? $disposition : 'attachment';
+        return (new self($contents))
+            ->header('Content-Type', $contentType)
+            ->header('Content-Disposition', $disposition . '; filename="' . $safeName . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
+            ->header('Content-Length', (string) strlen($contents))
+            ->header('X-Content-Type-Options', 'nosniff')
+            ->header('Cache-Control', 'private, no-store, max-age=0');
+    }
 }

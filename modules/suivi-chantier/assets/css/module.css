@@ -1,0 +1,48 @@
+/*
+ * Module « suivi-chantier » — styles propres au procès-verbal imprimable.
+ * Le reste de l’interface réutilise le design system du cœur (aucune couleur nouvelle).
+ * Ces règles sont préfixées par .pv- et ne touchent aucun composant du noyau.
+ */
+
+.pv-document {
+    padding-block: var(--space-6);
+}
+
+.pv-document .page-header__title {
+    font-size: var(--font-size-title-2);
+    letter-spacing: -0.03em;
+}
+
+.pv-signatures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+}
+
+.pv-signature-line {
+    min-block-size: 3rem;
+    margin-block-start: var(--space-5);
+    border-block-end: 1px solid var(--color-border-strong);
+}
+
+@media (max-width: 640px) {
+    .pv-signatures {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-4);
+    }
+
+    .pv-signature-line {
+        min-block-size: 2rem;
+        margin-block-start: var(--space-3);
+    }
+}
+
+@media print {
+    .pv-document {
+        padding-block: 0;
+    }
+
+    .pv-signature-line {
+        border-block-end-color: #9AA8BE;
+    }
+}

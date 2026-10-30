@@ -1,51 +1,143 @@
-# Prime Arch
+# Prime Architecture
 
-Application web de gestion de cabinet d'architecture pour la **Tunisie**.
-Squelette vierge : PHP 8.2+ natif (sans framework), MySQL 8, MVC maison, modules type extensions WordPress.
+Application web de gestion d'un cabinet d'architecture en Tunisie. Le noyau est développé en PHP 8.2+ natif, selon une architecture MVC maison, MySQL 8/InnoDB, PDO et interfaces HTML/CSS/JavaScript vanilla. Seul `public/` est exposé au web.
 
 ## Prérequis
 
-- PHP 8.2+ (extensions `pdo_mysql`, `mbstring`, `gd` pour mPDF)
-- MySQL 8 (InnoDB, utf8mb4)
-- Composer 2
-- Apache (mod_rewrite) ou nginx + PHP-FPM
+- PHP 8.2+ avec `pdo_mysql`, `mbstring`, `fileinfo`, `gd` et `zip` ; l'algorithme de hachage Argon2id doit être disponible (`password_algos()`).
+- MySQL 8, InnoDB, `utf8mb4`.
+- Composer 2.
+- Apache avec `mod_rewrite` ou nginx + PHP-FPM.
 
-## Installation
+## Installation locale
 
 ```bash
 composer install
-cp .env.example .env        # puis renseigner DB_* et APP_URL
-php bin/migrate.php         # crée les tables
-php -S localhost:8000 -t public   # serveur de développement
+cp .env.example .env
 ```
 
-Ouvrir http://localhost:8000 : la page **« Installation OK »** doit s'afficher
-(l'indicateur « Base de données » est vert si la connexion fonctionne).
+Renseigner `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` et `APP_URL` dans `.env`. Générer une clé d'application aléatoire (ne jamais la versionner) :
 
-## Déploiement
+```bash
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
 
-- **Seul `public/` doit être exposé.** Pointer le `DocumentRoot` (ou `root` nginx) vers `prime-arch/public`.
-  Voir `nginx.conf.example`.
-- **Hébergement mutualisé** sans accès au DocumentRoot : placer le projet dans `public_html/prime-arch/`.
-  Le `.htaccess` racine (`Require all denied`) protège tout le projet ; `public/.htaccess` réautorise
-  uniquement `public/`. Renseigner `APP_URL` avec l'URL complète vers `public/`
-  (ex. `https://exemple.tn/prime-arch/public`).
-- En production : `APP_ENV=production`, `APP_DEBUG=false`, générer `APP_KEY`, activer HTTPS.
+Copier le résultat dans `APP_KEY`, puis préparer le schéma, les rôles et le premier administrateur :
+
+```bash
+php bin/migrate.php
+php bin/seed.php
+php bin/create-admin.php
+php -S localhost:8000 -t public
+```
+
+Pour découvrir l'application avec des écrans peuplés, un jeu de démonstration réexécutable est
+disponible : `php bin/seed-demo.php` (voir `docs/DEMO-DATA.md`). Il crée une équipe, des clients,
+des projets, du temps et une chaîne de documents ; il refuse de s'exécuter sur un environnement
+`production` sans `--force` et n'utilise aucun mot de passe codé en dur.
+
+Le script `create-admin.php` demande le nom, le courriel et un mot de passe de 12 caractères minimum ; aucun compte ni secret par défaut n'est créé. L'administrateur se connecte sur `http://localhost:8000/login`. La racine `/` ouvre le tableau de bord si une session est active, sinon la connexion. `/health` permet de vérifier l'installation.
+
+En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_KEY` aléatoire, `APP_URL` en HTTPS, et placer uniquement `public/` derrière le serveur web.
+
+## Phases livrées pour validation
+
+### Phase 1 — Fondation
+
+- Connexion/déconnexion, sessions renouvelées à l'authentification, CSRF, mots de passe Argon2id et limite de tentatives.
+- Rôles Administrateur, Architecte, Collaborateur, Comptable et Lecture seule, avec contrôle d'accès côté serveur.
+- Réglages du cabinet et valeurs fiscales configurables ; téléversement sécurisé de logo JPEG/PNG/WebP privé.
+- Référentiel bilingue des 24 gouvernorats et des 264 délégations ; 4 853 localités/codes postaux importés depuis un jeu communautaire sous licence MIT (2015), avec conservation des cas de délégation ambigus et validation à quatre chiffres.
+- Commandes d'installation, graines idempotentes et pages de fondation.
+
+### Phase 2 — Clients et projets
+
+- Fiches clients, contacts, adresses, projets associés, phases configurables, recherche, filtres, champs personnalisés typés et pages de détail.
+
+### Phase 3 — Temps, coûts et avancement
+
+- Saisies de temps par utilisateur/projet/phase, taux horaires historisés, budgets d'heures et avancement pondéré.
+- Coûts et indicateurs de rentabilité calculés en `DECIMAL` à trois décimales, avec des permissions financières distinctes des permissions `time.*`.
+- Détails de fonctionnement et mise en service dans `docs/TIME-COSTS.md`.
+
+### Phase 4 — Documents et PDF
+
+- Devis, contrats, factures, modèles, instantanés immuables des documents émis, génération PDF bilingue, paiements, acomptes et avoirs.
+
+### Phase 5 — Modules
+
+- Installation ZIP réservée aux administrateurs, extraction contrôlée dans `storage/modules/`, manifeste, dépendances, migrations à l’activation et hooks.
+- Les modules sont du code PHP non sandboxé : installer uniquement des archives de confiance. La désactivation conserve le code et les données.
+- Format, limites d’archive et cycle de vie dans `docs/MODULES.md`.
+- Passerelles contextuelles : les fiches projet, client et document exposent `project.detail.sections`, `client.detail.sections` et `document.detail.actions` ; chaque module s’y annonce en un clic (voir `docs/MODULES.md`).
+- Recherche globale : la palette (`⌘K` / `Ctrl K`) interroge `GET /api/recherche` — clients, projets et documents filtrés par les droits, huit résultats par catégorie, cinq fiches récentes, pilotage complet au clavier. Les modules ajoutent leur section par le filtre `search.results` (voir `docs/MODULES.md`).
+- Tableau de bord réel : projets ouverts et retards, reste à encaisser, heures de la semaine, clients actifs, échéances sur 14 jours (retards inclus) et activité du journal d'audit, chaque bloc filtré par les droits. Les modules ajoutent leurs cartes par le filtre `dashboard.cards` (voir `docs/MODULES.md`).
+- Coquille de navigation : menu groupé par métier (Pilotage, Production, Finance, Conformité, Administration, puis Modules externes), barre mobile à quatre destinations + « Plus » (feuille filtrable), bouton « Nouveau » réel (client, projet, devis, temps) et icônes de modules uniques.
+- Registre du courrier (module `registre-courrier`) : courrier entrant et sortant, numérotation réglée par le cabinet (préfixes, séparateur, compteurs par année), échéances de traitement saisies, registre annuel imprimable et export CSV.
+- Règle des trois clics vérifiée en CI : `tests/NavigationDepthTest.php` reconstruit le graphe de navigation depuis le code (routes, vues, coquille, menus des modules) et échoue si une destination du noyau dépasse trois clics depuis le tableau de bord (voir `docs/CONVENTIONS.md`).
+
+### Phase 6 — Finition et exploitation (en cours de validation)
+
+- Le clair reste le rendu normal ; le sombre suit automatiquement la préférence `prefers-color-scheme: dark` du système.
+- Journal d’audit administrateur, sauvegarde ZIP privée en CLI, vérification d’intégrité et restauration limitée à une base vide.
+- Marge supérieure PDF harmonisée à 48 mm pour les régénérations de tous types de documents ; documents associés listés sur la fiche client selon les permissions.
+- Images JPEG/PNG/WebP téléversées par projet, stockées hors webroot et servies après contrôle d’accès ; galerie pour les plans 2D et visuels de référence.
+- Permissions des rôles intégrés explicites et moindres privilèges ; les réglages de cabinet contenant des données sensibles sont réservés à l’administrateur.
+- Interface bilingue **français / arabe** : sélecteur de langue dans l’en-tête et sur la connexion, direction `rtl` automatique, libellés JavaScript traduits et rôles localisés.
+- Les tests de sécurité et de politique de permissions sont ajoutés, mais doivent encore être exécutés avec PHP/PHPUnit/MySQL. Aucune règle fiscale ou juridique tunisienne n’est déclarée conforme sans validation de l’expert-comptable et de l’OAT.
+- Procédures d’exploitation et limites : `docs/OPERATIONS.md`.
+
+Avant utilisation de la phase 3, les migrations `0006` à `0008` doivent avoir été exécutées avec succès ; les rôles intégrés doivent ensuite être resynchronisés avec `php bin/seed.php`. L’état d’exécution des migrations ne peut pas être déduit du code seul.
+
+Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
+
+## Identité du produit
+
+Le nom affiché (`Prime Architecture`), l'éditeur (`Prime Vision Solutions`), l'adresse publique
+(`primevisionsolutions.fr`) et les fichiers du logo sont centralisés dans `config/brand.php`. La barre latérale
+n'affiche que le logo et le nom ; l'éditeur, l'adresse du site et le copyright sont regroupés en **pied de page**
+(`partials/brand-footer.php`), sous le contenu de chaque page et sous l'écran de connexion. Aucune vue ne contient le
+nom en dur. Le nom par défaut de la base (`APP_NAME`) suit le produit ; le nom du **cabinet client** reste réglable
+dans « Réglages » et prévaut sur les documents PDF. Le logo du cabinet téléversé reste distinct de la marque du
+produit.
+
+## Langues de l'interface
+
+L'interface est bilingue **français / arabe**. Le sélecteur de langue est disponible dans l'en-tête de
+l'application et sur l'écran de connexion ; le choix est conservé en session et la direction du document
+(`ltr` / `rtl`) suit la langue active. Les traductions sont dans `lang/fr.php` et `lang/ar.php` (mêmes clés
+obligatoires) ; la langue par défaut se règle avec `APP_LOCALE`. Les libellés dynamiques du JavaScript sont
+fournis par le bloc `#app-i18n` (`app/Views/partials/i18n.php`).
 
 ## Tests
 
 ```bash
-composer test
+composer test                                   # suite complète
+vendor/bin/phpunit --filter NavigationDepthTest # le garde-fou des trois clics seul
+vendor/bin/phpunit --filter ModulesIntegrityTest # les modules installables
+vendor/bin/phpunit --filter DemoDataTest        # la cohérence du jeu de démonstration
 ```
+
+Deux tests lisent le code plutôt que des données : `tests/NavigationDepthTest.php` reconstruit le
+graphe de navigation et refuse une destination à plus de trois clics ; `tests/ModulesIntegrityTest.php`
+contrôle chaque dossier de `modules/` (manifeste, traductions FR/AR, vues rendues, préfixes de tables,
+aucune écriture dans les tables du cœur). Ils valent la peine d'être lancés avant de livrer une page,
+un lien ou un module.
 
 ## Documentation
 
-- `docs/ARCHITECTURE.md` — architecture et cycle de vie d'une requête
-- `docs/MODULES.md` — spécification du format d'un module
-- `docs/CONVENTIONS.md` — conventions de code
-
-## État du squelette
-
-Fonctionnent : front controller, routeur, config/.env, connexion PDO, moteur de vues, traductions fr/ar,
-hooks, migrateur SQL. Squelettes à compléter (TODO dans le code) : authentification, modèles métier,
-gestion des modules (téléversement/activation), PDF (mPDF), seeds des délégations.
+- `docs/ARCHITECTURE.md` — architecture et cycle de vie d'une requête.
+- `docs/CONVENTIONS.md` — conventions de code.
+- `docs/DATA-SOURCES.md` — attribution des données géographiques et limites de validation.
+- `docs/DEMO-DATA.md` — jeu de données de démonstration, comptes, réexécution et retrait.
+- `docs/DESIGN-SYSTEM.md` — tokens, composants, accessibilité et RTL.
+- `docs/ROADMAP.md` — phases et critères de progression.
+- `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
+- `docs/MODULES.md` — format, installation et sécurité des modules.
+- `docs/MODULE-PROPOSALS.md` — catalogue des douze modules livrés, garde-fous et prérequis noyau.
+- `docs/MODULE-PROPOSALS-VAGUE-4.md` — onze propositions de modules complémentaires (vague 4) et journal des livraisons.
+- `docs/AUDIT-UX-ET-NAVIGATION.md` — audit design et UI/UX, règle des 3 clics et suivi des six lots (tous livrés).
+- `docs/design/maquette-navigation.html` — maquette de navigation (menu groupé, contexte, mobile).
+- `docs/LIVRAISON.md` — dossier de livraison : inventaire, paquets, empreintes et vérifications.
+- `docs/SECURITE-PORTAIL-CLIENT.md` — revue de sécurité de l’espace client public.
+- `docs/OPERATIONS.md` — journal d’audit, sauvegarde, restauration et validation opérationnelle.

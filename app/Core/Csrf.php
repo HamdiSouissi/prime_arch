@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 /**
- * Protection CSRF : jeton stocké en session, vérifié sur les requêtes POST.
+ * Protection CSRF : jeton stocké en session, vérifié sur les méthodes qui modifient l'état.
  */
 final class Csrf
 {
@@ -22,5 +22,12 @@ final class Csrf
     {
         $expected = (string) Session::get(self::KEY, '');
         return $expected !== '' && $token !== null && hash_equals($expected, $token);
+    }
+
+    /** Renouvelle le jeton après une authentification ou une déconnexion. */
+    public static function regenerate(): string
+    {
+        Session::forget(self::KEY);
+        return self::token();
     }
 }

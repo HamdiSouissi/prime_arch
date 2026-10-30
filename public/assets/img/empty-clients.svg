@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 176" role="img" aria-labelledby="title">
+  <title id="title">Illustration d'un dossier client</title>
+  <ellipse cx="120" cy="151" rx="74" ry="10" fill="#E8EEF9"/>
+  <path d="M53 54a9 9 0 0 1 9-9h37l11 12h68a9 9 0 0 1 9 9v67a9 9 0 0 1-9 9H62a9 9 0 0 1-9-9V54Z" fill="#F0F4FF" stroke="#C3D2F3" stroke-width="2"/>
+  <path d="M53 75h134l-12 50a8 8 0 0 1-8 6H67a8 8 0 0 1-8-6L53 75Z" fill="#DDE8FF" stroke="#B4C8F3" stroke-width="2"/>
+  <circle cx="120" cy="91" r="17" fill="#fff" stroke="#9CB6F1" stroke-width="2"/>
+  <path d="M111 123a9 9 0 0 1 9-9h1a9 9 0 0 1 9 9" fill="#fff" stroke="#9CB6F1" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="182" cy="43" r="13" fill="#FFE6F0"/>
+  <path d="M182 37v12M176 43h12" stroke="#BD3E6A" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="53" cy="38" r="6" fill="#14C8B8" fill-opacity=".7"/>
+</svg>

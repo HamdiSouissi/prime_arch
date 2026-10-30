@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">Emplacement du logo du cabinet</title>
+  <defs>
+    <linearGradient id="brand" x1="10" y1="8" x2="84" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F6BFF"/>
+      <stop offset="1" stop-color="#6C5CFF"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="20" y1="18" x2="77" y2="82" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity=".08"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="88" height="88" rx="28" fill="url(#brand)"/>
+  <path d="M22 69V27h26c13 0 21 7 21 18S61 63 48 63H37v6H22Zm15-20h11c4 0 6-1 6-4s-2-4-6-4H37v8Z" fill="#fff"/>
+  <path d="M47 23h24v5H47z" fill="url(#shine)"/>
+  <circle cx="75" cy="22" r="8" fill="#14C8B8"/>
+  <path d="M75 17.5v9M70.5 22h9" stroke="#fff" stroke-linecap="round" stroke-width="2"/>
+</svg>

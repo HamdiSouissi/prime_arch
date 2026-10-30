@@ -1,0 +1,69 @@
+/*
+ * Module « metre-quantitatif » — mise en page du DQE imprimable.
+ * Le reste de l’interface réutilise le design system du cœur ; aucune couleur nouvelle.
+ */
+
+.dqe-document {
+    padding-block: var(--space-6);
+}
+
+.dqe-total {
+    border: 2px solid var(--color-border-strong) !important;
+}
+
+.dqe-total__amount {
+    font-size: var(--font-size-title-2);
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+}
+
+.dqe-signature {
+    margin-block-start: var(--space-5);
+    max-inline-size: 18rem;
+}
+
+.dqe-signature__line {
+    min-block-size: 3rem;
+    margin-block-start: var(--space-4);
+    border-block-end: 1px solid var(--color-border-strong);
+}
+
+@media (max-width: 640px) {
+    .dqe-document {
+        padding-block: var(--space-4);
+    }
+
+    .dqe-total__amount {
+        font-size: var(--font-size-title-3);
+    }
+
+    .dqe-signature {
+        max-inline-size: 100%;
+    }
+}
+
+@media print {
+    .dqe-document {
+        padding-block: 0;
+    }
+
+    /* Un DQE peut être long : les cartes doivent pouvoir se répartir sur plusieurs pages. */
+    .dqe-document .card {
+        break-inside: auto;
+    }
+
+    .dqe-document tr,
+    .dqe-document thead,
+    .dqe-document .dqe-total {
+        break-inside: avoid;
+    }
+
+    .dqe-document thead {
+        display: table-header-group;
+    }
+
+    .dqe-document .dqe-signature__line {
+        border-block-end-color: #9AA8BE;
+    }
+}

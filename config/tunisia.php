@@ -19,9 +19,17 @@ return [
     // Monnaie : le dinar tunisien se divise en 1000 millimes (3 décimales).
     'currency' => [
         'code'                => 'TND',
+        // Symbole par défaut (français) et symbole arabe ; `money_format_tnd()` choisit
+        // selon la langue active, avec repli sur `symbol`.
         'symbol'              => 'DT',
+        'symbols'             => [
+            'fr' => 'DT',
+            'ar' => 'د.ت',
+        ],
         'decimals'            => 3,
         'decimal_separator'   => ',',
+        // Une espace simple est convertie en espace insécable par le formateur : le montant
+        // reste un seul bloc de chiffres et ne se réordonne pas en écriture de droite à gauche.
         'thousands_separator' => ' ',
         'symbol_after'        => true,
     ],
@@ -34,9 +42,9 @@ return [
 
     // Autres taxes / droits (TODO : valider les valeurs et leur applicabilité).
     'taxes' => [
-        'stamp_duty'      => 1.000,  // timbre fiscal (DT) — TODO
-        'withholding_tax' => 0,      // retenue à la source (%) — TODO
-        'fodec'           => 0,      // TODO
+        'stamp_duty'      => '1.000', // timbre fiscal (DT) — valeur indicative
+        'withholding_tax' => '0.000', // retenue à la source (%) — valeur indicative
+        'fodec'           => '0.000', // valeur indicative
     ],
 
     // Matricule fiscal : 7 chiffres + clé (lettre) [+ code TVA / catégorie / n° d'établissement].
@@ -50,7 +58,7 @@ return [
     // Téléphone : indicatif +216, 8 chiffres.
     'phone' => [
         'country_code' => '+216',
-        'pattern'      => '/^(?:\+216|00216)?\s?[2-579]\d{1}\s?\d{3}\s?\d{3}$/',
+        'pattern'      => '/^(?:(?:\+216|00216|216)[\s().-]*)?[2-579]\d(?:[\s().-]*\d{3}){2}$/',
         'example'      => '+216 20 123 456',
     ],
 
@@ -62,20 +70,21 @@ return [
     'datetime_format' => 'd/m/Y H:i',
     'week_start'      => 'monday',
 
-    // Les 24 gouvernorats : voir database/seeds/governorates.php
-    // Les délégations : voir database/seeds/delegations.php (TODO)
+    // Référentiel administratif fourni par les graines attribuées (voir docs/DATA-SOURCES.md).
+    // Les codes postaux restent vides jusqu'à validation d'une source réutilisable.
 
-    // Contexte architecture (TODO : à compléter avec les règles réglementaires en vigueur).
+    // Contexte architecture (à compléter avec les règles réglementaires en vigueur).
     'architecture' => [
         'professional_body' => 'Ordre des Architectes de Tunisie (OAT)',
-        // Phases types d'un projet (modifiables depuis les réglages)
+        // Ordre et libellés initiaux ; les phases sont ensuite gérées depuis les réglages du cabinet.
         'phases' => [
             'esquisse'        => 'Esquisse',
             'aps'             => 'Avant-projet sommaire (APS)',
             'apd'             => 'Avant-projet détaillé (APD)',
             'permis'          => 'Dossier de permis de bâtir',
             'dce'             => 'Dossier de consultation des entreprises (DCE)',
-            'suivi_chantier'  => 'Suivi de chantier',
+            'passation'       => 'Assistance à la passation des marchés',
+            'execution'       => 'Direction de l’exécution des travaux',
             'reception'       => 'Réception des travaux',
         ],
         // Documents administratifs à gérer (TODO : modèles PDF)

@@ -1,0 +1,17 @@
+{
+    "slug": "ged-versions",
+    "name": "Gestion documentaire versionnée",
+    "version": "1.1.0",
+    "description": "Dépôt documentaire privé par projet et par client : versions successives, étiquettes, recherche, rétention et empreinte d’intégrité.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\GedVersions",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "migrations": "migrations",
+    "lang": "lang",
+    "enabled_by_default": false
+}

@@ -1,0 +1,17 @@
+{
+  "slug": "registre-courrier",
+  "name": "Registre du courrier",
+  "version": "1.0.0",
+  "description": "Registre chronologique du courrier entrant et sortant : numérotation paramétrable par le cabinet, correspondant, objet, acheminement, projet et suivi du traitement.",
+  "author": "Prime Arch",
+  "namespace": "Modules\\RegistreCourrier",
+  "requires": {
+    "php": ">=8.2",
+    "app": ">=0.1.0",
+    "modules": []
+  },
+  "entry": "Module.php",
+  "migrations": "migrations",
+  "lang": "lang",
+  "enabled_by_default": false
+}

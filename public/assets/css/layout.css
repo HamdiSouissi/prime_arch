@@ -1,0 +1,925 @@
+.skip-link {
+    position: fixed;
+    z-index: 100;
+    inset-block-start: var(--space-3);
+    inset-inline-start: var(--space-3);
+    transform: translateY(-160%);
+    padding-block: var(--space-3);
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-sm);
+    color: #FFFFFF;
+    background: var(--color-primary-strong);
+    box-shadow: var(--shadow-float);
+}
+
+.skip-link:focus {
+    transform: translateY(0);
+}
+
+.app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    min-block-size: 100vh;
+}
+
+.sidebar {
+    position: sticky;
+    z-index: 20;
+    inset-block-start: 0;
+    display: flex;
+    flex-direction: column;
+    inline-size: var(--sidebar-width);
+    block-size: 100vh;
+    padding-block-start: var(--space-5);
+    padding-inline: var(--space-4);
+    padding-block-end: var(--space-4);
+    border-inline-end: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.73);
+    box-shadow: 0 0 26px rgba(71, 96, 142, 0.035);
+    -webkit-backdrop-filter: blur(28px) saturate(155%);
+    backdrop-filter: blur(28px) saturate(155%);
+}
+
+/* Bloc de marque : le logo et le nom du produit. L'éditeur, l'adresse du site et le
+   copyright sont regroupés en pied de page (.app-footer). */
+.sidebar-brand-block {
+    flex: 0 0 auto;
+    min-inline-size: 0;
+    margin-block-end: var(--space-5);
+    padding-inline: var(--space-2);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-inline-size: 0;
+    color: var(--color-ink);
+    text-decoration: none;
+}
+
+.sidebar-brand:hover {
+    text-decoration: none;
+}
+
+.sidebar-brand__logo {
+    flex: 0 0 auto;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: 0.8rem;
+}
+
+.sidebar-brand__product {
+    min-inline-size: 0;
+    color: var(--color-ink);
+    font-size: 0.95rem;
+    font-weight: 750;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+}
+
+/* Pied de page légal : éditeur et adresse du site, sous la colonne de contenu.
+   Discret (petite taille, teinte tertiaire) mais toujours lisible et cliquable. */
+.app-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-4) var(--space-6);
+    padding-inline: clamp(1.25rem, 3vw, 2.5rem);
+    border-block-start: 1px solid rgba(91, 112, 149, 0.12);
+    color: var(--color-ink-tertiary);
+    font-size: var(--font-size-caption);
+    line-height: 1.4;
+}
+
+.app-footer__legal {
+    margin: 0;
+    min-inline-size: 0;
+}
+
+.app-footer__site {
+    color: var(--color-ink-secondary);
+    font-weight: 600;
+    text-decoration: none;
+    /* Adresse latine dans une interface arabe : elle garde son sens de lecture. */
+    unicode-bidi: isolate;
+}
+
+.app-footer__site:hover,
+.app-footer__site:focus-visible {
+    color: var(--color-primary-strong);
+    text-decoration: underline;
+}
+
+/* Le menu ne doit jamais être tronqué : avec les douze modules, la liste dépasse la
+   hauteur de la fenêtre. Elle défile donc dans la barre latérale, l'identité du
+   cabinet restant fixée en bas. */
+.sidebar-nav {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    padding-inline-end: var(--space-1);
+}
+
+.sidebar-section-label {
+    margin-block-start: var(--space-4);
+    margin-inline: var(--space-3);
+    margin-block-end: var(--space-2);
+    color: var(--color-ink-tertiary);
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.105em;
+    text-transform: uppercase;
+}
+
+/* Séparateur « Modules externes » : la ligne et l'interligne détachent nettement les
+   entrées apportées par les modules de celles du noyau. */
+.sidebar-section-label--modules {
+    margin-block-start: var(--space-4);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border);
+}
+
+.sidebar-list--modules {
+    padding-block-start: 0;
+}
+
+/* La première section n'a pas besoin d'air au-dessus d'elle. */
+.sidebar-nav > .sidebar-section-label:first-child {
+    margin-block-start: 0;
+}
+
+.sidebar-list {
+    display: grid;
+    gap: 0.35rem;
+    margin-block: 0;
+    margin-inline: 0;
+    padding-block: 0;
+    padding-inline: 0;
+    list-style: none;
+}
+
+.sidebar-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: 2.875rem;
+    padding-block: 0;
+    padding-inline: var(--space-3);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-subhead);
+    font-weight: 600;
+    transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.sidebar-link:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-border);
+    color: var(--color-ink);
+    background: rgba(255, 255, 255, 0.76);
+    text-decoration: none;
+}
+
+.sidebar-link[aria-current="page"] {
+    border-color: rgba(47, 107, 255, 0.12);
+    color: var(--color-primary-strong);
+    background: linear-gradient(105deg, rgba(47, 107, 255, 0.115), rgba(108, 92, 255, 0.06));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.sidebar-link[aria-current="page"]::before {
+    position: absolute;
+    inset-block: 0.75rem;
+    inset-inline-start: -1px;
+    inline-size: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--gradient-primary);
+    content: "";
+}
+
+.sidebar-icon {
+    display: inline-grid;
+    flex: 0 0 1.4rem;
+    place-items: center;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+    color: var(--color-ink-tertiary);
+}
+
+.sidebar-link[aria-current="page"] .sidebar-icon {
+    color: var(--color-primary);
+}
+
+.sidebar-footer {
+    display: grid;
+    flex: 0 0 auto;
+    gap: var(--space-3);
+    margin-block-start: auto;
+    padding-block-start: var(--space-5);
+}
+
+.sidebar-workspace {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: 3.75rem;
+    padding-block: var(--space-3);
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.68);
+}
+
+.sidebar-workspace__mark {
+    display: grid;
+    flex: 0 0 2.25rem;
+    place-items: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: 0.75rem;
+    color: var(--color-primary-strong);
+    background: var(--color-primary-tint);
+}
+
+.sidebar-workspace__copy {
+    min-inline-size: 0;
+}
+
+.sidebar-workspace__name {
+    overflow: hidden;
+    color: var(--color-ink);
+    font-size: var(--font-size-footnote);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-workspace__meta {
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-caption);
+}
+
+.app-main {
+    display: flex;
+    min-inline-size: 0;
+    flex-direction: column;
+}
+
+.topbar {
+    position: sticky;
+    z-index: 15;
+    inset-block-start: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: 4.5rem;
+    padding-block: 0;
+    padding-inline: clamp(1.25rem, 3vw, 2.5rem);
+    border-block-end: 1px solid rgba(91, 112, 149, 0.12);
+    background: rgba(247, 249, 255, 0.72);
+    -webkit-backdrop-filter: blur(24px) saturate(165%);
+    backdrop-filter: blur(24px) saturate(165%);
+}
+
+/* Le contexte (titre) se comprime ; les actions restent toujours entières et visibles.
+   `overflow: hidden` : le titre tronqué ne doit jamais passer sous la recherche. */
+.topbar__context {
+    display: grid;
+    flex: 1 1 auto;
+    gap: 1px;
+    min-inline-size: 0;
+    overflow: hidden;
+}
+
+.topbar__eyebrow {
+    overflow: hidden;
+    color: var(--color-ink-tertiary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.topbar__title {
+    overflow: hidden;
+    color: var(--color-ink);
+    font-size: var(--font-size-subhead);
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar__actions {
+    display: flex;
+    /* `0 1 auto` : avec le bouton « Nouveau », les actions doivent pouvoir se resserrer
+       légèrement au lieu de déborder de la barre (c'est la recherche qui cède la place). */
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-2);
+    min-inline-size: 0;
+}
+
+.topbar-info {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: 2.75rem;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-secondary);
+    background: rgba(255, 255, 255, 0.72);
+    font-size: var(--font-size-caption);
+    font-variant-numeric: tabular-nums;
+}
+
+.topbar-info__place,
+.topbar-info__clock {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    white-space: nowrap;
+}
+
+.topbar-info__place .icon { color: var(--color-primary-strong); }
+.topbar-info__clock strong { color: var(--color-ink); font-size: var(--font-size-footnote); }
+.topbar-info__date { padding-inline-end: var(--space-2); border-inline-end: 1px solid var(--color-border); }
+
+.topbar-logout {
+    display: inline-flex;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.topbar-search {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: var(--space-3);
+    inline-size: clamp(12rem, 27vw, 22rem);
+    min-inline-size: 8rem;
+    min-block-size: 2.875rem;
+    padding-block: 0;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-ink-secondary);
+    background: rgba(255, 255, 255, 0.75);
+    text-align: start;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.topbar-search:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-solid);
+}
+
+.topbar-search__label {
+    overflow: hidden;
+    flex: 1;
+    font-size: var(--font-size-footnote);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar-search__keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding-block: 2px;
+    padding-inline: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-ink-tertiary);
+    background: rgba(255, 255, 255, 0.75);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    line-height: 1.2;
+}
+
+.topbar-avatar {
+    display: inline-grid;
+    flex: 0 0 2.75rem;
+    place-items: center;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    border-radius: 50%;
+    color: #FFFFFF;
+    background: linear-gradient(145deg, #8A80FF, #5B79E8 58%, #45C7BE);
+    box-shadow: 0 3px 8px rgba(69, 106, 190, 0.22);
+    font-size: var(--font-size-footnote);
+    font-weight: 750;
+    text-decoration: none;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* La bulle d'initiales est un lien vers les réglages du profil (ou le tableau de bord). */
+a.topbar-avatar:hover,
+a.topbar-avatar:focus-visible {
+    color: #FFFFFF;
+    box-shadow: 0 5px 14px rgba(69, 106, 190, 0.32);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+a.topbar-avatar:focus-visible {
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 3px;
+}
+
+.app-content {
+    /* La colonne de contenu occupe la hauteur restante : le pied de page légal reste ainsi
+       collé au bas de la fenêtre, même sur une page courte. */
+    flex: 1 1 auto;
+    inline-size: min(100%, var(--content-max));
+    margin-inline: auto;
+    padding-block-start: clamp(1.25rem, 3vw, 2.5rem);
+    padding-inline: clamp(1.25rem, 3vw, 2.75rem);
+    padding-block-end: var(--space-5);
+}
+
+.dev-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-block-size: 2rem;
+    padding-block: 0.3rem;
+    padding-inline: var(--space-4);
+    border-block-end: 1px solid rgba(47, 107, 255, 0.1);
+    color: var(--color-info);
+    background: rgba(234, 241, 255, 0.88);
+    font-size: var(--font-size-caption);
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-align: center;
+}
+
+.dev-banner__dot {
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.12);
+}
+
+.mobile-menu-backdrop {
+    display: none;
+}
+
+.mobile-tabbar {
+    display: none;
+}
+
+/* La feuille « Plus » (navigation mobile) est stylée dans components.css, à côté des
+   dialogues : sa largeur doit l'emporter sur la règle `dialog` de la même couche. */
+
+
+
+/* Entre 1101 et 1240 px la barre latérale est encore déployée : la recherche
+   se réduit pour laisser la place au sélecteur de langue et à l'horloge. */
+@media (max-width: 1240px) and (min-width: 1101px) {
+    .topbar-search {
+        inline-size: clamp(8rem, 18vw, 14rem);
+    }
+}
+
+@media (max-width: 1100px) and (min-width: 761px) {
+    :root {
+        --sidebar-width: 5.5rem;
+    }
+
+    .sidebar {
+        align-items: center;
+        padding-inline: var(--space-2);
+    }
+
+    .sidebar-brand-block {
+        justify-items: center;
+        margin-block-end: var(--space-5);
+        padding-inline: 0;
+    }
+
+    .sidebar-brand {
+        justify-content: center;
+    }
+
+    .sidebar-brand__product,
+    .sidebar-section-label,
+    .sidebar-link__label,
+    .sidebar-workspace__copy {
+        position: absolute;
+        overflow: hidden;
+        inline-size: 1px;
+        block-size: 1px;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .sidebar-list {
+        gap: var(--space-2);
+    }
+
+    /* Rail compact : le libellé serait illisible, c'est la liste qui porte le séparateur. */
+    .sidebar-section-label--modules {
+        display: none;
+    }
+
+    .sidebar-list--modules {
+        margin-block-start: var(--space-3);
+        padding-block-start: var(--space-3);
+        border-block-start: 1px solid var(--color-border);
+    }
+
+    .sidebar-link {
+        justify-content: center;
+        inline-size: 3.5rem;
+        min-block-size: 3.5rem;
+        padding-block: 0;
+        padding-inline: 0;
+    }
+
+    .sidebar-icon {
+        flex-basis: 1.55rem;
+        inline-size: 1.55rem;
+        block-size: 1.55rem;
+    }
+
+    .sidebar-footer {
+        inline-size: 100%;
+    }
+
+    .sidebar-workspace {
+        justify-content: center;
+        padding-block: var(--space-2);
+        padding-inline: var(--space-2);
+    }
+
+    /* En dessous de 1100 px, la recherche devient une icône : le sélecteur de
+       langue et l'horloge restent entièrement visibles. */
+    .topbar {
+        gap: var(--space-3);
+    }
+
+    .topbar-search {
+        flex: 0 0 auto;
+        justify-content: center;
+        inline-size: 2.5rem;
+        min-inline-size: 2.5rem;
+        padding-inline: 0;
+    }
+
+    .topbar-search__label,
+    .topbar-search__keys {
+        display: none;
+    }
+
+    .language-switcher {
+        padding-inline: 0.2rem;
+    }
+
+    .language-switcher__icon {
+        display: none;
+    }
+
+    .language-switcher__option {
+        min-inline-size: 1.9rem;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 760px) {
+    .app-shell {
+        display: block;
+        min-block-size: 100vh;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .app-shell.is-mobile-menu-open .sidebar {
+        position: fixed;
+        z-index: 45;
+        inset-block-start: 0;
+        inset-inline: 0;
+        display: flex;
+        inline-size: auto;
+        block-size: auto;
+        max-block-size: min(82vh, 42rem);
+        overflow-y: auto;
+        padding-block-start: var(--space-4);
+        padding-inline: var(--space-4);
+        padding-block-end: var(--space-5);
+        border-inline: 0;
+        border-block-end: 1px solid var(--color-border);
+        border-end-start-radius: var(--radius-panel);
+        border-end-end-radius: var(--radius-panel);
+        background: rgba(249, 251, 255, 0.97);
+        box-shadow: var(--shadow-float);
+        transform: translateY(-110%);
+        transition: transform var(--transition-normal), visibility var(--transition-normal);
+        visibility: hidden;
+    }
+
+    .app-shell.is-mobile-menu-open .sidebar {
+        transform: translateY(0);
+        visibility: visible;
+    }
+
+    .app-shell.is-mobile-menu-open .mobile-menu-backdrop {
+        position: fixed;
+        z-index: 40;
+        inset-block: 0;
+        inset-inline: 0;
+        display: block;
+        border: 0;
+        background: rgba(69, 91, 130, 0.18);
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
+    }
+
+    .sidebar-brand {
+        margin-block-end: var(--space-3);
+    }
+
+    .sidebar-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sidebar-link {
+        min-block-size: 3.25rem;
+    }
+
+    .sidebar-footer {
+        display: none;
+    }
+
+    .topbar {
+        gap: 0.35rem;
+        min-block-size: 3.875rem;
+        padding-inline: var(--space-3);
+    }
+
+    /* Le titre courant est repris par .page-header : le contexte laisse la place
+       aux actions, qui ne doivent jamais être rognées ni masquées. */
+    .topbar__context {
+        display: none;
+    }
+
+    .topbar__actions {
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: clamp(0.15rem, 1vw, 0.5rem);
+        min-inline-size: 0;
+    }
+
+    .topbar__actions > *,
+    .topbar-logout,
+    .topbar-avatar {
+        flex: 0 0 auto;
+    }
+
+    .topbar-info {
+        min-block-size: 2.5rem;
+        padding-inline: var(--space-2);
+        border-color: transparent;
+        background: transparent;
+    }
+
+    .topbar-info__place,
+    .topbar-info__date {
+        display: none;
+    }
+
+    .language-switcher {
+        padding-inline: 0.2rem;
+    }
+
+    .language-switcher__icon {
+        display: none;
+    }
+
+    .language-switcher__option {
+        min-inline-size: 1.85rem;
+        min-block-size: 1.9rem;
+        padding-inline: 0.3rem;
+        font-size: 0.7rem;
+    }
+
+    .topbar-search {
+        flex: 0 0 auto;
+        justify-content: center;
+        inline-size: 2.5rem;
+        min-inline-size: 2.5rem;
+        min-block-size: 2.5rem;
+        padding-inline: 0;
+    }
+
+    .topbar-search__label,
+    .topbar-search__keys {
+        display: none;
+    }
+
+    .topbar-avatar {
+        inline-size: 2.5rem;
+        block-size: 2.5rem;
+        flex-basis: 2.5rem;
+    }
+
+    .app-content {
+        padding-block-start: var(--space-5);
+        padding-inline: var(--space-4);
+        /* La marge basse de la barre d'onglets est portée par le dernier élément de la
+           colonne : le pied de page quand il est présent. */
+        padding-block-end: var(--space-4);
+    }
+
+    .app-main > .app-footer {
+        padding-block-end: calc(6.5rem + env(safe-area-inset-bottom));
+        padding-inline: var(--space-4);
+    }
+
+    /* Barre d'onglets ancrée en bas : 35 < voile (40) < tiroir latéral (45),
+       au-dessus du contenu et de l'en-tête de page collant (12). */
+    .mobile-tabbar {
+        position: fixed;
+        z-index: 35;
+        inset-block-end: 0;
+        inset-inline: 0;
+        /* La barre suit la largeur de la fenêtre, jamais celle du contenu : elle reste
+           collée au bas de l'écran même si une page contient un élément large. */
+        inline-size: 100%;
+        max-inline-size: 100%;
+        display: grid;
+        /* Une colonne par entrée : la barre reste identique (mêmes 6 entrées,
+           même ordre) quelle que soit la page. */
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        min-block-size: calc(4.35rem + env(safe-area-inset-bottom));
+        padding-block-start: 0.35rem;
+        padding-inline: max(0.4rem, env(safe-area-inset-left)) max(0.4rem, env(safe-area-inset-right));
+        padding-block-end: calc(0.35rem + env(safe-area-inset-bottom));
+        border-block-start: 1px solid rgba(91, 112, 149, 0.16);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 -7px 24px rgba(43, 68, 112, 0.075);
+        -webkit-backdrop-filter: blur(24px) saturate(155%);
+        backdrop-filter: blur(24px) saturate(155%);
+    }
+
+    .mobile-tabbar__link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 2px;
+        min-inline-size: 0;
+        min-block-size: 2.875rem;
+        max-inline-size: 100%;
+        /* Un `<button>` ne s'étire pas de lui-même : « Plus » doit occuper sa colonne
+           comme les autres onglets. */
+        inline-size: 100%;
+        padding-block: 0.2rem;
+        padding-inline: 1px;
+        border: 0;
+        border-radius: var(--radius-sm);
+        color: var(--color-ink-tertiary);
+        font-family: inherit;
+        /* Minimum lisible : 0,68 rem (≈ 11 px) au lieu de 0,59 rem, y compris en arabe. */
+        font-size: 0.68rem;
+        font-weight: 600;
+        line-height: 1.1;
+        text-align: center;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    /* Libellés courts (français comme arabe) : jamais d'élargissement de la barre. */
+    .mobile-tabbar__link > span {
+        display: block;
+        overflow: hidden;
+        max-inline-size: 100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobile-tabbar__link:hover,
+    .mobile-tabbar__link[aria-current="page"] {
+        color: var(--color-primary-strong);
+        background: var(--color-primary-tint);
+        text-decoration: none;
+    }
+
+    .mobile-tabbar__item { min-inline-size: 0; }
+    .mobile-tabbar__link.is-disabled { cursor: not-allowed; opacity: 0.5; }
+
+    .mobile-tabbar__icon {
+        inline-size: 1.2rem;
+        block-size: 1.2rem;
+    }
+}
+
+/* Très petits écrans : tout l'en-tête est conservé, simplement réduit. */
+@media (max-width: 430px) {
+    .topbar {
+        gap: 0.2rem;
+        padding-inline: var(--space-2);
+    }
+
+    /* L'horloge passe dans la feuille « Plus » : l'en-tête tient sur une seule ligne même
+       avec la recherche, la langue, « Nouveau », la déconnexion et les initiales. */
+    .topbar-info {
+        display: none;
+    }
+
+    .topbar__actions {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 0.2rem;
+    }
+
+    .topbar__actions .button--icon,
+    .topbar-search {
+        inline-size: 2.35rem;
+        min-inline-size: 2.35rem;
+        min-block-size: 2.35rem;
+    }
+
+    .language-switcher {
+        padding: 0.15rem;
+    }
+
+    .language-switcher__option {
+        min-inline-size: 1.55rem;
+        min-block-size: 1.8rem;
+        padding-inline: 0.2rem;
+        font-size: 0.65rem;
+    }
+
+    .topbar-info {
+        min-block-size: 2.35rem;
+        padding-inline: 0.3rem;
+        font-size: 0.68rem;
+    }
+
+    .topbar-info__clock strong {
+        font-size: 0.72rem;
+    }
+
+    .topbar-avatar {
+        inline-size: 2.3rem;
+        block-size: 2.3rem;
+        flex-basis: 2.3rem;
+        font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 390px) {
+    .app-content {
+        padding-inline: var(--space-3);
+    }
+
+    /* Les libellés restent lisibles (0,68 rem) : c'est la marge intérieure qui se réduit,
+       jamais la taille du texte (elle tombait à 0,55 rem, soit 8,8 px, en arabe aussi). */
+    .mobile-tabbar__link {
+        padding-inline: 0;
+        letter-spacing: -0.01em;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sidebar,
+    .topbar,
+    .sidebar-workspace,
+    .topbar-search,
+    .mobile-tabbar {
+        background: var(--color-surface-solid);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .app-shell.is-mobile-menu-open .sidebar {
+        background: var(--color-surface-solid);
+    }
+
+    .app-shell.is-mobile-menu-open .mobile-menu-backdrop {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

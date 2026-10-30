@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 176" role="img" aria-labelledby="title">
+  <title id="title">Illustration d'une liste de tâches vide</title>
+  <ellipse cx="120" cy="151" rx="72" ry="10" fill="#E8EEF9"/>
+  <rect x="67" y="27" width="105" height="121" rx="13" fill="#fff" stroke="#BDCCEB" stroke-width="2"/>
+  <rect x="97" y="20" width="45" height="17" rx="8.5" fill="#E8EDFF" stroke="#AFC2ED" stroke-width="2"/>
+  <path d="M86 61h10l3 3 6-7M112 61h42M86 88h10l3 3 6-7M112 88h42M86 115h10l3 3 6-7M112 115h31" fill="none" stroke="#7894CE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="184" cy="53" r="15" fill="#DFF9F4"/>
+  <path d="m177 53 5 5 9-10" fill="none" stroke="#08776E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="49" cy="57" r="8" fill="#FFF0E8"/>
+</svg>

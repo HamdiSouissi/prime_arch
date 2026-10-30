@@ -1,0 +1,103 @@
+@media print {
+    :root {
+        color-scheme: light;
+    }
+
+    html,
+    body {
+        min-block-size: auto;
+        color: #25334B;
+        background: #FFFFFF !important;
+        background-image: none !important;
+        font-size: 10pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body::before,
+    .sidebar,
+    .topbar,
+    .dev-banner,
+    .mobile-tabbar,
+    .mobile-menu-backdrop,
+    .page-header__actions,
+    .button,
+    .btn,
+    button,
+    .toast-region,
+    .no-print {
+        display: none !important;
+    }
+
+    .app-shell {
+        display: block;
+        min-block-size: auto;
+    }
+
+    .app-content {
+        inline-size: 100%;
+        max-inline-size: none;
+        margin-block: 0;
+        margin-inline: 0;
+        padding-block: 0;
+        padding-inline: 0;
+    }
+
+    .card,
+    .glass-card,
+    .panel,
+    .table-wrap,
+    .project-card,
+    .stat-card,
+    .document-preview {
+        break-inside: avoid;
+        border: 1px solid #D4DCE8 !important;
+        background: #FFFFFF !important;
+        box-shadow: none !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+
+    .data-table {
+        min-inline-size: 0;
+        font-size: 9pt;
+    }
+
+    /* Le confinement de mise en page sert à l'écran mobile : à l'impression, un tableau
+       doit pouvoir se répartir sur plusieurs pages. */
+    .table-wrap,
+    .document-lines-wrap {
+        contain: none;
+        overflow: visible;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding-block: 6pt;
+        padding-inline: 8pt;
+    }
+
+    a {
+        color: #25334B;
+        text-decoration: none;
+    }
+
+    .page-header__title,
+    .section-heading__title {
+        color: #25334B !important;
+    }
+
+    .badge {
+        border: 1px solid #9AA8BA;
+        color: #25334B !important;
+        background: #FFFFFF !important;
+    }
+
+    .document-preview {
+        max-inline-size: none;
+        margin-block: 0;
+        margin-inline: 0;
+        padding-block: 0;
+        padding-inline: 0;
+    }
+}

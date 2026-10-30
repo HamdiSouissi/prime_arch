@@ -1,0 +1,17 @@
+{
+    "slug": "relances-factures",
+    "name": "Relances de factures",
+    "version": "1.1.0",
+    "description": "Balance âgée, règles de relance et courriers à copier-coller pour recouvrer les factures impayées.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\RelancesFactures",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "migrations": "migrations",
+    "lang": "lang",
+    "enabled_by_default": false
+}

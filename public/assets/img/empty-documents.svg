@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 176" role="img" aria-labelledby="title">
+  <title id="title">Illustration de documents</title>
+  <ellipse cx="120" cy="153" rx="75" ry="10" fill="#E8EEF9"/>
+  <path d="M74 29h62l28 28v75a8 8 0 0 1-8 8H74a8 8 0 0 1-8-8V37a8 8 0 0 1 8-8Z" fill="#F7F9FF" stroke="#B8C9ED" stroke-width="2"/>
+  <path d="M136 29v29h28" fill="#E7EEFF" stroke="#B8C9ED" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M86 77h55M86 90h55M86 103h38" stroke="#8EA9E2" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="157" cy="121" r="23" fill="#DFF9F4" stroke="#9DE2D8" stroke-width="2"/>
+  <path d="m147 121 7 7 13-15" fill="none" stroke="#08776E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="55" cy="47" r="9" fill="#FFF0E8"/>
+  <path d="M55 43v8M51 47h8" stroke="#A83D1B" stroke-width="2" stroke-linecap="round"/>
+</svg>

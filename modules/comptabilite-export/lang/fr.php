@@ -1,0 +1,87 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Traductions françaises du module « comptabilite-export ».
+ */
+return [
+    'comptabilite.title' => 'Journaux comptables',
+    'comptabilite.index_title' => 'Journaux comptables',
+    'comptabilite.eyebrow' => 'Comptabilité et export',
+    'comptabilite.intro' => 'Journal des ventes et journal des encaissements du mois, avec TVA, timbre et retenue, prêts pour l’expert-comptable.',
+    'comptabilite.readonly_notice' => 'Module en lecture seule : il ne crée, ne modifie et ne supprime aucune donnée, et n’applique aucun taux. Les montants proviennent exclusivement des documents émis et des règlements enregistrés dans le noyau.',
+    'comptabilite.unknown_journal' => 'Journal inconnu : choisissez « ventes » ou « encaissements ».',
+
+    'comptabilite.period_title' => 'Période comptable',
+    'comptabilite.period_range' => 'Du :from au :to',
+    'comptabilite.year' => 'Exercice',
+    'comptabilite.month' => 'Mois',
+    'comptabilite.month.1' => 'Janvier',
+    'comptabilite.month.2' => 'Février',
+    'comptabilite.month.3' => 'Mars',
+    'comptabilite.month.4' => 'Avril',
+    'comptabilite.month.5' => 'Mai',
+    'comptabilite.month.6' => 'Juin',
+    'comptabilite.month.7' => 'Juillet',
+    'comptabilite.month.8' => 'Août',
+    'comptabilite.month.9' => 'Septembre',
+    'comptabilite.month.10' => 'Octobre',
+    'comptabilite.month.11' => 'Novembre',
+    'comptabilite.month.12' => 'Décembre',
+
+    'comptabilite.statistics' => 'Synthèse de la période',
+    'comptabilite.stat.sales' => 'Ventes TTC',
+    'comptabilite.stat.documents_note' => ':count pièce(s) émise(s)',
+    'comptabilite.stat.vat' => 'TVA collectée',
+    'comptabilite.stat.stamp_note' => 'Timbre : :amount',
+    'comptabilite.stat.payments' => 'Encaissements',
+    'comptabilite.stat.payments_note' => ':count règlement(s)',
+    'comptabilite.stat.outstanding' => 'Solde de la période',
+    'comptabilite.stat.outstanding_note' => 'Ventes TTC − encaissements',
+
+    'comptabilite.export_title' => 'Export pour l’expert-comptable',
+    'comptabilite.export_help' => 'Un fichier CSV par journal et par période, sans ressaisie ni recalcul.',
+    'comptabilite.export_sales' => 'Exporter le journal des ventes',
+    'comptabilite.export_payments' => 'Exporter le journal des encaissements',
+    'comptabilite.export_format' => 'CSV UTF-8, séparateur point-virgule, montants à trois décimales avec point décimal, formules de tableur neutralisées : le fichier s’importe directement dans un logiciel de comptabilité.',
+
+    'comptabilite.sales_title' => 'Journal des ventes',
+    'comptabilite.sales_help' => 'Factures et avoirs émis sur la période, par date d’émission. Les avoirs viennent en déduction.',
+    'comptabilite.sales_note' => 'Les brouillons et les pièces annulées ne figurent pas au journal. Le total TTC correspond au total imprimé sur chaque pièce (HT + TVA + timbre − retenue).',
+    'comptabilite.empty_sales_title' => 'Aucune pièce émise sur la période',
+    'comptabilite.empty_sales_help' => 'Émettez une facture ou un avoir pour alimenter le journal des ventes.',
+
+    'comptabilite.vat_title' => 'Ventilation de la TVA',
+    'comptabilite.vat_help' => 'Base et taxe regroupées par taux, avoirs déduits. Aucun taux n’est appliqué par le module.',
+    'comptabilite.no_vat' => 'Aucune TVA à ventiler sur la période.',
+    'comptabilite.vat_rate' => 'Taux de TVA',
+    'comptabilite.vat' => 'TVA',
+
+    'comptabilite.payments_title' => 'Journal des encaissements',
+    'comptabilite.payments_help' => 'Règlements enregistrés sur la période, par date de paiement.',
+    'comptabilite.empty_payments_title' => 'Aucun encaissement sur la période',
+    'comptabilite.empty_payments_help' => 'Les règlements saisis sur les factures apparaîtront ici.',
+
+    'comptabilite.date' => 'Date',
+    'comptabilite.document' => 'Pièce',
+    'comptabilite.type' => 'Type',
+    'comptabilite.client' => 'Client',
+    'comptabilite.tax_id' => 'Matricule fiscal',
+    'comptabilite.project' => 'Projet',
+    'comptabilite.base' => 'Base HT',
+    'comptabilite.stamp' => 'Timbre',
+    'comptabilite.withholding' => 'Retenue',
+    'comptabilite.total' => 'Total TTC',
+    'comptabilite.totals' => 'Totaux',
+    'comptabilite.method' => 'Mode de règlement',
+    'comptabilite.reference' => 'Référence',
+    'comptabilite.amount' => 'Montant',
+
+    'comptabilite.document_type.invoice' => 'Facture',
+    'comptabilite.document_type.credit_note' => 'Avoir',
+    'comptabilite.method.cash' => 'Espèces',
+    'comptabilite.method.bank_transfer' => 'Virement',
+    'comptabilite.method.cheque' => 'Chèque',
+    'comptabilite.method.card' => 'Carte',
+    'comptabilite.method.other' => 'Autre',
+];

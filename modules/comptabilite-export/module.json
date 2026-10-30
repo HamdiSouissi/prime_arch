@@ -1,0 +1,16 @@
+{
+    "slug": "comptabilite-export",
+    "name": "Journaux comptables",
+    "version": "1.1.0",
+    "description": "Journal des ventes et journal des encaissements par période, avec TVA, timbre et retenue, exportables en CSV pour l’expert-comptable. Module en lecture seule : il ne crée ni ne modifie aucune donnée.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\ComptabiliteExport",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "lang": "lang",
+    "enabled_by_default": false
+}

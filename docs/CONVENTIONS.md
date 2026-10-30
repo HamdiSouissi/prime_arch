@@ -7,7 +7,7 @@
 - Docblocs et commentaires **en français**. Noms de classes/méthodes/variables en anglais.
 - Requêtes SQL uniquement préparées (PDO) ; jamais de concaténation de données utilisateur.
 - Échapper toute sortie HTML avec `e()`. Tout formulaire POST contient `csrf_field()`.
-- Montants : stockés en `DECIMAL(15,3)` ; affichés avec `money_format_tnd()`.
+- Montants : stockés en `DECIMAL` avec trois décimales ; dimensionner la précision au domaine (coûts cumulés et honoraires de projet en `DECIMAL(18,3)`). Utiliser `money_format_tnd()` avec les chaînes décimales PDO pour préserver le millime, sans calcul monétaire en `float`.
 - Aucun paramètre tunisien en dur : utiliser `config('tunisia.…')`.
 
 ## Base de données
@@ -20,7 +20,56 @@
 
 - Apple HIG : sobriété, hiérarchie claire, cibles tactiles ≥ 44 px, mode sombre automatique.
 - Propriétés CSS logiques (`margin-inline`, `padding-inline`) pour le RTL (arabe).
-- Navigation : toute destination à 3 clics maximum.
+- Navigation : **toute destination à trois clics maximum** depuis n'importe quel écran, sur ordinateur
+  comme sur mobile.
+
+## Navigation — la règle des trois clics
+
+Le budget est une contrainte de CI, pas une intention : `tests/NavigationDepthTest.php` reconstruit
+le graphe de navigation à partir du code réel et échoue si une destination du noyau dépasse trois
+clics depuis `/dashboard`.
+
+**Ce que le test lit :** les routes GET de `config/routes.php`, la vue rendue par chaque méthode de
+contrôleur (la 404 de garde est ignorée), les liens des vues (`url()` et `href` absolus), la coquille
+commune — menu latéral, barre d'onglets, feuille « Plus », actions rapides, palette — et les entrées
+de menu déclarées par les modules.
+
+**Comment il compte :** un lien de liste (`/clients/` suivi d'un identifiant) désigne **une** fiche,
+pas ses sous-écrans ; `/clients/{id}/edit` doit donc être atteint depuis la fiche. La coquille coûte
+un clic depuis n'importe quelle page authentifiée. Les routes techniques (`/api/`, `/health`,
+`/media/`, `/module-assets/`, `/design/`, `*/export-csv`, `*/import-template`) ne sont pas des
+destinations et restent hors budget.
+
+**Conséquences pratiques :**
+
+- une nouvelle page du noyau doit être liée depuis une liste, une fiche, le menu ou une action
+  rapide ; sans lien entrant, le test échoue avec la mention « inatteignable » ;
+- un écran ajouté à une fiche (édition, PDF, pièce jointe) se compte depuis cette fiche : deux
+  niveaux de sous-écran maximum sous une liste ;
+- un module déclare ses entrées de menu dans `Module.php` (`'url' => url('/permis')`) en même temps
+  que ses routes ; le test vérifie que chaque entrée correspond à une route déclarée et qu'aucun
+  module ne revendique deux fois le même chemin ;
+- pour une exception assumée, préférer un changement de structure (passerelle contextuelle, action
+  sur la fiche) à un ajout dans la liste d'exclusions.
+
+Exécution : `composer test` ou `vendor/bin/phpunit --filter NavigationDepthTest`.
+
+## Modules
+
+- Un module vit dans son dossier : `module.json`, `Module.php`, `migrations/`, `views/`, `lang/`.
+- Il n’écrit **jamais** dans une table du cœur (`clients`, `projects`, `documents`, `time_entries`,
+  `users`, …) : il lit, et stocke ses données dans ses propres tables.
+- Ses tables partagent un préfixe unique, distinct de celui des autres modules.
+- Il déclare ses routes dans `routes()` (les chemins fixes avant `{id}`), son entrée de menu par
+  `sidebar.items` (clé `section` facultative) et ses traductions en FR **et** AR.
+- Chaque vue rendue par `View::renderModule()` doit exister ; chaque entrée de menu doit
+  correspondre à une route déclarée par ce module.
+- Une entrée de menu déclare `available` d’après un droit du noyau : une destination fermée au
+  rôle est **omise** du menu (latéral, feuille mobile, palette), jamais grisée ni pointée vers
+  une autre page.
+
+Ces règles sont vérifiées par `tests/ModulesIntegrityTest.php` (manifestes, parité FR/AR, vues,
+tables du cœur, préfixes) et `tests/NavigationDepthTest.php` (menus, profondeur).
 
 ## Traductions
 

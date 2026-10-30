@@ -1,0 +1,17 @@
+{
+    "slug": "metre-quantitatif",
+    "name": "Métré et DQE",
+    "version": "1.1.0",
+    "description": "Avant-métré par lots, détail quantitatif estimatif, marges et bibliothèque de prix réutilisable.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\MetreQuantitatif",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "migrations": "migrations",
+    "lang": "lang",
+    "enabled_by_default": false
+}

@@ -3,18 +3,26 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Core\Auth;
 use App\Core\Request;
 use App\Core\Response;
 
 /**
- * Exige un utilisateur connecté.
- * Contrat : handle() retourne null pour laisser passer, ou une Response pour interrompre.
+ * Exige une session authentifiée avant l'accès à une route privée.
  */
 final class AuthMiddleware
 {
     public function handle(Request $request): ?Response
     {
-        // TODO : si pas de session utilisateur → Response::redirect(url('login'))
-        return null;
+        if (Auth::check()) {
+            return null;
+        }
+
+        $loginUrl = url('/login');
+        $returnPath = $request->path();
+        if ($returnPath !== '' && str_starts_with($returnPath, '/') && !str_starts_with($returnPath, '//')) {
+            $loginUrl .= '?return=' . rawurlencode($returnPath);
+        }
+        return Response::redirect($loginUrl);
     }
 }
