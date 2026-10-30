@@ -30,8 +30,12 @@
     .u-grid { display: grid; }
     .u-hidden { display: none !important; }
 
-    .stack-md { display: grid; gap: var(--space-4); }
-    .stack-lg { display: grid; gap: var(--space-6); }
+    /* `minmax(0, 1fr)` : une piste de grille ne peut jamais être élargie par le contenu
+       d'un enfant (tableau large, ligne de tableau sans retour). Sans cela, un tableau de
+       42 rem élargit la carte au-delà de l'écran et la page se met à défiler
+       horizontalement, ce qui décale la barre d'onglets fixe sur mobile. */
+    .stack-md { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+    .stack-lg { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
     .cluster { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
     .cluster--between { justify-content: space-between; }
 

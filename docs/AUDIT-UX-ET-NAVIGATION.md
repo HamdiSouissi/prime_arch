@@ -385,3 +385,38 @@ rien du module. Le module ne crée aucune permission : il réutilise les droits 
 | Routes ciblées par les passerelles | 9 sur 9 existantes, paramètres de requête conformes |
 | Modules livrés touchés | 9 (ajout d'une passerelle et de son compteur, aucun changement de comportement) |
 
+---
+
+## 9. Correctif — barre du bas sur les pages de liste
+
+Signalement : en mode téléphone, la barre de navigation du bas est mal placée ou coupée sur Clients et Documents,
+alors qu'elle est correcte ailleurs.
+
+### 9.1 Diagnostic
+
+Le balisage est identique partout : le layout rend la même barre (`partials/tabbar.php`), avec les six mêmes entrées
+depuis `ViewContext`, hors du conteneur de page. Rendu réel comparé page par page (Clients, Documents, Projets) :
+le `<nav class="mobile-tabbar">` est un enfant direct de `<body>`, mêmes six entrées, seul l'`aria-current` change.
+La différence ne pouvait donc venir que du **contenu**, et les deux pages incriminées sont précisément les deux seules
+pages principales qui contiennent un tableau large (`.data-table`, `min-inline-size: 42rem`) placé dans une carte-pile
+`.card.stack-md`, laquelle est une grille à piste implicite `auto`.
+
+Sur un écran de 390 px, la piste `auto` prend la largeur minimale du contenu (672 px) : la carte déborde, le document
+devient plus large que la fenêtre, et la barre `position: fixed` — ancrée au viewport — apparaît décalée puis coupée
+sur le côté dès que la page se déplace horizontalement (comportement classique de Safari iOS).
+
+### 9.2 Correctif
+
+| Fichier | Correctif |
+|---|---|
+| `public/assets/css/app.css` | `.stack-md` et `.stack-lg` déclarent `grid-template-columns: minmax(0, 1fr)` : la piste se comprime au lieu de suivre le contenu |
+| `public/assets/css/components.css` | `.table-wrap` porte `inline-size: 100%`, `max-inline-size: 100%` et `min-inline-size: 0` à toutes les largeurs |
+| `public/assets/css/layout.css` | `.mobile-tabbar` porte `inline-size: 100%` et `max-inline-size: 100%` : la barre suit la fenêtre, jamais la largeur du contenu |
+| `public/assets/css/base.css` | `html` rejoint `body` avec `overflow-x: clip` : le document ne défile jamais horizontalement, même sur les navigateurs qui ne propagent pas le clip du `body` |
+
+### 9.3 Garde-fous
+
+`tests/ResponsiveLayoutTest.php` ajoute `testWideTablesNeverWidenThePageNorMoveTheFixedTabbar` : clip horizontal sur
+`html` et `body`, piste `minmax(0, 1fr)` sur les piles, conteneur de tableau compressible, barre ancrée au viewport.
+11 assertions, rejouées hors PHPUnit : 11 / 11.
+

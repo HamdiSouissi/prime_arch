@@ -11,7 +11,8 @@ use PHPUnit\Framework\TestCase;
  * Trois régressions sont figées ici :
  *  - l'en-tête compressait ses actions jusqu'à faire disparaître le sélecteur de langue ;
  *  - la bulle d'initiales n'était qu'un bouton décoratif, sans destination ;
- *  - la barre d'onglets mobile dépendait du nombre d'entrées fournies par la page.
+ *  - la barre d'onglets mobile dépendait du nombre d'entrées fournies par la page ;
+ *  - un tableau large élargissait la page et décalait cette barre fixe sur mobile.
  *
  * Les tests sont statiques (lecture du balisage et des feuilles de style) : ils
  * s'exécutent sans navigateur et sans base de données.
@@ -159,6 +160,42 @@ final class ResponsiveLayoutTest extends TestCase
         // Les tableaux larges défilent dans leur propre conteneur, pas dans la page.
         self::assertStringContainsString('overflow-x: auto', self::lastRule($components, '.table-wrap'));
         self::assertStringContainsString('max-inline-size: 100%', self::lastRule($pages, '.table-wrap'));
+    }
+
+    /**
+     * Une page qui contient un tableau large (Clients, Documents) ne doit jamais déborder
+     * horizontalement : c'est ce débordement qui décalait et coupait la barre d'onglets fixe
+     * sur mobile, alors que son balisage est identique partout.
+     */
+    public function testWideTablesNeverWidenThePageNorMoveTheFixedTabbar(): void
+    {
+        $base = self::file('/public/assets/css/base.css');
+        $layout = self::file('/public/assets/css/layout.css');
+        $components = self::file('/public/assets/css/components.css');
+        $utilities = self::file('/public/assets/css/app.css');
+
+        // 1. Ni le document ni le corps de page ne défilent horizontalement.
+        self::assertMatchesRegularExpression('/html\s*\{[^}]*overflow-x:\s*clip/s', $base);
+        self::assertMatchesRegularExpression('/body\s*\{[^}]*overflow-x:\s*clip/s', $base);
+
+        // 2. Les cartes empilées sont des grilles : la piste se comprime au lieu de suivre
+        //    le contenu (un tableau de 42 rem élargissait la carte sur les pages de liste).
+        foreach (['.stack-md', '.stack-lg'] as $selector) {
+            self::assertStringContainsString('minmax(0, 1fr)', self::lastRule($utilities, $selector), $selector);
+        }
+
+        // 3. Le tableau large défile dans son conteneur, pas dans la page.
+        $wrap = self::allRules($components, '.table-wrap');
+        self::assertStringContainsString('overflow-x: auto', $wrap);
+        self::assertStringContainsString('min-inline-size: 0', $wrap);
+        self::assertStringContainsString('max-inline-size: 100%', $wrap);
+
+        // 4. La barre reste ancrée à la fenêtre, pas à la largeur du contenu.
+        $tabbar = self::allRules($layout, '.mobile-tabbar');
+        self::assertStringContainsString('position: fixed', $tabbar);
+        self::assertStringContainsString('inset-inline: 0', $tabbar);
+        self::assertStringContainsString('inline-size: 100%', $tabbar);
+        self::assertStringContainsString('max-inline-size: 100%', $tabbar);
     }
 
     public function testProfileLabelsAreTranslatedInBothLanguages(): void

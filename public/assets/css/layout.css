@@ -708,6 +708,10 @@ a.topbar-avatar:focus-visible {
         z-index: 35;
         inset-block-end: 0;
         inset-inline: 0;
+        /* La barre suit la largeur de la fenêtre, jamais celle du contenu : elle reste
+           collée au bas de l'écran même si une page contient un élément large. */
+        inline-size: 100%;
+        max-inline-size: 100%;
         display: grid;
         /* Une colonne par entrée : la barre reste identique (mêmes 6 entrées,
            même ordre) quelle que soit la page. */

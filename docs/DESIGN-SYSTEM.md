@@ -178,8 +178,14 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
   d’entrées, avec `env(safe-area-inset-*)`. Le layout fournit la même navigation partout, y compris sur les pages 404
   qui n’en déclarent pas. Ordre des plans : contenu `app-content` < `.page-header` collant (12) < `.topbar` (15) <
   `.mobile-tabbar` (35) < voile du menu (40) < tiroir latéral (45).
-- **Aucun débordement horizontal** : `body { overflow-x: clip }`, `.app-content` et ses blocs sont en `min-inline-size: 0`
-  sous 760 px, les grilles et formulaires repassent en une colonne. Les tableaux larges (`.data-table`, `.audit-table`,
-  `.document-lines`) gardent une largeur minimale mais défilent **dans** `.table-wrap` : la page, elle, ne défile jamais
-  horizontalement.
+- **Aucun débordement horizontal** : `html` et `body` portent `overflow-x: clip` ; `.app-content` et ses blocs sont en
+  `min-inline-size: 0` sous 760 px ; les grilles et formulaires repassent en une colonne. Les tableaux larges
+  (`.data-table`, `.audit-table`, `.document-lines`) gardent une largeur minimale mais défilent **dans** `.table-wrap` :
+  la page, elle, ne défile jamais horizontalement. `.table-wrap` porte `inline-size: 100%`, `max-inline-size: 100%` et
+  `min-inline-size: 0` à toutes les largeurs.
+- **Les piles (`.stack-md`, `.stack-lg`) déclarent `grid-template-columns: minmax(0, 1fr)`.** Une piste de grille
+  implicite (`auto`) peut être élargie par le contenu d'un enfant : une carte de liste contenant un tableau de 42 rem
+  devenait plus large que l'écran, la page se mettait à défiler horizontalement et la barre d'onglets fixe, ancrée au
+  viewport, apparaissait décalée et coupée sur téléphone. La piste explicite `minmax(0, 1fr)` la rend compressible.
+  `.mobile-tabbar` porte en complément `inline-size: 100%` et `max-inline-size: 100%`.
 - **Tests de garde** : `tests/ResponsiveLayoutTest.php` vérifie ces invariants sur le balisage et les feuilles de style.

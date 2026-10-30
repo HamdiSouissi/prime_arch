@@ -1,6 +1,9 @@
 html {
     scroll-behavior: smooth;
     scroll-padding-block-start: 5.5rem;
+    /* Aucune page ne défile horizontalement : c'est ce défilement qui décalait la barre
+       d'onglets fixe sur mobile. */
+    overflow-x: clip;
 }
 
 body {
