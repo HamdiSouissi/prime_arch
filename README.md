@@ -35,13 +35,27 @@ Le script `create-admin.php` demande le nom, le courriel et un mot de passe de 1
 
 En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_KEY` aléatoire, `APP_URL` en HTTPS, et placer uniquement `public/` derrière le serveur web.
 
-## Phase 1 livrée pour validation
+## Phases livrées pour validation
+
+### Phase 1 — Fondation
 
 - Connexion/déconnexion, sessions renouvelées à l'authentification, CSRF, mots de passe Argon2id et limite de tentatives.
 - Rôles Administrateur, Architecte, Collaborateur, Comptable et Lecture seule, avec contrôle d'accès côté serveur.
 - Réglages du cabinet et valeurs fiscales configurables ; téléversement sécurisé de logo JPEG/PNG/WebP privé.
 - Référentiel bilingue des 24 gouvernorats et des 264 délégations ; 4 853 localités/codes postaux importés depuis un jeu communautaire sous licence MIT (2015), avec conservation des cas de délégation ambigus et validation à quatre chiffres.
 - Commandes d'installation, graines idempotentes et pages de fondation.
+
+### Phase 2 — Clients et projets
+
+- Fiches clients, contacts, adresses, projets associés, phases configurables, recherche, filtres, champs personnalisés typés et pages de détail.
+
+### Phase 3 — Temps, coûts et avancement
+
+- Saisies de temps par utilisateur/projet/phase, taux horaires historisés, budgets d'heures et avancement pondéré.
+- Coûts et indicateurs de rentabilité calculés en `DECIMAL` à trois décimales, avec des permissions financières distinctes des permissions `time.*`.
+- Détails de fonctionnement et mise en service dans `docs/TIME-COSTS.md`.
+
+Avant utilisation de la phase 3, les migrations `0006` à `0008` doivent avoir été exécutées avec succès ; les rôles intégrés doivent ensuite être resynchronisés avec `php bin/seed.php`. L’état d’exécution des migrations ne peut pas être déduit du code seul.
 
 Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
 
@@ -58,4 +72,5 @@ composer test
 - `docs/DATA-SOURCES.md` — attribution des données géographiques et limites de validation.
 - `docs/DESIGN-SYSTEM.md` — tokens, composants, accessibilité et RTL.
 - `docs/ROADMAP.md` — phases et critères de progression.
+- `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
 - `docs/MODULES.md` — format cible des modules.

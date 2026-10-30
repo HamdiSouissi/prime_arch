@@ -8,8 +8,10 @@ use App\Controllers\DashboardController;
 use App\Controllers\DesignController;
 use App\Controllers\GeographyController;
 use App\Controllers\HomeController;
+use App\Controllers\HourlyRateController;
 use App\Controllers\MediaController;
 use App\Controllers\ProjectController;
+use App\Controllers\TimeEntryController;
 use App\Controllers\ProjectPhaseController;
 use App\Controllers\SettingsController;
 use App\Controllers\UserController;
@@ -46,9 +48,19 @@ return function (Router $router): void {
     $router->post('/projects', [ProjectController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}/edit', [ProjectController::class, 'edit'], [AuthMiddleware::class]);
     $router->post('/projects/{id}', [ProjectController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/plan', [ProjectController::class, 'savePlan'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/phases/{assignmentId}/progress', [ProjectController::class, 'updatePhaseProgress'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/phases/{assignmentId}', [ProjectController::class, 'updatePhase'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
 
+    $router->get('/time', [TimeEntryController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/time/new', [TimeEntryController::class, 'createForm'], [AuthMiddleware::class]);
+    $router->post('/time', [TimeEntryController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/time/{id}/edit', [TimeEntryController::class, 'edit'], [AuthMiddleware::class]);
+    $router->post('/time/{id}', [TimeEntryController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+
+    $router->get('/settings/hourly-rates', [HourlyRateController::class, 'index'], [AuthMiddleware::class]);
+    $router->post('/settings/hourly-rates', [HourlyRateController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/settings/project-phases', [ProjectPhaseController::class, 'index'], [AuthMiddleware::class]);
     $router->post('/settings/project-phases', [ProjectPhaseController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/settings/project-phases/{id}', [ProjectPhaseController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);

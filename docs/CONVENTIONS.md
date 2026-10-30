@@ -7,7 +7,7 @@
 - Docblocs et commentaires **en français**. Noms de classes/méthodes/variables en anglais.
 - Requêtes SQL uniquement préparées (PDO) ; jamais de concaténation de données utilisateur.
 - Échapper toute sortie HTML avec `e()`. Tout formulaire POST contient `csrf_field()`.
-- Montants : stockés en `DECIMAL(15,3)` ; affichés avec `money_format_tnd()`.
+- Montants : stockés en `DECIMAL` avec trois décimales ; dimensionner la précision au domaine (coûts cumulés et honoraires de projet en `DECIMAL(18,3)`). Utiliser `money_format_tnd()` avec les chaînes décimales PDO pour préserver le millime, sans calcul monétaire en `float`.
 - Aucun paramètre tunisien en dur : utiliser `config('tunisia.…')`.
 
 ## Base de données

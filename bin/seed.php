@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Précharge les rôles et données géographiques de base : php bin/seed.php
+ * Synchronise les rôles et référentiels et initialise les poids de phases : php bin/seed.php
  */
 if (PHP_SAPI !== 'cli') {
     exit('Ce script doit être lancé en ligne de commande.');

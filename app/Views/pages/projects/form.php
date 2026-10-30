@@ -61,6 +61,24 @@ $formAction = $isEdit ? url('/projects/' . $projectId) : url('/projects');
         </div>
     </section>
 
+    <section class="form-section" aria-labelledby="project-budget-title">
+        <div class="section-heading"><div><h2 class="section-heading__title" id="project-budget-title"><?= e(__('projects.budget_title')) ?></h2><p class="section-heading__note"><?= e(__('projects.budget_hours_help')) ?></p></div></div>
+        <div class="form-grid">
+            <div class="field">
+                <label class="field__label" for="project-budget-hours"><?= e(__('projects.budget_hours')) ?></label>
+                <input class="field__control" id="project-budget-hours" name="budget_hours" type="number" min="0" step="0.01" inputmode="decimal" value="<?= e($values['budget_hours'] ?? '') ?>">
+                <?php if (!empty($errors['budget_hours'])): ?><span class="field__hint field__hint--error"><?= e($errors['budget_hours']) ?></span><?php endif; ?>
+            </div>
+            <?php if (!empty($canManageFee)): ?>
+                <div class="field">
+                    <label class="field__label" for="project-fee-budget"><?= e(__('projects.fee_budget_amount')) ?></label>
+                    <input class="field__control" id="project-fee-budget" name="fee_budget_amount" type="number" min="0" step="0.001" inputmode="decimal" value="<?= e($values['fee_budget_amount'] ?? '') ?>">
+                    <?php if (!empty($errors['fee_budget_amount'])): ?><span class="field__hint field__hint--error"><?= e($errors['fee_budget_amount']) ?></span><?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+
     <section class="form-section" aria-labelledby="project-address-title">
         <div class="section-heading"><div><h2 class="section-heading__title" id="project-address-title"><?= e(__('projects.site_address')) ?></h2><p class="section-heading__note"><?= e(__('address.help')) ?></p></div></div>
         <?php View::partial('partials/tunisian-address-fields', [

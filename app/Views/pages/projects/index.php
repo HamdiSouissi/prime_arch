@@ -36,14 +36,17 @@ $pageCount = max(1, (int) ($pageCount ?? 1));
         ]) ?>
     <?php else: ?>
         <div class="table-wrap"><table class="data-table">
-            <thead><tr><th scope="col"><?= e(__('projects.name')) ?></th><th scope="col"><?= e(__('clients.client')) ?></th><th scope="col"><?= e(__('projects.location')) ?></th><th scope="col"><?= e(__('project_phases.current')) ?></th><th scope="col"><?= e(__('projects.dates')) ?></th><th scope="col"><?= e(__('projects.status.label')) ?></th></tr></thead>
+            <thead><tr><th scope="col"><?= e(__('projects.name')) ?></th><th scope="col"><?= e(__('clients.client')) ?></th><th scope="col"><?= e(__('projects.location')) ?></th><th scope="col"><?= e(__('project_phases.current')) ?></th><th scope="col"><?= e(__('projects.weighted_progress')) ?></th><?php if (!empty($canViewTime) || !empty($canViewCosts)): ?><th scope="col"><?= e(__('projects.actual_hours')) ?></th><?php endif; ?><?php if (!empty($canViewCosts)): ?><th scope="col"><?= e(__('projects.actual_cost')) ?></th><?php endif; ?><th scope="col"><?= e(__('projects.dates')) ?></th><th scope="col"><?= e(__('projects.status.label')) ?></th></tr></thead>
             <tbody>
                 <?php foreach ($projects as $project): ?>
                     <tr>
                         <td><a class="table-primary" href="<?= e(url('/projects/' . (int) $project['id'])) ?>"><span class="table-primary__text"><strong class="table-primary__name"><?= e($project['name']) ?></strong><span class="table-primary__meta"><?= e($project['reference'] ?? '') ?><?= !empty($project['project_type']) ? ' · ' . e($project['project_type']) : '' ?></span></span></a></td>
                         <td><?php if (Auth::can('clients.view')): ?><a href="<?= e(url('/clients/' . (int) $project['client_id'])) ?>"><?= e($project['client_name']) ?></a><?php else: ?><?= e($project['client_name']) ?><?php endif; ?></td>
                         <td><?= e(implode(', ', array_filter([(string) ($project['city'] ?? ''), (string) ($project['postal_code'] ?? '')]))) ?: '—' ?></td>
-                        <td><?= e($project['current_phase'] !== '' ? $project['current_phase'] : '—') ?></td>
+                        <td><?= e(!empty($project['current_phase']) ? $project['current_phase'] : '—') ?></td>
+                        <td><?= e(number_format((float) ($project['weighted_progress'] ?? 0), 1, ',', ' ')) ?> %</td>
+                        <?php if (!empty($canViewTime) || !empty($canViewCosts)): ?><td><?= e((string) ($project['actual_hours'] ?? '0.00')) ?> h<?php if (!empty($project['budget_hours'])): ?> / <?= e((string) $project['budget_hours']) ?> h<?php endif; ?></td><?php endif; ?>
+                        <?php if (!empty($canViewCosts)): ?><td><?= e(money_format_tnd((string) ($project['actual_cost'] ?? '0.000'))) ?><?php if (!empty($project['fee_budget_amount'])): ?><span class="table-primary__meta"><?= e(money_format_tnd((string) $project['fee_budget_amount'])) ?> <?= e(__('projects.fee_budget')) ?></span><?php endif; ?></td><?php endif; ?>
                         <td><?php if ($project['start_date'] !== null && $project['start_date'] !== ''): ?><?= e(date('d/m/Y', strtotime((string) $project['start_date']))) ?><?php else: ?><?= e(__('projects.not_scheduled')) ?><?php endif; ?></td>
                         <td><span class="badge badge--<?= e(match ($project['status']) { 'active' => 'info', 'completed' => 'success', 'on_hold' => 'warning', 'cancelled' => 'neutral', default => 'neutral' }) ?>"><?= e(__('projects.status.' . $project['status'])) ?></span></td>
                     </tr>

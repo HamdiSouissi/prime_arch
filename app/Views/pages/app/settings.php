@@ -15,6 +15,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
     'subtitle' => 'Identité du cabinet, adresse et paramètres applicables aux futurs documents.',
     'eyebrow' => 'Espace sécurisé',
     'secondaryAction' => !empty($canManageUsers) ? ['label' => __('settings.admin_users'), 'icon' => 'people', 'url' => url('/admin/users')] : null,
+    'primaryAction' => !empty($canViewRates) ? ['label' => __('finance.rates_title'), 'icon' => 'currency', 'url' => url('/settings/hourly-rates')] : null,
 ]) ?>
 
 <?php if (!empty($notice)): ?>

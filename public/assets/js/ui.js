@@ -369,6 +369,26 @@ function initGeographySelects() {
     });
 }
 
+function initTimeEntryPhases() {
+    const form = document.querySelector("[data-time-entry-form]");
+    const projectSelect = form?.querySelector("[data-time-project-select]");
+    const phaseSelect = form?.querySelector("[data-time-phase-select]");
+    if (!projectSelect || !phaseSelect) return;
+
+    const syncPhases = () => {
+        Array.from(phaseSelect.options).forEach((option) => {
+            if (!option.value) return;
+            const available = option.dataset.projectId === projectSelect.value;
+            option.hidden = !available;
+            option.disabled = !available;
+        });
+        const selected = phaseSelect.selectedOptions[0];
+        if (selected?.disabled) phaseSelect.value = "";
+    };
+    projectSelect.addEventListener("change", syncPhases);
+    syncPhases();
+}
+
 function initVatRatesSelect() {
     const ratesInput = document.querySelector("[name='vat_rates']");
     const defaultSelect = document.querySelector("[name='vat_default']");
@@ -547,5 +567,6 @@ export function initUI() {
     initTimer();
     initUpload();
     initGeographySelects();
+    initTimeEntryPhases();
     initVatRatesSelect();
 }

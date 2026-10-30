@@ -39,6 +39,7 @@ final class CoreSeeder
                 $delegationGovernorateIsos
             );
             $projectPhaseCount = $this->seedProjectPhases((array) config('tunisia.architecture.phases', []));
+            $projectPhaseWeightCount = $this->initializeProjectPhaseWeights();
             $this->pdo->commit();
         } catch (\Throwable $error) {
             if ($this->pdo->inTransaction()) {
@@ -53,6 +54,7 @@ final class CoreSeeder
             'delegations' => count($delegationIds),
             'postal_codes' => $postalCodeCount,
             'project_phases' => $projectPhaseCount,
+            'project_phase_weights' => $projectPhaseWeightCount,
         ];
     }
 
@@ -61,19 +63,28 @@ final class CoreSeeder
         $roles = require BASE_PATH . '/database/seeds/roles.php';
         $find = $this->pdo->prepare('SELECT id FROM roles WHERE name = :name LIMIT 1');
         $insert = $this->pdo->prepare('INSERT INTO roles (name, label, permissions) VALUES (:name, :label, :permissions)');
+        $update = $this->pdo->prepare('UPDATE roles SET label = :label, permissions = :permissions WHERE id = :id');
         $count = 0;
         foreach ($roles as $role) {
             $name = (string) $role['slug'];
             $find->execute(['name' => $name]);
-            if ($find->fetchColumn() !== false) {
-                continue;
-            }
-            $insert->execute([
+            $id = $find->fetchColumn();
+            $parameters = [
                 'name' => $name,
                 'label' => (string) $role['label'],
                 'permissions' => json_encode($role['permissions'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            ];
+            if ($id === false) {
+                $insert->execute($parameters);
+                $count++;
+                continue;
+            }
+            // Les rôles intégrés suivent les permissions de la définition versionnée du noyau.
+            $update->execute([
+                'id' => (int) $id,
+                'label' => $parameters['label'],
+                'permissions' => $parameters['permissions'],
             ]);
-            $count++;
         }
         return $count;
     }
@@ -186,6 +197,40 @@ final class CoreSeeder
                 $count++;
             }
             $position += 10;
+        }
+        return $count;
+    }
+
+    private function initializeProjectPhaseWeights(): int
+    {
+        $projectIds = $this->pdo->query(
+            'SELECT project_id FROM project_phase_assignments
+             GROUP BY project_id HAVING MIN(weight_percent) = 0 AND MAX(weight_percent) = 0'
+        )->fetchAll(PDO::FETCH_COLUMN);
+        $phases = $this->pdo->prepare(
+            'SELECT id FROM project_phase_assignments WHERE project_id = :project_id ORDER BY sort_order, id'
+        );
+        $update = $this->pdo->prepare(
+            'UPDATE project_phase_assignments SET weight_percent = :weight_percent
+             WHERE id = :id AND weight_percent = 0'
+        );
+        $count = 0;
+        foreach ($projectIds as $projectId) {
+            $phases->execute(['project_id' => (int) $projectId]);
+            $phaseIds = array_map('intval', $phases->fetchAll(PDO::FETCH_COLUMN));
+            if ($phaseIds === []) {
+                continue;
+            }
+            $baseWeight = intdiv(10000, count($phaseIds));
+            $remainder = 10000 % count($phaseIds);
+            foreach ($phaseIds as $index => $phaseId) {
+                $weightUnits = $baseWeight + ($index < $remainder ? 1 : 0);
+                $update->execute([
+                    'id' => $phaseId,
+                    'weight_percent' => sprintf('%d.%02d', intdiv($weightUnits, 100), $weightUnits % 100),
+                ]);
+                $count += $update->rowCount();
+            }
         }
         return $count;
     }

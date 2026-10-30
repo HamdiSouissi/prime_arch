@@ -62,11 +62,25 @@ if (!function_exists('money_format_tnd')) {
     function money_format_tnd(float|int|string $amount): string
     {
         $c = Config::get('tunisia.currency', []);
-        $formatted = number_format(
+        $decimals = (int) ($c['decimals'] ?? 3);
+        $decimalSeparator = (string) ($c['decimal_separator'] ?? ',');
+        $thousandsSeparator = (string) ($c['thousands_separator'] ?? ' ');
+        $formatted = null;
+        if (is_string($amount) && preg_match('/^(-?)(\\d+)(?:\\.(\\d+))?$/', trim($amount), $parts)
+            && strlen($parts[3] ?? '') <= $decimals
+        ) {
+            $whole = ltrim($parts[2], '0');
+            $whole = $whole === '' ? '0' : $whole;
+            $whole = preg_replace('/\\B(?=(\\d{3})+(?!\\d))/', $thousandsSeparator, $whole) ?? $whole;
+            $fraction = str_pad((string) ($parts[3] ?? ''), $decimals, '0');
+            $formatted = ($parts[1] === '-' ? '-' : '') . $whole
+                . ($decimals > 0 ? $decimalSeparator . $fraction : '');
+        }
+        $formatted ??= number_format(
             (float) $amount,
-            (int) ($c['decimals'] ?? 3),
-            (string) ($c['decimal_separator'] ?? ','),
-            (string) ($c['thousands_separator'] ?? ' ')
+            $decimals,
+            $decimalSeparator,
+            $thousandsSeparator
         );
         $symbol = (string) ($c['symbol'] ?? 'DT');
         return ($c['symbol_after'] ?? true) ? "{$formatted} {$symbol}" : "{$symbol} {$formatted}";

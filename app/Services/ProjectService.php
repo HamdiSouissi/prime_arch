@@ -43,6 +43,8 @@ final class ProjectService
             'postal_code' => trim(self::string($input['postal_code'] ?? '')),
             'start_date' => trim(self::string($input['start_date'] ?? '')),
             'target_end_date' => trim(self::string($input['target_end_date'] ?? '')),
+            'budget_hours' => trim(self::string($input['budget_hours'] ?? '')),
+            'fee_budget_amount' => trim(self::string($input['fee_budget_amount'] ?? '')),
         ];
         $errors = [];
 
@@ -74,6 +76,18 @@ final class ProjectService
         }
         $this->validateDate($values['start_date'], 'start_date', $errors);
         $this->validateDate($values['target_end_date'], 'target_end_date', $errors);
+        $budgetHours = self::normalizeDecimal($values['budget_hours'], 2, 7);
+        if ($values['budget_hours'] !== '' && $budgetHours === null) {
+            $errors['budget_hours'] = __('projects.invalid_budget');
+        } elseif ($budgetHours !== null) {
+            $values['budget_hours'] = $budgetHours;
+        }
+        $feeBudget = self::normalizeDecimal($values['fee_budget_amount'], 3, 15);
+        if ($values['fee_budget_amount'] !== '' && $feeBudget === null) {
+            $errors['fee_budget_amount'] = __('projects.invalid_budget');
+        } elseif ($feeBudget !== null) {
+            $values['fee_budget_amount'] = $feeBudget;
+        }
         if ($values['start_date'] !== '' && $values['target_end_date'] !== ''
             && $values['target_end_date'] < $values['start_date']
         ) {
@@ -125,6 +139,17 @@ final class ProjectService
         if ($values['postal_code'] !== '' && !preg_match((string) config('tunisia.postal_code.pattern'), $values['postal_code'])) {
             $errors['postal_code'] = __('projects.invalid');
         }
+    }
+
+    private static function normalizeDecimal(string $value, int $scale, int $maxWholeDigits): ?string
+    {
+        $value = str_replace(',', '.', trim($value));
+        if (!preg_match('/^\\d{1,' . $maxWholeDigits . '}(?:\\.\\d{1,' . $scale . '})?$/', $value)) {
+            return null;
+        }
+        [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
+        $whole = ltrim($whole, '0');
+        return ($whole === '' ? '0' : $whole) . '.' . str_pad($fraction, $scale, '0');
     }
 
     private static function string(mixed $value): string

@@ -29,7 +29,7 @@
 
 ## Initialisation des données
 
-`php bin/migrate.php` applique les migrations versionnées. `php bin/seed.php` insère les rôles, les 24 gouvernorats, les 264 délégations, le jeu postal fourni et les phases de projet initiales définies dans `config/tunisia.php`, de façon répétable. Les données postales sont des suggestions communautaires anciennes et non officielles ; les cas sans rapprochement sûr restent rattachés au seul gouvernorat (voir `docs/DATA-SOURCES.md`). Les repositories utilisent PDO et des requêtes préparées ; les valeurs de champs personnalisés des clients et projets sont stockées dans des colonnes JSON et validées à partir des définitions actives.
+`php bin/migrate.php` applique les migrations versionnées. `php bin/seed.php` synchronise les rôles intégrés, les 24 gouvernorats, les 264 délégations, le jeu postal fourni et les phases de projet initiales définies dans `config/tunisia.php`, de façon répétable ; après la migration de la phase 3, il initialise aussi à parts égales les poids des phases de projets existants qui n'en ont pas encore. Les données postales sont des suggestions communautaires anciennes et non officielles ; les cas sans rapprochement sûr restent rattachés au seul gouvernorat (voir `docs/DATA-SOURCES.md`). Les repositories utilisent PDO et des requêtes préparées ; les valeurs de champs personnalisés des clients et projets sont stockées dans des colonnes JSON et validées à partir des définitions actives.
 
 ## Dossiers
 
