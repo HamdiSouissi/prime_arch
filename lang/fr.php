@@ -159,7 +159,6 @@ return [
     'role.read_only' => 'Lecture seule',
     'common.enabled' => 'Actif',
     'common.disabled' => 'Inactif',
-    'common.not_available' => 'Disponible dans une phase ultérieure',
     'common.choose' => 'Choisir…',
     'common.filter' => 'Filtrer',
     'common.clear' => 'Effacer les filtres',

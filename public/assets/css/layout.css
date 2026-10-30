@@ -188,17 +188,6 @@
     text-decoration: none;
 }
 
-.sidebar-link.is-disabled {
-    cursor: not-allowed;
-    opacity: 0.58;
-}
-
-.sidebar-link.is-disabled:hover {
-    transform: none;
-    border-color: transparent;
-    background: transparent;
-}
-
 .sidebar-link[aria-current="page"] {
     border-color: rgba(47, 107, 255, 0.12);
     color: var(--color-primary-strong);

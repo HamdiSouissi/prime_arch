@@ -14,7 +14,12 @@ use App\Services\NavigationSections;
  * @var string $activeNav
  * @var array{name:string,location:string,plan:string} $workspace
  */
-$menuSections = NavigationSections::group(is_array($items ?? null) ? $items : []);
+$menuItems = is_array($items ?? null) ? $items : [];
+$menuItems = array_values(array_filter(
+    $menuItems,
+    static fn (array $item): bool => !array_key_exists('available', $item) || (bool) $item['available']
+));
+$menuSections = NavigationSections::group($menuItems);
 ?>
 <dialog class="mobile-menu" id="mobile-more-menu" aria-labelledby="mobile-more-title" data-mobile-menu>
     <div class="mobile-menu__header">

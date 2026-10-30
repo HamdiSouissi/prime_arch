@@ -16,6 +16,13 @@ use App\Services\NavigationSections;
  * @var array{name:string,location:string,plan:string} $workspace
  */
 $navigationItems = is_array($items ?? null) ? $items : [];
+// Une entrée dont la destination est fermée au rôle est retirée du menu (et non grisée) :
+// le menu ne montre jamais qu'une page existe pour la refuser ensuite. Le filtre s'applique
+// avant le regroupement pour ne pas laisser de titre de section orphelin.
+$navigationItems = array_values(array_filter(
+    $navigationItems,
+    static fn (array $item): bool => !array_key_exists('available', $item) || (bool) $item['available']
+));
 $sections = NavigationSections::group($navigationItems);
 
 $brandUrl = !empty($showDesignNav)
@@ -25,21 +32,13 @@ $brandUrl = !empty($showDesignNav)
 /** Rendu d'une entrée de menu ; le même balisage sert à toutes les sections. */
 $renderItem = static function (array $item) use ($activeNav): void {
     $isCurrent = ($item['key'] ?? '') === ($activeNav ?? '');
-    $isAvailable = !array_key_exists('available', $item) || (bool) $item['available'];
     $label = (string) ($item['label'] ?? '');
     ?>
     <li>
-        <?php if ($isAvailable): ?>
-            <a class="sidebar-link" href="<?= e($item['url']) ?>"<?= $isCurrent ? ' aria-current="page"' : '' ?> title="<?= e($label) ?>">
-                <svg class="icon sidebar-icon" aria-hidden="true" focusable="false"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($item['icon'] ?? 'grid') ?>"></use></svg>
-                <span class="sidebar-link__label"><?= e($label) ?></span>
-            </a>
-        <?php else: ?>
-            <span class="sidebar-link is-disabled" aria-disabled="true" title="<?= e(__('common.not_available')) ?>">
-                <svg class="icon sidebar-icon" aria-hidden="true" focusable="false"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($item['icon'] ?? 'grid') ?>"></use></svg>
-                <span class="sidebar-link__label"><?= e($label) ?></span>
-            </span>
-        <?php endif; ?>
+        <a class="sidebar-link" href="<?= e($item['url']) ?>"<?= $isCurrent ? ' aria-current="page"' : '' ?> title="<?= e($label) ?>">
+            <svg class="icon sidebar-icon" aria-hidden="true" focusable="false"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($item['icon'] ?? 'grid') ?>"></use></svg>
+            <span class="sidebar-link__label"><?= e($label) ?></span>
+        </a>
     </li>
     <?php
 };

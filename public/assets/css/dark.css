@@ -44,11 +44,6 @@
         box-shadow: none;
     }
 
-    .sidebar-link.is-disabled:hover {
-        border-color: transparent;
-        background: transparent;
-    }
-
     .topbar {
         border-block-end-color: var(--color-border);
     }

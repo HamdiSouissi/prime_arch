@@ -159,7 +159,6 @@ return [
     'role.read_only' => 'للقراءة فقط',
     'common.enabled' => 'نشط',
     'common.disabled' => 'غير نشط',
-    'common.not_available' => 'متاح في مرحلة لاحقة',
     'common.choose' => 'اختر…',
     'common.filter' => 'تصفية',
     'common.clear' => 'مسح عوامل التصفية',

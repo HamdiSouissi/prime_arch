@@ -24,20 +24,16 @@ final class ViewContext
             || Auth::can('documents.payments.manage') || Auth::can('documents.templates.manage')
             || Auth::can('settings.manage');
         $rateSettingsAvailable = Auth::can('finance.rates.view') || Auth::can('finance.rates.manage');
-        $settingsAvailable = Auth::can('settings.view')
-            || Auth::can('users.manage')
-            || Auth::can('clients.manage')
-            || Auth::can('projects.configure')
-            || $rateSettingsAvailable;
-        $settingsUrl = Auth::can('settings.manage')
-            ? url('/settings')
-            : ($rateSettingsAvailable
-                ? url('/settings/hourly-rates')
-                : (Auth::can('settings.view')
-                    ? url('/settings')
-                    : (Auth::can('projects.configure')
-                        ? url('/settings/project-phases')
-                        : (Auth::can('users.manage') ? url('/settings/modules') : url('/settings/custom-fields')))));
+        // Le menu ne propose que des destinations réellement ouvertes au rôle : « Réglages »
+        // mène aux réglages du cabinet, aux taux horaires ou aux comptes. Les écrans de
+        // configuration métier (phases, champs personnalisés, modèles de documents) restent
+        // attachés à leur page Clients / Projets / Documents et n'apparaissent pas ici.
+        $settingsUrl = self::settingsDestination(
+            Auth::can('settings.view') || Auth::can('settings.manage'),
+            $rateSettingsAvailable,
+            Auth::can('users.manage')
+        );
+        $settingsAvailable = $settingsUrl !== null;
         // Chaque entrée du noyau déclare sa section : le menu se lit par métier et non plus
         // comme une liste unique (lot 3). Une extension fait de même, sinon elle rejoint
         // « Modules externes ».
@@ -47,7 +43,7 @@ final class ViewContext
             ['label' => __('nav.projects'), 'short' => __('nav.projects'), 'url' => url('/projects'), 'icon' => 'briefcase', 'key' => 'projects', 'available' => $projectsAvailable, 'section' => NavigationSections::PRODUCTION],
             ['label' => __('nav.time'), 'short' => __('nav.time'), 'url' => url('/time'), 'icon' => 'clock', 'key' => 'time', 'available' => $timeAvailable, 'section' => NavigationSections::PRODUCTION],
             ['label' => __('nav.documents'), 'short' => __('nav.documents_short'), 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => $documentsAvailable, 'section' => NavigationSections::FINANCE],
-            ['label' => __('nav.settings'), 'short' => __('nav.settings'), 'url' => $settingsUrl, 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable, 'section' => NavigationSections::ADMINISTRATION],
+            ['label' => __('nav.settings'), 'short' => __('nav.settings'), 'url' => $settingsUrl ?? '', 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable, 'section' => NavigationSections::ADMINISTRATION],
         ];
 
         // Actions rapides réelles : les mêmes destinations que les écrans de création, jamais
@@ -118,7 +114,7 @@ final class ViewContext
                 'initials' => self::initials((string) ($user['name'] ?? '')),
             ],
             // La bulle d'initiales ouvre les réglages accessibles, sinon le tableau de bord.
-            'profileUrl' => $settingsAvailable ? $settingsUrl : url('/dashboard'),
+            'profileUrl' => $settingsUrl ?? url('/dashboard'),
             'authenticated' => true,
             'showAppActions' => true,
             'showDesignActions' => false,
@@ -130,6 +126,27 @@ final class ViewContext
             'searchEndpoint' => url('/api/recherche'),
             'quickActions' => $quickActions,
         ];
+    }
+
+    /**
+     * Destination du bouton « Réglages » pour la combinaison de droits donnée.
+     *
+     * Renvoie `null` quand le rôle n'a accès à aucun écran de réglages : l'entrée est alors
+     * absente du menu, plutôt que grisée ou dirigée vers une page interdite.
+     */
+    public static function settingsDestination(bool $cabinetSettings, bool $hourlyRates, bool $accounts): ?string
+    {
+        if ($cabinetSettings) {
+            return url('/settings');
+        }
+        if ($hourlyRates) {
+            return url('/settings/hourly-rates');
+        }
+        if ($accounts) {
+            return url('/settings/modules');
+        }
+
+        return null;
     }
 
     private static function initials(string $name): string

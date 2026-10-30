@@ -64,6 +64,9 @@ Exécution : `composer test` ou `vendor/bin/phpunit --filter NavigationDepthTest
   `sidebar.items` (clé `section` facultative) et ses traductions en FR **et** AR.
 - Chaque vue rendue par `View::renderModule()` doit exister ; chaque entrée de menu doit
   correspondre à une route déclarée par ce module.
+- Une entrée de menu déclare `available` d’après un droit du noyau : une destination fermée au
+  rôle est **omise** du menu (latéral, feuille mobile, palette), jamais grisée ni pointée vers
+  une autre page.
 
 Ces règles sont vérifiées par `tests/ModulesIntegrityTest.php` (manifestes, parité FR/AR, vues,
 tables du cœur, préfixes) et `tests/NavigationDepthTest.php` (menus, profondeur).

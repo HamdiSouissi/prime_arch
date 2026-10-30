@@ -164,8 +164,10 @@ final class NavigationShellTest extends TestCase
             }
         }
 
-        self::assertSame('chart', $icons['chart'] ?? null, 'CRM doit utiliser « chart ».');
-        self::assertSame('timer', $icons['timer'] ?? null, 'Planning doit utiliser « timer ».');
+        // La table associe une icône au module qui la porte : les deux paires historiquement
+        // confondues sont figées ici (CRM ≠ Planning dans le rail).
+        self::assertSame('crm-opportunites', $icons['chart'] ?? null, 'CRM doit utiliser « chart ».');
+        self::assertSame('planning-equipe', $icons['timer'] ?? null, 'Planning doit utiliser « timer ».');
     }
 
     /** Chaque module range son entrée dans une section connue. */

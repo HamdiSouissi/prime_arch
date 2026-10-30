@@ -23,7 +23,9 @@ final class SettingsController
 {
     public function edit(Request $request): Response
     {
-        if (!Auth::can('settings.view')) {
+        // `settings.manage` implique la lecture : sans cela, un rôle autorisé à enregistrer
+        // les réglages ne pourrait pas ouvrir l'écran qu'il a le droit de modifier.
+        if (!Auth::can('settings.view') && !Auth::can('settings.manage')) {
             return Response::html(__('common.forbidden'), 403);
         }
 

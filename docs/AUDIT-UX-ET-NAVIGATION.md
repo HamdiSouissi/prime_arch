@@ -152,6 +152,12 @@ donc « remonter » coûte toujours **1 clic**. Effort : **S**.
   (aujourd'hui `people` pour Clients **et** CRM, `calendar` pour Fiscal **et** Planning) →
   `crm-opportunites` → `chart`, `planning-equipe` → `timer`.
 - Entrée « Aujourd'hui » en haut (échéances + tâches), facultative.
+- **Droits et menu (correctif)** : une entrée n'est rendue que si sa page est ouverte au rôle.
+  Auparavant, « Réglages » renvoyait un architecte vers `/settings/project-phases` en soulignant
+  « Projets », et les rôles sans réglages voyaient une entrée grisée menant à un refus. Le bouton
+  ne subsiste que pour les écrans de réglages réellement accessibles (cabinet, taux horaires,
+  comptes) ; les configurations métier (phases, champs personnalisés, modèles de documents)
+  restent atteintes depuis Clients, Projets et Documents.
 
 Effort : **S/M**. Gain : 18 entrées redeviennent lisibles et toutes atteignables.
 
