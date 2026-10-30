@@ -19,9 +19,17 @@ return [
     // Monnaie : le dinar tunisien se divise en 1000 millimes (3 décimales).
     'currency' => [
         'code'                => 'TND',
+        // Symbole par défaut (français) et symbole arabe ; `money_format_tnd()` choisit
+        // selon la langue active, avec repli sur `symbol`.
         'symbol'              => 'DT',
+        'symbols'             => [
+            'fr' => 'DT',
+            'ar' => 'د.ت',
+        ],
         'decimals'            => 3,
         'decimal_separator'   => ',',
+        // Une espace simple est convertie en espace insécable par le formateur : le montant
+        // reste un seul bloc de chiffres et ne se réordonne pas en écriture de droite à gauche.
         'thousands_separator' => ' ',
         'symbol_after'        => true,
     ],

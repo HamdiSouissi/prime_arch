@@ -1100,7 +1100,8 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 .metric-card__icon--success { color: var(--color-success); background: var(--color-success-tint); }
 .metric-card__icon--info { color: var(--color-info); background: var(--color-info-tint); }
 .metric-card__value { overflow-wrap: anywhere; color: var(--color-ink); font-size: clamp(1.2rem, 2vw, 1.8rem); font-weight: 750; font-variant-numeric: tabular-nums; }
-.metric-card__value--currency { font-size: clamp(1rem, 1.55vw, 1.45rem); }
+/* Montant + devise sur une seule ligne : jamais de coupure entre les chiffres et le symbole. */
+.metric-card__value--currency { font-size: clamp(1rem, 1.55vw, 1.45rem); white-space: nowrap; unicode-bidi: isolate; }
 .metric-card__meta { color: var(--color-ink-tertiary); font-size: var(--font-size-caption); }
 
 .filter-bar {
@@ -1113,7 +1114,7 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 .field--search { min-inline-size: 12rem; }
 .table-link { color: var(--color-primary-strong); font-weight: 750; }
 .table-meta { display: block; margin-block-start: 0.2rem; color: var(--color-ink-tertiary); font-size: var(--font-size-caption); }
-.u-numeric { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.u-numeric { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; unicode-bidi: isolate; }
 .empty-state__copy { max-inline-size: 38rem; color: var(--color-ink-secondary); font-size: var(--font-size-footnote); }
 
 .form-feedback--info {

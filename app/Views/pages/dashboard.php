@@ -7,7 +7,7 @@ $stats = [
     ['label' => 'Projets en cours', 'value' => '12', 'icon' => 'briefcase', 'tone' => 'blue', 'trend' => '+2', 'note' => 'vs. mois dernier'],
     ['label' => 'Clients actifs', 'value' => '28', 'icon' => 'people', 'tone' => 'turquoise', 'trend' => '+4', 'note' => 'sur les 30 derniers jours'],
     ['label' => 'Heures cette semaine', 'value' => '31,5 h', 'icon' => 'clock', 'tone' => 'coral', 'trend' => '+8 %', 'note' => 'par rapport à la cible'],
-    ['label' => 'Honoraires facturés', 'value' => '48 750,000 DT', 'icon' => 'currency', 'tone' => 'mint', 'trend' => '+12 %', 'note' => 'ce trimestre'],
+    ['label' => 'Honoraires facturés', 'value' => money_format_tnd('48750.000'), 'icon' => 'currency', 'tone' => 'mint', 'trend' => '+12 %', 'note' => 'ce trimestre'],
 ];
 $projects = [
     ['name' => 'Villa contemporaine · Sidi Bou Saïd', 'client' => 'Famille Ben Salem', 'value' => 76, 'tone' => ''],

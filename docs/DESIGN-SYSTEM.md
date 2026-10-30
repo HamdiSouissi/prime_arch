@@ -151,3 +151,11 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
   le passage à `dir="rtl"` reste correct sans feuille de style dédiée.
 - Les messages produits côté navigateur sont exposés par `app/Views/partials/i18n.php` (JSON `#app-i18n`) et lus dans
   `public/assets/js/ui.js` via la fonction `t()`.
+### Montants et devise en arabe
+
+- Toujours passer par `money_format_tnd()` : jamais de `number_format()` ni de « DT » codé en dur dans une vue.
+- Le séparateur de milliers est une espace insécable (U+00A0, classe bidi `CS`) convertie automatiquement : une espace
+  simple (classe `WS`) coupe le nombre en plusieurs blocs que l'algorithme bidi réordonne (`2 380,000` devenait `380,000 2`).
+- Le symbole suit la langue active via `config('tunisia.currency.symbols')` : `DT` en français, `د.ت` en arabe ; il est
+  placé après le montant dans l'ordre logique, ce qui correspond au sens de lecture droite à gauche.
+- Les montants sont formatés depuis la chaîne `DECIMAL` d'origine (pas de conversion en flottant) pour conserver les millimes.
