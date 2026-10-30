@@ -205,13 +205,13 @@ l’objet de la revue de sécurité dédiée demandée, consignée dans
 `docs/SECURITE-PORTAIL-CLIENT.md`.
 
 Critères de priorisation retenus : valeur quotidienne pour l’architecte > impact trésorerie >
-risque technique.
+risque technique. Les deux modules à **plus fort effet perçu** sont `suivi-chantier` (il crée de la
+matière que le cabinet n’a jamais eue) et `relances-factures` (il encaisse).
 
 Les trois vagues étant livrées, une **vague 4** de onze modules complémentaires (registre du
 courrier, réunions de chantier, appels d’offres, pilotage, notes de frais, marchés de travaux,
 sous-traitance, litiges, parc matériel, données personnelles, veille urbanisme) est proposée dans
-`docs/MODULE-PROPOSALS-VAGUE-4.md`, avec le même cadre technique. Les deux modules à **plus fort effet perçu** sont `suivi-chantier` (il crée de la
-matière que le cabinet n’a jamais eue) et `relances-factures` (il encaisse).
+`docs/MODULE-PROPOSALS-VAGUE-4.md`, avec le même cadre technique et les mêmes garde-fous.
 
 ---
 
