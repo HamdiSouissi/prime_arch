@@ -67,6 +67,21 @@ SET postal.governorate_id = COALESCE(postal.governorate_id, delegation.governora
 WHERE postal.delegation_id IS NOT NULL
   AND (postal.governorate_id IS NULL OR postal.source_delegation = '');
 
+-- La clé composite historique sert aussi à la clé étrangère delegation_id.
+-- Crée d'abord un index dédié pour pouvoir retirer l'ancienne clé unique sans casser cette FK.
+SET @has_postal_delegation_index = (
+    SELECT COUNT(*) FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'postal_codes' AND INDEX_NAME = 'idx_postal_codes_delegation'
+);
+SET @postal_sql = IF(
+    @has_postal_delegation_index = 0,
+    'ALTER TABLE postal_codes ADD INDEX idx_postal_codes_delegation (delegation_id)',
+    'SET @postal_noop = 0'
+);
+PREPARE prime_arch_postal_stmt FROM @postal_sql;
+EXECUTE prime_arch_postal_stmt;
+DEALLOCATE PREPARE prime_arch_postal_stmt;
+
 -- Remplace l'ancienne clé, si elle existe, par la clé qui conserve le libellé source.
 SET @has_postal_locality_index = (
     SELECT COUNT(*) FROM information_schema.STATISTICS
