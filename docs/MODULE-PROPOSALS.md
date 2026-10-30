@@ -1,0 +1,211 @@
+# Propositions de modules installables
+
+Ce document décrit les extensions que je propose de développer pour Prime Arch, dans le cadre
+technique réel du gestionnaire de modules (voir `docs/MODULES.md`) et pour un cabinet
+d’architecture tunisien : missions d’architecte, permis de bâtir, DCE, suivi de chantier,
+honoraires en millimes, TVA, timbre fiscal et retenue à la source.
+
+---
+
+## 1. Ce qu’un module peut faire aujourd’hui
+
+| Capacité | État | Remarque |
+|---|---|---|
+| Routes, contrôleurs, vues privées | Oui | `routes(Router $router)` + `View::renderModule()` |
+| Tables propres (migrations SQL) | Oui | Préfixer par le slug : `permis_batir_*` |
+| Traductions FR/AR | Oui | `lang/fr.php` + `lang/ar.php`, clés préfixées |
+| CSS/JS/images privés | Oui | `/module-assets/<slug>?file=css/module.css` |
+| Entrée de menu latéral | Oui | Filtre `sidebar.items` |
+| Événements | Oui | `module.installed/activated/deactivated/booting/booted` |
+| **Bloc dans une fiche existante** (client, projet, document) | **Non** | Aucun hook de rendu dans le noyau |
+| **Nouvelle permission** | **Non** | Permissions figées par `database/seeds/roles.php`, pas d’écran d’édition |
+| **Entrée dans la barre d’onglets mobile** | **Non** | La barre doit rester identique partout (6 entrées noyau) |
+| **Tâche planifiée** (relances, échéances) | **Non** | Aucun ordonnanceur ; seulement des actions à l’ouverture d’un écran |
+| **Envoi de courriel** | **Non** | Aucun service de messagerie dans le noyau |
+| Modification des PDF du noyau | Non | `DocumentPdfService` non hookable |
+
+**Conséquence de conception :** un module est aujourd’hui une **section autonome** de
+l’application (ses écrans, ses tables, son entrée de menu), pas une extension qui s’insère dans
+les écrans du noyau. Les propositions ci-dessous respectent cette contrainte ; celles qui en
+auraient besoin signalent le prérequis correspondant.
+
+---
+
+## 2. Prérequis noyau (petites évolutions à faire d’abord)
+
+Ces ajouts sont légers mais débloquent l’essentiel de la valeur des modules.
+
+| Réf. | Évolution | Pourquoi | Effort |
+|---|---|---|---|
+| **P1** | Filtres de rendu : `project.detail.sections`, `client.detail.sections`, `document.detail.actions`, `dashboard.cards` | Permettre à un module d’afficher un panneau dans une fiche existante (sinon l’architecte doit changer d’écran) | S |
+| **P2** | Registre de permissions : filtre `permissions.registry` + écran de rôle affichant les capacités des modules | Sans cela, un module ne peut pas être restreint par rôle (il doit réutiliser `projects.view`, etc.) | M |
+| **P3** | Service de messagerie : `Mailer` + file d’attente `mail_queue` + filtre `mail.transports` | Indispensable aux relances, au portail client et aux notifications d’échéance | M |
+| **P4** | Commande CLI `bin/console module:run <slug> <tâche>` + exemple de cron documenté | Échéances, relances, purges ; sans cela un module ne peut agir qu’à l’ouverture d’un écran | S |
+| **P5** | Convention de stockage privé `storage/modules/<slug>/files/` + helper de dépôt/validation (MIME, taille, anti-lien) | Éviter que chaque module réinvente (et casse) le téléversement | S |
+| **P6** | Filtre `document.pdf.variables` (données additionnelles dans les modèles PDF) | Ajouter des mentions propres à un module sur devis/factures | S |
+
+> **Décision à valider (P6/barre mobile) :** je recommande de **ne pas** ouvrir la barre
+> d’onglets aux modules : vous avez demandé qu’elle reste identique sur tous les onglets. Un
+> module s’atteint par le menu latéral et le tiroir mobile.
+
+---
+
+## 3. Catalogue proposé
+
+Effort : **S** ≈ 1–2 jours, **M** ≈ 3–5 jours, **L** ≈ 6–10 jours (hors tests d’intégration MySQL).
+
+### Vague 1 — Métier et trésorerie (à faire en premier)
+
+#### 1. `permis-batir` — Dossiers de permis de bâtir et suivi administratif — **L**
+**Problème :** le permis est le point de blocage administratif n° 1 du cabinet ; les délais
+conditionnent la facturation des phases `permis` et `dce`.
+
+- **Écrans :** liste filtrable (commune, état, année), fiche dossier, tableau de bord des délais.
+- **Contenu :** commune (référentiel gouvernorat/délégation déjà présent), n° et date de dépôt,
+  commission concernée, pièces déposées (checklist paramétrable), avis, demandes de complément,
+  arrêté obtenu/refusé, dates de retrait et de recours, historique horodaté.
+- **Tables :** `permis_batir_dossiers`, `permis_batir_pieces`, `permis_batir_evenements`.
+- **Rattachements :** `projects`, `clients`, `delegations`, `project_images` (plans déposés).
+- **Sorties :** bordereau de dépôt PDF (FR/AR), export CSV, relances d’échéance (via P3/P4).
+- **Permissions :** `projects.view` en lecture, `projects.manage` en écriture (en attendant P2).
+- **Risques :** les délais réglementaires varient selon la commune ; le module **ne code aucune
+  durée légale** : elles sont saisies par le cabinet dans les réglages du module.
+
+#### 2. `suivi-chantier` — Journal de chantier, réserves et réceptions — **L**
+**Problème :** la phase « direction de l’exécution » n’est suivie nulle part ; les PV et réserves
+vivent dans des courriels.
+
+- **Écrans :** journal chronologique par projet (visite, météo, effectif, observations, photos),
+  registre des réserves (émise / levée / contestée), PV de réception provisoire et définitive.
+- **Tables :** `chantier_journal`, `chantier_reserves`, `chantier_pv`, `chantier_journal_photos`.
+- **Rattachements :** `projects`, `project_phases`, `users`, stockage privé (photos).
+- **Sorties :** PV de réception PDF FR/AR, extrait de journal par période.
+- **Dépendance :** P5 (stockage).
+- **Valeur :** protège juridiquement le cabinet (preuve de visite et de réserve) et alimente la
+  facturation de la phase réception.
+
+#### 3. `relances-factures` — Relances et recouvrement — **M**
+**Problème :** les impayés sont visibles (paiements) mais rien ne les relance.
+
+- **Écrans :** balance âgée (0-30/31-60/61-90/+90 j), file de relances, historique par client.
+- **Contenu :** règles de relance paramétrables (délai, ton, modèle FR/AR), promesse de paiement,
+  marquage « litige », exclusion d’un client.
+- **Tables :** `relances_regles`, `relances_evenements`, `relances_modeles`.
+- **Rattachements :** `documents`, `document_payments`, `clients` — **lecture seule** du noyau.
+- **Dépendances :** P3 (envoi) et P4 (déclenchement). Sans elles, le module produit la liste et le
+  courriel à copier-coller : dégradation acceptable pour une V1.
+- **Gain :** le plus rapide à rentabiliser.
+
+### Vague 2 — Production et conformité
+
+#### 4. `metre-quantitatif` — Avant-métré, DQE et bibliothèque de prix — **L**
+- Lots et postes (gros œuvre, second œuvre, lots techniques), unités, quantités, prix unitaires,
+  totaux, marges ; bibliothèque de prix réutilisable ; export CSV et DQE PDF.
+- **Tables :** `metre_lots`, `metre_postes`, `metre_bibliotheque_prix`.
+- **Rattachements :** `projects` (et phase `dce`), `clients`.
+- **Intérêt :** nourrit l’estimation du coût des travaux, donc l’assiette des honoraires (module 5).
+- **Attention :** montants en `DECIMAL(15,3)`, jamais de flottant.
+
+#### 5. `honoraires-bareme` — Décompte des honoraires par mission — **M**
+- Barème **saisi par le cabinet** (assiette = coût des travaux, % par phase, missions partielles),
+  décompte par projet et par phase, génération d’un devis d’honoraires dans le noyau.
+- **Tables :** `bareme_missions`, `bareme_tranches`, `bareme_decomptes`.
+- **Rattachements :** `projects`, `project_phases`, `documents` (création de devis).
+- **Garde-fou :** aucun taux OAT/décret n’est codé en dur ni présenté comme validé ; l’écran
+  affiche un avertissement « barème à faire valider par l’OAT ».
+
+#### 6. `planning-equipe` — Charge et planning des collaborateurs — **M**
+- Vue semaine/mois par collaborateur (saisies de temps existantes + affectations prévisionnelles),
+  congés, détection de surcharge, comparaison budget d’heures / réalisé.
+- **Tables :** `planning_affectations`, `planning_conges`.
+- **Rattachements :** `users`, `projects`, `project_phases`, `time_entries` (lecture).
+
+#### 7. `conformite-oat` — Dossier professionnel et assurances — **S/M**
+- Inscription à l’OAT, carte professionnelle, RC professionnelle (échéances), formation continue,
+  bureaux d’études partenaires ; alertes d’expiration ; attestation d’assurance par projet.
+- **Tables :** `conformite_inscriptions`, `conformite_assurances`, `conformite_formations`.
+- **Valeur :** évite une suspension d’activité pour pièce expirée.
+
+### Vague 3 — Relation client et finance
+
+#### 8. `portail-client` — Espace client en lecture seule — **L**
+- Lien signé et expirable (sans création de compte) : avancement du projet, documents émis,
+  photos de chantier ; journal des consultations ; révocation immédiate.
+- **Tables :** `portail_jetons`, `portail_acces`.
+- **Sécurité :** routes publiques à jeton HMAC, expiration, limitation de débit, aucun index
+  exposé, `noindex` ; **à ne pas improviser** — je le propose en dernier de la vague, avec revue
+  de sécurité dédiée.
+
+#### 9. `fiscal-tn` — Échéancier et déclarations — **M**
+- Calendrier des obligations (TVA mensuelle/trimestrielle, retenue à la source, TCL), état
+  « à préparer / déposé / payé », récapitulatif par période, export CSV pour l’expert-comptable.
+- **Tables :** `fiscal_echeances`, `fiscal_declarations`.
+- **Garde-fou :** aucun taux ni périodicité imposés ; tout est paramétré et affiché comme
+  « à valider par l’expert-comptable ».
+
+#### 10. `comptabilite-export` — Journaux comptables — **S/M**
+- Journal des ventes par période (factures, avoirs, paiements, TVA, timbre, retenue), export CSV
+  compatible avec les logiciels utilisés en Tunisie ; un fichier par période et par journal.
+- **Aucune table** (lecture seule du noyau) : le module le moins risqué du catalogue.
+- **Valeur :** supprime la ressaisie et les erreurs de TVA.
+
+#### 11. `crm-opportunites` — Prospects et pipeline — **M**
+- Prospects (particulier/entreprise/organisme), origine, étape, relance prévue, conversion en
+  client + projet ; activités (appel, visite, envoi de devis).
+- **Tables :** `crm_opportunites`, `crm_activites`.
+- **Rattachements :** `clients`, `projects`, `documents`.
+
+#### 12. `notifications-mail` — Socle de messagerie — **M**
+- Réglages SMTP, modèles FR/AR, file d’attente, journal des envois et des échecs, test d’envoi.
+- **Tables :** `notifications_reglages`, `notifications_file`, `notifications_log`.
+- **Rôle :** module « socle » dont dépendent `relances-factures`, `portail-client` et
+  `fiscal-tn` (dépendances déclarées dans `requires.modules`).
+- **Décision requise :** `mail()` de PHP seul, client SMTP maison, ou dépendance Composer
+  autorisée. Sans accord, je pars sur **SMTP maison** (socket, STARTTLS, AUTH LOGIN/PLAIN,
+  zéro dépendance).
+
+#### 13. `ged-versions` — Versions et recherche documentaire — **M**
+- Dépôt de fichiers par projet/client avec versions, étiquettes, recherche par titre/étiquette,
+  rétention ; stockage privé hors `public/`.
+- **Tables :** `ged_documents`, `ged_versions`.
+- **Dépendance :** P5.
+
+---
+
+## 4. Ce qui ne doit **pas** être un module
+
+| Sujet | Pourquoi |
+|---|---|
+| Facturation électronique / TTN, mentions légales obligatoires | Le noyau doit garantir la conformité et l’immuabilité des documents émis |
+| Comptabilité générale, paie | Hors périmètre produit ; intégrations via export |
+| Thème, design system, navigation | Doit rester homogène et testé dans le noyau |
+| Moteur PDF / modèles de documents | Déjà couvert (mPDF FR/AR) ; à étendre par P6 si besoin |
+| Gestion des utilisateurs et des rôles | Sécurité du noyau |
+
+---
+
+## 5. Ordre de livraison recommandé
+
+1. **Prérequis** P1 → P5 (une itération courte, sans module).
+2. **Vague 1** : `permis-batir`, `suivi-chantier`, `relances-factures`.
+3. **Vague 2** : `metre-quantitatif`, `honoraires-bareme`, `planning-equipe`, `conformite-oat`.
+4. **Vague 3** : `comptabilite-export` (rapide), `fiscal-tn`, `crm-opportunites`,
+   `portail-client` (avec revue de sécurité), `ged-versions`.
+
+Critères de priorisation retenus : valeur quotidienne pour l’architecte > impact trésorerie >
+risque technique. Les deux modules à **plus fort effet perçu** sont `suivi-chantier` (il crée de la
+matière que le cabinet n’a jamais eue) et `relances-factures` (il encaisse).
+
+---
+
+## 6. Décisions à valider avant le premier module
+
+1. **Courriel** : SMTP maison (recommandé, zéro dépendance) ou dépendance Composer ?
+2. **Permissions de modules** : on implémente P2 (recommandé) ou on réutilise les permissions du
+   noyau pour la V1 ?
+3. **Portée linguistique des données** : libellés saisis une seule fois (FR) ou bilingues par
+   enregistrement (utile pour les PV et courriers arabes) ?
+4. **Cron** : accès à une tâche planifiée sur le serveur d’hébergement (nécessaire aux relances et
+   aux alertes d’échéance) ?
+5. **Multi-cabinet** : les modules doivent-ils être conçus pour une seule installation (comme
+   aujourd’hui) ou anticiper plusieurs cabinets partageant la base ?
