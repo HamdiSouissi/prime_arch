@@ -229,6 +229,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `honoraires-bareme` | 1.0.0 | `bareme_missions`, `bareme_tranches`, `bareme_decomptes` | `projects.view` / `projects.manage` (+ `documents.create` pour le devis) | Liste des projets, fiche honoraires (décomptes), barèmes et tranches par phase, détail du calcul, génération d’un devis d’honoraires en brouillon |
 | `planning-equipe` | 1.0.0 | `planning_affectations`, `planning_conges` | `time.view` / `time.manage` (+ `time.view_all` et `time.manage_all` pour toute l’équipe) | Grille semaine/mois de la charge par collaborateur, affectations prévisionnelles, congés, détection de surcharge à seuil réglable, budget d’heures par projet |
 | `conformite-oat` | 1.0.0 | `conformite_inscriptions`, `conformite_assurances`, `conformite_formations`, `conformite_partenaires` | `projects.view` / `projects.manage` (+ `settings.view` / `settings.manage`) | Dossier professionnel : inscription et carte OAT, responsabilité civile, formation continue, bureaux d’études partenaires, alertes d’échéance à horizon réglable, attestation d’assurance imprimable par projet |
+| `comptabilite-export` | 1.0.0 | Aucune (lecture seule) | `documents.view` ou `finance.view` (aucune écriture) | Journaux du mois : ventes (factures et avoirs, TVA, timbre, retenue) et encaissements, ventilation de la TVA par taux, export CSV par journal et par période |
 
 ### Points de vigilance (à valider par le cabinet)
 
@@ -276,6 +277,11 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
   prévues au catalogue, pour couvrir les **bureaux d’études partenaires** cités dans le même
   périmètre. Le module lit `users`, `projects` et `clients` et n’écrit que dans ses tables
   `conformite_*`.
+- **Journaux comptables** : `comptabilite-export` est **strictement en lecture** — aucune table,
+  aucune route d’écriture, aucun taux appliqué. Il reprend les montants figés dans les documents
+  émis (HT + TVA + timbre − retenue) et les règlements du noyau ; les brouillons et les pièces
+  annulées sont exclus. Le CSV utilise un point décimal et est destiné à être **relu par
+  l’expert-comptable** : le module ne produit ni déclaration, ni écriture comptable définitive.
 
 ### Installation
 
@@ -287,6 +293,7 @@ cd modules && zip -r metre-quantitatif-1.0.0.zip metre-quantitatif
 cd modules && zip -r honoraires-bareme-1.0.0.zip honoraires-bareme
 cd modules && zip -r planning-equipe-1.0.0.zip planning-equipe
 cd modules && zip -r conformite-oat-1.0.0.zip conformite-oat
+cd modules && zip -r comptabilite-export-1.0.0.zip comptabilite-export
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -296,5 +303,7 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 ### Préfixes de tables
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
-`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*` et `conformite_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
+`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*` et `conformite_*`.
+`comptabilite-export` ne crée aucune table : il ne lit que `documents`, `document_payments`,
+`clients` et `projects`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.
