@@ -34,6 +34,7 @@ $keys = [
     'js.module_deactivate_label',
     'js.action_done',
     'js.demo_only',
+    'js.copied',
 ];
 
 $payload = [];

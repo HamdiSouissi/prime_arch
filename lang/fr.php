@@ -849,4 +849,5 @@ return [
 
     'common.profile' => 'Profil',
     'common.profile_open' => 'ouvrir les réglages du profil',
+    'js.copied' => 'Texte copié dans le presse-papiers.',
 ];

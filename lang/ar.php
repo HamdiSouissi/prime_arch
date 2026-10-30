@@ -849,4 +849,5 @@ return [
 
     'common.profile' => 'الملف الشخصي',
     'common.profile_open' => 'فتح إعدادات الملف الشخصي',
+    'js.copied' => 'تم نسخ النص إلى الحافظة.',
 ];

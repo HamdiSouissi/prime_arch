@@ -635,6 +635,60 @@ function initUpload() {
     zone.addEventListener("drop", (event) => showFile(event.dataTransfer?.files?.[0], true));
 }
 
+/** Confirmation native avant une action destructive (formulaire portant data-confirm). */
+function initConfirmForms() {
+    document.querySelectorAll("form[data-confirm]").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+            const message = form.getAttribute("data-confirm") || "";
+            if (message !== "" && !window.confirm(message)) event.preventDefault();
+        });
+    });
+}
+
+/** Boutons d’impression génériques (procès-verbaux, bordereaux des modules). */
+function initPrintButtons() {
+    document.querySelectorAll("[data-print]").forEach((button) => {
+        button.addEventListener("click", () => window.print());
+    });
+}
+
+/** Copie le contenu d’un champ ciblé (brouillon de courrier, référence à transmettre). */
+function initCopyButtons() {
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const selector = button.getAttribute("data-copy") || "";
+            const target = selector ? document.querySelector(selector) : null;
+            if (!target) return;
+            const text = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+                ? target.value
+                : target.textContent ?? "";
+            let copied = false;
+            try {
+                await navigator.clipboard.writeText(text);
+                copied = true;
+            } catch {
+                // Repli hors HTTPS ou pour les navigateurs sans API presse-papiers.
+                if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+                    target.focus();
+                    target.select();
+                } else {
+                    const range = document.createRange();
+                    range.selectNodeContents(target);
+                    const selection = window.getSelection();
+                    selection?.removeAllRanges();
+                    selection?.addRange(range);
+                }
+                try {
+                    copied = document.execCommand("copy");
+                } catch {
+                    copied = false;
+                }
+            }
+            if (copied) showToast(t("js.copied", "Texte copié."));
+        });
+    });
+}
+
 export function initUI() {
     document.addEventListener("click", (event) => {
         const target = event.target;
@@ -803,4 +857,7 @@ export function initUI() {
     initGeographySelects();
     initTimeEntryPhases();
     initVatRatesSelect();
+    initPrintButtons();
+    initCopyButtons();
+    initConfirmForms();
 }
