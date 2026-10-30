@@ -84,10 +84,16 @@ final class DemoDataSeeder
     /**
      * Exécute toutes les étapes et renvoie un compte rendu chiffré.
      *
+     * Sauf `$force`, le seeder refuse une base qui contient déjà des comptes ou des clients
+     * réels : la démonstration ne doit jamais s'ajouter au dossier d'un cabinet.
+     *
      * @return array{version:int,today:string,steps:array<string,array{created:int,existing:int}>,warnings:array<int,string>}
      */
-    public function run(string $password, ?string $today = null): array
+    public function run(string $password, ?string $today = null, bool $force = false): array
     {
+        if (!$force) {
+            $this->assertEmptyOfRealData();
+        }
         $dataset = new DemoDataset($today);
         $this->counts = [];
         $this->warnings = [];
@@ -111,6 +117,32 @@ final class DemoDataSeeder
             'steps' => $this->counts,
             'warnings' => $this->warnings,
         ];
+    }
+
+    /** Refuse de mélanger la démonstration aux données réelles d'un cabinet. */
+    private function assertEmptyOfRealData(): void
+    {
+        $found = [];
+        foreach (['users' => 'compte(s)', 'clients' => 'client(s)'] as $table => $label) {
+            $statement = $this->pdo->prepare(
+                sprintf(
+                    "SELECT COUNT(*) FROM %s WHERE email IS NOT NULL AND email <> '' AND email NOT LIKE :domain",
+                    $table
+                )
+            );
+            $statement->execute(['domain' => '%@' . DemoDataset::EMAIL_DOMAIN]);
+            $count = (int) $statement->fetchColumn();
+            if ($count > 0) {
+                $found[] = $count . ' ' . $label;
+            }
+        }
+        if ($found !== []) {
+            throw new RuntimeException(
+                'La base contient déjà des données réelles (' . implode(', ', $found) . ' hors domaine de '
+                . 'démonstration). Utilisez une base de démonstration dédiée, ou --force si vous acceptez '
+                . 'd’ajouter le jeu à ces données.'
+            );
+        }
     }
 
     private function seedUsers(DemoDataset $dataset, string $password): int

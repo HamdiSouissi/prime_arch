@@ -21,12 +21,14 @@ de `production`.
 | --- | --- |
 | `--password=SECRET` | mot de passe commun aux comptes créés (12 caractères minimum) |
 | `--today=AAAA-MM-JJ` | décale la date de référence du jeu (démonstration figée, recette) |
-| `--force` | autorise l'exécution alors que `APP_ENV` vaut `production` |
+| `--force` | autorise l'exécution malgré un `APP_ENV` de production ou la présence de données réelles |
 
 Sans `--password`, un mot de passe aléatoire est généré et **affiché une seule fois** en fin
 d'exécution : aucun mot de passe de démonstration n'est codé en dur. Le script refuse de
 s'exécuter sur un environnement `production` sans `--force`, car tous les comptes créés
-partagent ce mot de passe.
+partagent ce mot de passe. Il refuse aussi une base qui contient déjà des comptes ou des clients
+d'une autre provenance que le domaine de démonstration : le jeu ne s'ajoute jamais au dossier
+d'un cabinet, sauf `--force` explicite.
 
 ## Contenu
 

@@ -50,7 +50,7 @@ if ($options['help']) {
     echo <<<'TXT'
 Usage : php bin/seed-demo.php [--force] [--today=AAAA-MM-JJ] [--password=MOT_DE_PASSE]
 
-  --force              autorise l'exécution alors que APP_ENV vaut « production »
+  --force              autorise l'exécution malgré un APP_ENV de production ou des données réelles
   --today=DATE         décale la date de référence du jeu (démonstration figée, tests)
   --password=SECRET    mot de passe commun aux comptes créés (12 caractères minimum) ;
                        à défaut, un mot de passe aléatoire est généré et affiché une seule fois
@@ -63,7 +63,7 @@ TXT;
 $environment = (string) Config::get('app.env', 'production');
 if ($environment === 'production' && !$options['force']) {
     fwrite(STDERR, "Refus : APP_ENV vaut « production ».\n");
-    fwrite(STDERR, "Les comptes de démonstration partagent un mot de passe : utilisez un environnement local\n");
+    fwrite(STDERR, "Les comptes de démonstration partagent un mot de passe : utilisez une base dédiée\n");
     fwrite(STDERR, "ou relancez avec --force si cette base est bien une base de démonstration.\n");
     exit(1);
 }
@@ -89,7 +89,7 @@ try {
     }
 
     echo "Insertion du jeu de démonstration (version " . DemoDataset::VERSION . ", référence " . $dataset->today() . ")…\n";
-    $report = (new DemoDataSeeder())->run($password, $options['today']);
+    $report = (new DemoDataSeeder())->run($password, $options['today'], $options['force']);
     foreach ($report['steps'] as $table => $counts) {
         printf(
             "  %-24s %d créé(s), %d déjà présent(s)\n",
