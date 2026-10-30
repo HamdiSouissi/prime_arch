@@ -1,0 +1,17 @@
+{
+    "slug": "permis-batir",
+    "name": "Permis de bâtir",
+    "version": "1.0.0",
+    "description": "Dossiers de permis de bâtir : dépôt, pièces, instruction, décisions et délais suivis par projet.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\PermisBatir",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "migrations": "migrations",
+    "lang": "lang",
+    "enabled_by_default": false
+}
