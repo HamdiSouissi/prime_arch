@@ -4,6 +4,8 @@ declare(strict_types=1);
 use App\Controllers\AuthController;
 use App\Controllers\ClientController;
 use App\Controllers\CustomFieldController;
+use App\Controllers\DocumentController;
+use App\Controllers\DocumentTemplateController;
 use App\Controllers\DashboardController;
 use App\Controllers\DesignController;
 use App\Controllers\GeographyController;
@@ -52,6 +54,21 @@ return function (Router $router): void {
     $router->post('/projects/{id}/phases/{assignmentId}/progress', [ProjectController::class, 'updatePhaseProgress'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/phases/{assignmentId}', [ProjectController::class, 'updatePhase'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
+
+    $router->get('/documents', [DocumentController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/documents/new', [DocumentController::class, 'createForm'], [AuthMiddleware::class]);
+    $router->post('/documents', [DocumentController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/documents/{id}/edit', [DocumentController::class, 'edit'], [AuthMiddleware::class]);
+    $router->post('/documents/{id}', [DocumentController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/documents/{id}/issue', [DocumentController::class, 'issue'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/documents/{id}/delete', [DocumentController::class, 'deleteDraft'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/documents/{id}/pdf', [DocumentController::class, 'pdf'], [AuthMiddleware::class]);
+    $router->post('/documents/{id}/payments', [DocumentController::class, 'addPayment'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/documents/{id}', [DocumentController::class, 'show'], [AuthMiddleware::class]);
+
+    $router->get('/settings/document-templates', [DocumentTemplateController::class, 'index'], [AuthMiddleware::class]);
+    $router->post('/settings/document-templates', [DocumentTemplateController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/document-templates/{id}', [DocumentTemplateController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
 
     $router->get('/time', [TimeEntryController::class, 'index'], [AuthMiddleware::class]);
     $router->get('/time/new', [TimeEntryController::class, 'createForm'], [AuthMiddleware::class]);

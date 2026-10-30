@@ -26,7 +26,9 @@ $client = $client ?? [
 ];
 $cssPath = defined('BASE_PATH') ? BASE_PATH . '/public/assets/css/pdf.css' : '';
 $pdfCss = isset($pdfCss) ? (string) $pdfCss : (is_file($cssPath) ? (string) file_get_contents($cssPath) : '');
-$logoPath = defined('BASE_PATH') ? BASE_PATH . '/public/assets/img/logo-placeholder.svg' : '';
+$logoPath = isset($logoPath) && is_string($logoPath) && $logoPath !== ''
+    ? $logoPath
+    : (defined('BASE_PATH') ? BASE_PATH . '/public/assets/img/logo-placeholder.svg' : '');
 $direction = $direction ?? 'ltr';
 $documentTitle = $documentTitle ?? 'Document';
 $documentNumber = $documentNumber ?? 'PA-2025-018';
@@ -50,13 +52,13 @@ $documentDate = $documentDate ?? '14/10/2026';
             <td class="pdf-meta" style="text-align:end">
                 <?= e($cabinet['address'] ?? '') ?><br>
                 <?= e($cabinet['phone'] ?? '') ?> · <?= e($cabinet['email'] ?? '') ?><br>
-                Matricule fiscal : <?= e($cabinet['tax_id'] ?? '') ?>
+                <?= e(__('documents.pdf.tax_id')) ?> : <?= e($cabinet['tax_id'] ?? '') ?>
             </td>
         </tr>
     </table>
 </htmlpageheader>
 <htmlpagefooter name="PdfFooter">
-    <table class="pdf-footer"><tr><td><?= e($cabinet['name'] ?? '') ?> · <?= e($cabinet['phone'] ?? '') ?> · <?= e($cabinet['email'] ?? '') ?></td><td class="pdf-page-count">Page {PAGENO} / {nbpg}</td></tr></table>
+    <table class="pdf-footer"><tr><td><?= e($cabinet['name'] ?? '') ?> · <?= e($cabinet['phone'] ?? '') ?> · <?= e($cabinet['email'] ?? '') ?></td><td class="pdf-page-count"><?= e(__('documents.pdf.page')) ?> {PAGENO} / {nbpg}</td></tr></table>
 </htmlpagefooter>
 <sethtmlpageheader name="PdfHeader" value="on" show-this-page="1" />
 <sethtmlpagefooter name="PdfFooter" value="on" />
@@ -64,23 +66,23 @@ $documentDate = $documentDate ?? '14/10/2026';
 <table class="pdf-parties">
     <tr>
         <td>
-            <p class="pdf-party-label">Destinataire</p>
+            <p class="pdf-party-label"><?= e(__('documents.pdf.recipient')) ?></p>
             <p class="pdf-party-name"><?= e($client['name'] ?? '') ?></p>
             <?= e($client['address'] ?? '') ?><br>
             <?= e($client['phone'] ?? '') ?><br>
             <?= e($client['email'] ?? '') ?>
         </td>
         <td>
-            <p class="pdf-party-label">Référence du projet</p>
+            <p class="pdf-party-label"><?= e(__('documents.pdf.project')) ?></p>
             <p class="pdf-party-name"><?= e($projectName ?? 'Villa contemporaine · Sidi Bou Saïd') ?></p>
             <span class="pdf-muted"><?= e($documentTitle) ?> · <?= e($documentNumber) ?></span><br>
-            <span class="pdf-muted">Émis le <?= e($documentDate) ?></span>
+            <span class="pdf-muted"><?= e(__('documents.pdf.issued_on')) ?> <?= e($documentDate) ?></span>
         </td>
     </tr>
 </table>
 
 <h1 class="pdf-title"><?= e($documentTitle) ?></h1>
-<p class="pdf-number">N° <?= e($documentNumber) ?> · Émis le <?= e($documentDate) ?></p>
+<p class="pdf-number"><?= e(__('documents.pdf.number')) ?> <?= e($documentNumber) ?> · <?= e(__('documents.pdf.issued_on')) ?> <?= e($documentDate) ?></p>
 <div class="pdf-document-body">
     <?= $documentBody ?? '' ?>
 </div>

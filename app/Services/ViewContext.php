@@ -19,6 +19,10 @@ final class ViewContext
         $projectsAvailable = Auth::can('projects.view');
         $timeAvailable = Auth::can('time.view') || Auth::can('time.manage')
             || Auth::can('time.view_all') || Auth::can('time.manage_all');
+        $documentsAvailable = Auth::can('documents.view') || Auth::can('documents.create')
+            || Auth::can('documents.manage') || Auth::can('documents.issue')
+            || Auth::can('documents.payments.manage') || Auth::can('documents.templates.manage')
+            || Auth::can('settings.manage');
         $rateSettingsAvailable = Auth::can('finance.rates.view') || Auth::can('finance.rates.manage');
         $settingsAvailable = Auth::can('settings.view')
             || Auth::can('clients.manage')
@@ -35,7 +39,7 @@ final class ViewContext
             ['label' => __('nav.dashboard'), 'short' => __('nav.home'), 'url' => url('/dashboard'), 'icon' => 'grid', 'key' => 'dashboard', 'available' => true],
             ['label' => __('nav.clients'), 'short' => __('nav.clients'), 'url' => url('/clients'), 'icon' => 'people', 'key' => 'clients', 'available' => $clientsAvailable],
             ['label' => __('nav.projects'), 'short' => __('nav.projects'), 'url' => url('/projects'), 'icon' => 'briefcase', 'key' => 'projects', 'available' => $projectsAvailable],
-            ['label' => __('nav.documents'), 'short' => __('nav.documents'), 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => false],
+            ['label' => __('nav.documents'), 'short' => __('nav.documents'), 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => $documentsAvailable],
             ['label' => __('nav.time'), 'short' => __('nav.time'), 'url' => url('/time'), 'icon' => 'clock', 'key' => 'time', 'available' => $timeAvailable],
             ['label' => __('nav.settings'), 'short' => __('nav.settings'), 'url' => $settingsUrl, 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable],
         ];

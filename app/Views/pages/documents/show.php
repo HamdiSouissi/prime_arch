@@ -3,44 +3,116 @@ declare(strict_types=1);
 
 use App\Core\View;
 
-$lines = [
-    ['description' => 'Études préliminaires & esquisse', 'quantity' => '1 forfait', 'unit' => '6 500,000 DT', 'amount' => '6 500,000 DT'],
-    ['description' => 'Avant-projet sommaire (APS)', 'quantity' => '1 forfait', 'unit' => '8 500,000 DT', 'amount' => '8 500,000 DT'],
-    ['description' => 'Avant-projet détaillé (APD)', 'quantity' => '1 forfait', 'unit' => '10 500,000 DT', 'amount' => '10 500,000 DT'],
-    ['description' => 'Dossier de permis & coordination', 'quantity' => '1 forfait', 'unit' => '3 000,000 DT', 'amount' => '3 000,000 DT'],
-];
+$document = is_array($document ?? null) ? $document : [];
+$snapshot = is_array($snapshot ?? null) ? $snapshot : [];
+$lines = is_array($lines ?? null) ? $lines : [];
+$payments = is_array($payments ?? null) ? $payments : [];
+$financialPosition = is_array($financialPosition ?? null) ? $financialPosition : [];
+$errors = is_array($errors ?? null) ? $errors : [];
+$paymentErrors = is_array($paymentErrors ?? null) ? $paymentErrors : [];
+$paymentValues = is_array($paymentValues ?? null) ? $paymentValues : [];
+$issued = ($document['status'] ?? '') === 'issued';
+$draft = ($document['status'] ?? '') === 'draft';
+$number = trim((string) ($document['document_number'] ?? '')) !== ''
+    ? (string) $document['document_number']
+    : __('documents.draft_number', ['id' => (string) ($document['id'] ?? '')]);
+$snapshotDocument = is_array($snapshot['document'] ?? null) ? $snapshot['document'] : [];
+$snapshotClient = is_array($snapshot['client'] ?? null) ? $snapshot['client'] : [];
+$snapshotProject = is_array($snapshot['project'] ?? null) ? $snapshot['project'] : [];
+$snapshotCabinet = is_array($snapshot['cabinet'] ?? null) ? $snapshot['cabinet'] : [];
+$statusTone = match ((string) ($document['status'] ?? 'draft')) {
+    'issued' => 'success',
+    'void' => 'danger',
+    default => 'warning',
+};
+$isPositiveAmount = static fn (mixed $amount): bool => !str_starts_with(trim((string) $amount), '-')
+    && preg_match('/[1-9]/', (string) $amount) === 1;
+$balanceIsPositive = $isPositiveAmount($financialPosition['balance_due'] ?? '0.000');
+$balanceLabel = str_starts_with(trim((string) ($financialPosition['balance_due'] ?? '0.000')), '-')
+    ? __('documents.credit_balance')
+    : __('documents.balance_due');
 ?>
 <?php View::partial('partials/page-header', [
-    'pageTitle' => 'Devis d’honoraires',
-    'eyebrow' => 'Document ' . ($recordId ?? 'PA-2025-018'),
-    'subtitle' => 'Préparé pour Hichem Ben Salem · Villa contemporaine, Sidi Bou Saïd',
-    'secondaryAction' => ['label' => 'Régénérer', 'icon' => 'refresh', 'url' => '#regenerer'],
-    'primaryAction' => ['label' => 'Télécharger PDF', 'icon' => 'download', 'url' => '#telecharger'],
+    'pageTitle' => (string) ($document['title'] ?? __('documents.title')),
+    'eyebrow' => $number . ' · ' . __('documents.type.' . ($document['document_type'] ?? 'quote')),
+    'subtitle' => __('documents.detail_intro'),
+    'primaryAction' => $draft && !empty($canManage) ? ['label' => __('documents.edit'), 'icon' => 'edit', 'url' => url('/documents/' . (int) $document['id'] . '/edit')] : null,
+    'secondaryAction' => ['label' => __('documents.back'), 'icon' => 'arrow-left', 'url' => url('/documents')],
 ]) ?>
 
-<div class="document-toolbar cluster cluster--between margin-block-end-5">
-    <span class="badge badge--info">Envoyé · 14 octobre 2026</span>
-    <div class="cluster"><button class="button button--secondary" type="button" data-print><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#printer"></use></svg> Imprimer</button><button class="button button--secondary" type="button" data-toast-message="Une nouvelle version du devis a été préparée en démonstration." data-toast-tone="info"><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#refresh"></use></svg> Régénérer</button><button class="button button--primary" type="button" data-toast-message="Aucun fichier n'est téléchargé dans cette démonstration." data-toast-tone="info"><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#download"></use></svg> Télécharger PDF</button></div>
-</div>
+<?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
+<?php if (!empty($errors['general'])): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($errors['general']) ?></p><?php endif; ?>
 
-<article class="document-preview" aria-label="Aperçu du devis PA-2025-018">
-    <div class="document-preview__top">
-        <div class="document-preview__brand"><img src="<?= e(asset('img/logo-placeholder.svg')) ?>" alt="" width="48" height="48"><div><strong>ATELIER SOUISSI</strong><p class="table-primary__meta">Architecture · Urbanisme · Intérieur</p></div></div>
-        <div class="u-text-end"><h2 class="document-preview__title">DEVIS</h2><p class="document-preview__number">N° PA-2025-018 · 14/10/2026</p></div>
+<section class="card stack-md" aria-labelledby="document-status-heading">
+    <div class="card-header"><div><h2 class="card-header__title" id="document-status-heading"><?= e(__('documents.status_label')) ?></h2><p class="section-heading__note"><?= e(__('documents.status.' . ($document['status'] ?? 'draft'))) ?> · <?= e(__('documents.type.' . ($document['document_type'] ?? 'quote'))) ?></p></div><span class="badge badge--<?= e($statusTone) ?>"><?= e(__('documents.status.' . ($document['status'] ?? 'draft'))) ?></span></div>
+    <div class="document-actions">
+        <?php if ($issued && !empty($canCreate) && in_array($document['document_type'], ['quote', 'contract'], true)): ?><a class="button button--primary" href="<?= e(url('/documents/new?' . http_build_query(['type' => 'invoice', 'reference_id' => (int) $document['id']]))) ?>"><?= e(__('documents.create_invoice_from')) ?></a><?php endif; ?>
+        <?php if ($issued && !empty($canCreate) && $document['document_type'] === 'invoice'): ?><a class="button button--secondary" href="<?= e(url('/documents/new?' . http_build_query(['type' => 'credit_note', 'reference_id' => (int) $document['id']]))) ?>"><?= e(__('documents.create_credit_note_from')) ?></a><?php endif; ?>
+        <a class="button button--secondary" href="<?= e(url('/documents/' . (int) $document['id'] . '/pdf')) ?>"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#download"></use></svg><?= e($issued ? __('documents.download_pdf') : __('documents.preview_pdf')) ?></a>
+        <?php if ($issued && !empty($canIssue)): ?><a class="button button--ghost" href="<?= e(url('/documents/' . (int) $document['id'] . '/pdf?regenerate=1')) ?>"><?= e(__('documents.regenerate_pdf')) ?></a><?php endif; ?>
+        <?php if ($draft && !empty($canIssue)): ?>
+            <form method="post" action="<?= e(url('/documents/' . (int) $document['id'] . '/issue')) ?>" data-confirm-message="<?= e(__('documents.confirm_issue')) ?>">
+                <?= csrf_field() ?><button class="button button--primary" type="submit"><?= e(__('documents.issue')) ?></button>
+            </form>
+        <?php endif; ?>
+        <?php if ($draft && !empty($canManage)): ?>
+            <form method="post" action="<?= e(url('/documents/' . (int) $document['id'] . '/delete')) ?>" data-confirm-message="<?= e(__('documents.confirm_delete')) ?>">
+                <?= csrf_field() ?><button class="button button--danger" type="submit"><?= e(__('documents.delete_draft')) ?></button>
+            </form>
+        <?php endif; ?>
     </div>
-    <div class="document-preview__parties">
-        <section><p class="document-preview__label">Émis par</p><strong>Atelier Souissi — Amel Trabelsi, architecte</strong><p class="muted text-footnote">18, avenue Habib Bourguiba, 1001 Tunis</p><p class="muted text-footnote">+216 71 245 880 · contact@ateliersouissi.tn</p><p class="muted text-footnote">Matricule fiscal : 1234567/A/M/000</p></section>
-        <section><p class="document-preview__label">Adressé à</p><strong>Hichem Ben Salem</strong><p class="muted text-footnote">18, rue de la Corniche, Sidi Bou Saïd, 2026 Tunis</p><p class="muted text-footnote">+216 20 123 456 · hichem.bensalem@email.tn</p><p class="muted text-footnote">Projet : Villa contemporaine · 420 m²</p></section>
+    <div class="document-summary-grid">
+        <div><span class="detail-label"><?= e(__('documents.number')) ?></span><strong><?= e($number) ?></strong></div>
+        <div><span class="detail-label"><?= e(__('documents.client')) ?></span><strong><?= e($snapshotClient['name'] ?? $document['client_name'] ?? '—') ?></strong><?php if (($snapshotClient['tax_id'] ?? '') !== ''): ?><span class="table-meta"><?= e(__('settings.tax_id')) ?> · <?= e($snapshotClient['tax_id']) ?></span><?php endif; ?></div>
+        <div><span class="detail-label"><?= e(__('documents.project')) ?></span><strong><?= e($snapshotProject['name'] ?? $document['project_name'] ?? '—') ?></strong><?php if (($snapshotProject['reference'] ?? '') !== ''): ?><span class="table-meta"><?= e($snapshotProject['reference']) ?></span><?php endif; ?></div>
+        <div><span class="detail-label"><?= e(__('documents.issue_date')) ?></span><strong><?= e($snapshotDocument['issue_date'] ?? $document['issue_date'] ?? '—') ?></strong></div>
+        <?php if (($snapshotDocument['due_date'] ?? $document['due_date'] ?? null) !== null): ?><div><span class="detail-label"><?= e(__('documents.due_date')) ?></span><strong><?= e($snapshotDocument['due_date'] ?? $document['due_date']) ?></strong></div><?php endif; ?>
+        <?php if (($snapshotDocument['valid_until'] ?? $document['valid_until'] ?? null) !== null): ?><div><span class="detail-label"><?= e(__('documents.valid_until')) ?></span><strong><?= e($snapshotDocument['valid_until'] ?? $document['valid_until']) ?></strong></div><?php endif; ?>
+        <?php if (($snapshotDocument['reference_document_number'] ?? $document['reference_document_number'] ?? '') !== ''): ?><div><span class="detail-label"><?= e(__('documents.reference_document')) ?></span><strong><?= e($snapshotDocument['reference_document_number'] ?? $document['reference_document_number']) ?></strong></div><?php endif; ?>
+        <?php if (($snapshotDocument['billing_kind'] ?? '') !== ''): ?><div><span class="detail-label"><?= e(__('documents.billing_kind_label')) ?></span><strong><?= e(__('documents.billing_kind.' . $snapshotDocument['billing_kind'])) ?></strong></div><?php endif; ?>
+        <?php if (($snapshotDocument['phase_name'] ?? '') !== ''): ?><div><span class="detail-label"><?= e(__('documents.phase')) ?></span><strong><?= e($snapshotDocument['phase_name']) ?></strong></div><?php endif; ?>
     </div>
-    <div class="table-wrap document-lines-wrap"><table class="data-table document-lines"><thead><tr><th scope="col">Désignation</th><th scope="col">Quantité</th><th scope="col">Prix unitaire HT</th><th scope="col">Total HT</th></tr></thead><tbody>
-        <?php foreach ($lines as $line): ?><tr><td><strong><?= e($line['description']) ?></strong></td><td><?= e($line['quantity']) ?></td><td class="number"><?= e($line['unit']) ?></td><td class="number"><?= e($line['amount']) ?></td></tr><?php endforeach; ?>
+    <?php if ($issued): ?><p class="form-feedback form-feedback--info"><?= e(__('documents.snapshot_notice')) ?></p><?php endif; ?>
+</section>
+
+<section class="card stack-md" aria-labelledby="document-lines-heading">
+    <div class="card-header"><div><h2 class="card-header__title" id="document-lines-heading"><?= e(__('documents.lines')) ?></h2><p class="section-heading__note"><?= e(__('documents.lines_help')) ?></p></div></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th><?= e(__('documents.line_description')) ?></th><th><?= e(__('documents.line_quantity')) ?></th><th><?= e(__('documents.line_unit')) ?></th><th><?= e(__('documents.line_unit_price')) ?></th><th><?= e(__('documents.line_total')) ?></th></tr></thead><tbody>
+        <?php foreach ($lines as $line): ?>
+            <tr><td><?= e($line['description']) ?></td><td class="u-numeric"><?= e($line['quantity']) ?></td><td><?= e($line['unit'] !== '' ? $line['unit'] : '—') ?></td><td class="u-numeric"><?= e(money_format_tnd((string) $line['unit_price'])) ?></td><td class="u-numeric"><?= e(money_format_tnd((string) $line['line_total'])) ?></td></tr>
+        <?php endforeach; ?>
     </tbody></table></div>
-    <div class="document-totals" aria-label="Totaux du document">
-        <div class="document-totals__row"><span>Total hors taxes (HT)</span><strong>28 500,000 DT</strong></div>
-        <div class="document-totals__row"><span>TVA 19 %</span><strong>5 415,000 DT</strong></div>
-        <div class="document-totals__row"><span>Timbre fiscal</span><strong>1,000 DT</strong></div>
-        <div class="document-totals__row"><span>Retenue à la source</span><strong>0,000 DT</strong></div>
-        <div class="document-totals__row document-totals__row--total"><span>Net à payer TTC</span><strong>33 916,000 DT</strong></div>
-    </div>
-    <div class="document-legal"><p><strong>Conditions :</strong> validité du devis 30 jours. Acompte de 30 % à la signature. Les taux et mentions fiscales présentés sont indicatifs et doivent être validés par un expert-comptable.</p><p>Arrêté le présent devis à la somme de trente-trois mille neuf cent seize dinars et zéro millime.</p></div>
-</article>
+    <dl class="document-totals">
+        <div><dt><?= e(__('documents.subtotal')) ?></dt><dd><?= e(money_format_tnd((string) ($snapshotDocument['subtotal'] ?? $document['subtotal'] ?? '0.000'))) ?></dd></div>
+        <div><dt><?= e(__('documents.tax_rate')) ?> · <?= e((string) ($snapshotDocument['tax_rate'] ?? $document['tax_rate'] ?? '0.00')) ?> %</dt><dd><?= e(money_format_tnd((string) ($snapshotDocument['tax_amount'] ?? $document['tax_amount'] ?? '0.000'))) ?></dd></div>
+        <?php if ($isPositiveAmount($snapshotDocument['stamp_amount'] ?? $document['stamp_amount'] ?? '0.000')): ?><div><dt><?= e(__('documents.stamp_duty')) ?></dt><dd><?= e(money_format_tnd((string) ($snapshotDocument['stamp_amount'] ?? $document['stamp_amount']))) ?></dd></div><?php endif; ?>
+        <?php if ($isPositiveAmount($snapshotDocument['withholding_rate'] ?? $document['withholding_rate'] ?? '0.000')): ?><div><dt><?= e(__('documents.withholding')) ?> · <?= e((string) ($snapshotDocument['withholding_rate'] ?? $document['withholding_rate'])) ?> %</dt><dd>−<?= e(money_format_tnd((string) ($snapshotDocument['withholding_amount'] ?? $document['withholding_amount'] ?? '0.000'))) ?></dd></div><?php endif; ?>
+        <div class="document-totals__grand"><dt><?= e(__('documents.total')) ?></dt><dd><?= e(money_format_tnd((string) ($snapshotDocument['total_amount'] ?? $document['total_amount'] ?? '0.000'))) ?></dd></div>
+    </dl>
+    <?php if (($snapshotDocument['notes'] ?? $document['notes'] ?? '') !== ''): ?><div class="document-text-block"><h3><?= e(__('documents.notes')) ?></h3><p><?= nl2br(e($snapshotDocument['notes'] ?? $document['notes'])) ?></p></div><?php endif; ?>
+    <?php if (($snapshotDocument['terms_text'] ?? $document['terms_text'] ?? '') !== ''): ?><div class="document-text-block"><h3><?= e(__('documents.terms_text')) ?></h3><p><?= nl2br(e($snapshotDocument['terms_text'] ?? $document['terms_text'])) ?></p></div><?php endif; ?>
+    <?php if (($snapshotDocument['legal_notice'] ?? $document['legal_notice'] ?? '') !== ''): ?><div class="document-text-block"><h3><?= e(__('documents.legal_notice')) ?></h3><p><?= nl2br(e($snapshotDocument['legal_notice'] ?? $document['legal_notice'])) ?></p></div><?php endif; ?>
+    <?php if (($snapshotCabinet['name'] ?? '') !== '' && $issued): ?><p class="table-meta"><?= e(__('documents.issued_by_cabinet')) ?> · <?= e($snapshotCabinet['name']) ?></p><?php endif; ?>
+</section>
+
+<?php if ($issued && ($document['document_type'] ?? '') === 'invoice'): ?>
+    <section class="card stack-md" aria-labelledby="payments-heading">
+        <div class="card-header"><div><h2 class="card-header__title" id="payments-heading"><?= e(__('documents.payments')) ?></h2><p class="section-heading__note"><?= e(__('documents.payments_intro')) ?></p></div><span class="badge badge--<?= e($balanceIsPositive ? 'warning' : 'success') ?>"><?= e($balanceLabel) ?> · <?= e(money_format_tnd((string) ($financialPosition['balance_due'] ?? '0.000'))) ?></span></div>
+        <div class="document-summary-grid document-summary-grid--compact"><div><span class="detail-label"><?= e(__('documents.paid_amount')) ?></span><strong><?= e(money_format_tnd((string) ($financialPosition['paid_amount'] ?? '0.000'))) ?></strong></div><div><span class="detail-label"><?= e(__('documents.credited_amount')) ?></span><strong><?= e(money_format_tnd((string) ($financialPosition['credited_amount'] ?? '0.000'))) ?></strong></div></div>
+        <?php if (!empty($paymentErrors['general'])): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($paymentErrors['general']) ?></p><?php endif; ?>
+        <?php if ($payments !== []): ?>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th><?= e(__('documents.payment_date')) ?></th><th><?= e(__('documents.payment_method_label')) ?></th><th><?= e(__('documents.payment_reference')) ?></th><th><?= e(__('documents.payment_amount')) ?></th><th><?= e(__('documents.recorded_by')) ?></th></tr></thead><tbody><?php foreach ($payments as $payment): ?><tr><td><?= e($payment['paid_on']) ?></td><td><?= e(__('documents.payment_method.' . $payment['payment_method'])) ?></td><td><?= e($payment['reference'] !== '' ? $payment['reference'] : '—') ?><?php if ($payment['note'] !== ''): ?><span class="table-meta"><?= e($payment['note']) ?></span><?php endif; ?></td><td class="u-numeric"><?= e(money_format_tnd((string) $payment['amount'])) ?></td><td><?= e($payment['created_by_name'] ?? '—') ?></td></tr><?php endforeach; ?></tbody></table></div>
+        <?php else: ?><p class="empty-state__copy"><?= e(__('documents.no_payments')) ?></p><?php endif; ?>
+        <?php if (!empty($canManagePayments) && $balanceIsPositive): ?>
+            <form class="form-grid" method="post" action="<?= e(url('/documents/' . (int) $document['id'] . '/payments')) ?>">
+                <?= csrf_field() ?>
+                <div class="field"><label class="field__label" for="payment-date"><?= e(__('documents.payment_date')) ?></label><input class="field__control" id="payment-date" name="paid_on" type="date" max="<?= e(date('Y-m-d')) ?>" required value="<?= e($paymentValues['paid_on'] ?? date('Y-m-d')) ?>"><?php if (!empty($paymentErrors['paid_on'])): ?><span class="field__hint field__hint--error"><?= e($paymentErrors['paid_on']) ?></span><?php endif; ?></div>
+                <div class="field"><label class="field__label" for="payment-amount"><?= e(__('documents.payment_amount')) ?></label><input class="field__control" id="payment-amount" name="amount" type="number" min="0.001" max="<?= e((string) ($financialPosition['balance_due'] ?? '0.000')) ?>" step="0.001" required value="<?= e($paymentValues['amount'] ?? '') ?>"><?php if (!empty($paymentErrors['amount'])): ?><span class="field__hint field__hint--error"><?= e($paymentErrors['amount']) ?></span><?php endif; ?></div>
+                <div class="field"><label class="field__label" for="payment-method"><?= e(__('documents.payment_method_label')) ?></label><select class="field__control" id="payment-method" name="payment_method" required><?php foreach (['bank_transfer', 'cash', 'cheque', 'card', 'other'] as $method): ?><option value="<?= e($method) ?>" <?= ($paymentValues['payment_method'] ?? 'bank_transfer') === $method ? 'selected' : '' ?>><?= e(__('documents.payment_method.' . $method)) ?></option><?php endforeach; ?></select><?php if (!empty($paymentErrors['payment_method'])): ?><span class="field__hint field__hint--error"><?= e($paymentErrors['payment_method']) ?></span><?php endif; ?></div>
+                <div class="field"><label class="field__label" for="payment-reference"><?= e(__('documents.payment_reference')) ?></label><input class="field__control" id="payment-reference" name="reference" maxlength="120" value="<?= e($paymentValues['reference'] ?? '') ?>"></div>
+                <div class="field"><label class="field__label" for="payment-note"><?= e(__('documents.payment_note')) ?></label><input class="field__control" id="payment-note" name="note" maxlength="255" value="<?= e($paymentValues['note'] ?? '') ?>"><?php if (!empty($paymentErrors['note'])): ?><span class="field__hint field__hint--error"><?= e($paymentErrors['note']) ?></span><?php endif; ?></div>
+                <div class="form-actions"><button class="button button--primary" type="submit"><?= e(__('documents.add_payment')) ?></button></div>
+            </form>
+        <?php endif; ?>
+    </section>
+<?php endif; ?>

@@ -75,11 +75,13 @@ table {
     font-weight: bold;
 }
 
-.pdf-parties {
+.pdf-parties,
+.pdf-document-meta {
     margin: 0 0 9mm;
 }
 
-.pdf-parties td {
+.pdf-parties td,
+.pdf-document-meta td {
     width: 50%;
     padding: 4mm;
     border: 1px solid #E0E6F0;

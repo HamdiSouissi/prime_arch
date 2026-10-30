@@ -3,47 +3,80 @@ declare(strict_types=1);
 
 use App\Core\View;
 
-$documents = [
-    ['number' => 'PA-2025-018', 'title' => 'Devis d’honoraires', 'client' => 'Hichem Ben Salem', 'project' => 'Villa contemporaine · Tunis', 'date' => '14 oct. 2026', 'amount' => '33 916,000 DT', 'status' => 'Envoyé', 'tone' => 'info', 'icon' => 'quote', 'kind' => 'devis'],
-    ['number' => 'FA-2025-012', 'title' => 'Facture de situation n° 03', 'client' => 'Société El Amana', 'project' => 'Résidence Les Jasmins · Sfax', 'date' => '10 oct. 2026', 'amount' => '18 446,000 DT', 'status' => 'Payée', 'tone' => 'success', 'icon' => 'receipt', 'kind' => 'facture'],
-    ['number' => 'CT-2025-008', 'title' => 'Contrat de maîtrise d’œuvre', 'client' => 'Dr. Hatem Gharbi', 'project' => 'Clinique Al Yasmine · Sousse', 'date' => '02 oct. 2026', 'amount' => '58 750,000 DT', 'status' => 'À signer', 'tone' => 'warning', 'icon' => 'file-text', 'kind' => 'contrat'],
-    ['number' => 'FA-2025-011', 'title' => 'Facture d’acompte', 'client' => 'Nadia Khelifi', 'project' => 'Maison de vacances · Gammarth', 'date' => '28 sept. 2026', 'amount' => '8 500,000 DT', 'status' => 'En retard', 'tone' => 'error', 'icon' => 'receipt', 'kind' => 'facture'],
-    ['number' => 'DV-2025-015', 'title' => 'Devis extension de mission', 'client' => 'Groupe Cap Bon', 'project' => 'Bureaux Cap Bon · Nabeul', 'date' => '24 sept. 2026', 'amount' => '12 000,000 DT', 'status' => 'Brouillon', 'tone' => 'neutral', 'icon' => 'quote', 'kind' => 'devis'],
-];
+$documents = is_array($documents ?? null) ? $documents : [];
+$filters = is_array($filters ?? null) ? $filters : [];
+$summary = is_array($summary ?? null) ? $summary : [];
+$clients = is_array($clients ?? null) ? $clients : [];
+$page = max(1, (int) ($page ?? 1));
+$pageCount = max(1, (int) ($pageCount ?? 1));
+$query = array_filter([
+    'q' => $filters['search'] ?? '',
+    'type' => $filters['document_type'] ?? '',
+    'status' => $filters['status'] ?? '',
+    'client_id' => $filters['client_id'] ?? '',
+    'project_id' => $filters['project_id'] ?? '',
+    'page' => null,
+], static fn (mixed $value): bool => $value !== '' && $value !== null);
 ?>
+<?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
 <?php View::partial('partials/page-header', [
-    'pageTitle' => 'Documents',
-    'eyebrow' => 'Devis · contrats · factures',
-    'subtitle' => 'Gérez vos documents commerciaux et suivez leur état en un coup d’œil.',
-    'primaryAction' => ['label' => 'Créer un document', 'icon' => 'plus', 'dialog' => '#quick-add-dialog'],
+    'pageTitle' => __('documents.title'),
+    'eyebrow' => __('documents.eyebrow'),
+    'subtitle' => __('documents.intro'),
+    'primaryAction' => !empty($canCreate) ? ['label' => __('documents.new'), 'icon' => 'plus', 'url' => url('/documents/new')] : null,
+    'secondaryAction' => !empty($canManageTemplates) ? ['label' => __('documents.templates_title'), 'icon' => 'file-text', 'url' => url('/settings/document-templates')] : null,
 ]) ?>
 
-<section class="stats-grid stats-grid--three" aria-label="Résumé des documents">
-    <?php View::partial('partials/stat-card', ['label' => 'À encaisser', 'value' => '26 945,000 DT', 'icon' => 'wallet', 'tone' => 'blue', 'note' => '3 factures en attente']) ?>
-    <?php View::partial('partials/stat-card', ['label' => 'Devis en attente', 'value' => '5', 'icon' => 'quote', 'tone' => 'coral', 'note' => '2 à relancer cette semaine']) ?>
-    <?php View::partial('partials/stat-card', ['label' => 'Taux de conversion', 'value' => '68 %', 'icon' => 'chart', 'tone' => 'mint', 'trend' => '+6 %', 'note' => 'sur le trimestre']) ?>
-</section>
+<div class="metric-grid metric-grid--four" aria-label="<?= e(__('documents.summary')) ?>">
+    <article class="metric-card"><div class="metric-card__header"><span class="metric-card__label"><?= e(__('documents.total_documents')) ?></span><span class="metric-card__icon"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#file-text"></use></svg></span></div><p class="metric-card__value"><?= e((string) ($summary['document_count'] ?? 0)) ?></p><p class="metric-card__meta"><?= e(__('documents.all_documents')) ?></p></article>
+    <article class="metric-card"><div class="metric-card__header"><span class="metric-card__label"><?= e(__('documents.draft_count')) ?></span><span class="metric-card__icon metric-card__icon--warning"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#clock"></use></svg></span></div><p class="metric-card__value"><?= e((string) ($summary['draft_count'] ?? 0)) ?></p><p class="metric-card__meta"><?= e(__('documents.awaiting_issue')) ?></p></article>
+    <article class="metric-card"><div class="metric-card__header"><span class="metric-card__label"><?= e(__('documents.issued_quote_count')) ?></span><span class="metric-card__icon metric-card__icon--success"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#quote"></use></svg></span></div><p class="metric-card__value"><?= e((string) ($summary['issued_quote_count'] ?? 0)) ?></p><p class="metric-card__meta"><?= e(__('documents.issued_quotes')) ?></p></article>
+    <article class="metric-card"><div class="metric-card__header"><span class="metric-card__label"><?= e(__('documents.outstanding_amount')) ?></span><span class="metric-card__icon metric-card__icon--info"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#wallet"></use></svg></span></div><p class="metric-card__value metric-card__value--currency"><?= e(money_format_tnd((string) ($summary['outstanding_amount'] ?? '0.000'))) ?></p><p class="metric-card__meta"><?= e(__('documents.invoices_balance')) ?></p></article>
+</div>
 
-<section class="card stack-md" aria-label="Documents du cabinet">
-    <div class="filter-row">
-        <div class="input-with-icon"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg><input type="search" placeholder="Numéro, client ou projet…" aria-label="Rechercher un document" data-table-search="#documents-table"></div>
-        <div class="field"><label class="u-sr-only" for="document-kind">Type de document</label><select id="document-kind" aria-label="Filtrer par type" data-filter-select="#documents-table"><option value="">Tous les types</option><option value="devis">Devis</option><option value="facture">Facture</option><option value="contrat">Contrat</option></select></div>
-        <button class="button button--secondary" type="button" data-toast-message="Filtres supplémentaires disponibles dans la version connectée."><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#filter"></use></svg> Filtrer</button>
-    </div>
-    <div class="table-wrap">
-        <table class="data-table" id="documents-table">
-            <thead><tr><th scope="col">Document</th><th scope="col">Client / projet</th><th scope="col">Date</th><th scope="col">Montant TTC</th><th scope="col">Statut</th><th scope="col"><span class="u-sr-only">Ouvrir</span></th></tr></thead>
-            <tbody>
-                <?php foreach ($documents as $document): ?>
-                    <tr data-filter-row data-filter-value="<?= e($document['kind']) ?>">
-                        <td><a class="table-primary" href="<?= e(url('/design/documents/' . $document['number'])) ?>"><span class="document-row__icon"><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($document['icon']) ?>"></use></svg></span><span class="table-primary__text"><span class="table-primary__name"><?= e($document['title']) ?></span><span class="table-primary__meta"><?= e($document['number']) ?></span></span></a></td>
-                        <td><span class="table-primary__text"><span class="table-primary__name"><?= e($document['client']) ?></span><span class="table-primary__meta"><?= e($document['project']) ?></span></span></td>
-                        <td><?= e($document['date']) ?></td><td class="number"><strong><?= e($document['amount']) ?></strong></td><td><span class="badge badge--<?= e($document['tone']) ?>"><?= e($document['status']) ?></span></td>
-                        <td><a class="button button--icon button--ghost" href="<?= e(url('/design/documents/' . $document['number'])) ?>" aria-label="Voir le document <?= e($document['number']) ?>"><svg class="icon icon--small icon--directional"><use href="<?= e(asset('img/icons.svg')) ?>#chevron-right"></use></svg></a></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <div class="table-footer"><span>5 documents récents sur 42</span><button class="button button--small button--secondary" type="button" data-toast-message="Tous les documents de démonstration sont affichés.">Voir tous les documents</button></div>
+<section class="card stack-md" aria-labelledby="documents-list-title">
+    <div class="card-header"><div><h2 class="card-header__title" id="documents-list-title"><?= e(__('documents.list_title')) ?></h2><p class="section-heading__note"><?= e(__('documents.list_intro')) ?></p></div><span class="badge badge--neutral"><?= e((string) ($total ?? 0)) ?> <?= e(__('documents.results')) ?></span></div>
+    <form class="filter-bar" method="get" action="<?= e(url('/documents')) ?>">
+        <div class="field field--search"><label class="u-sr-only" for="documents-search"><?= e(__('documents.search')) ?></label><input class="field__control" id="documents-search" name="q" type="search" value="<?= e($filters['search'] ?? '') ?>" placeholder="<?= e(__('documents.search_placeholder')) ?>"></div>
+        <div class="field"><label class="u-sr-only" for="documents-type"><?= e(__('documents.type_label')) ?></label><select class="field__control" id="documents-type" name="type"><option value=""><?= e(__('documents.all_types')) ?></option><?php foreach (['quote', 'contract', 'invoice', 'credit_note'] as $type): ?><option value="<?= e($type) ?>" <?= ($filters['document_type'] ?? '') === $type ? 'selected' : '' ?>><?= e(__('documents.type.' . $type)) ?></option><?php endforeach; ?></select></div>
+        <div class="field"><label class="u-sr-only" for="documents-status"><?= e(__('documents.status_label')) ?></label><select class="field__control" id="documents-status" name="status"><option value=""><?= e(__('documents.all_statuses')) ?></option><?php foreach (['draft', 'issued', 'void'] as $status): ?><option value="<?= e($status) ?>" <?= ($filters['status'] ?? '') === $status ? 'selected' : '' ?>><?= e(__('documents.status.' . $status)) ?></option><?php endforeach; ?></select></div>
+        <div class="field"><label class="u-sr-only" for="documents-client"><?= e(__('documents.client')) ?></label><select class="field__control" id="documents-client" name="client_id"><option value=""><?= e(__('documents.all_clients')) ?></option><?php foreach ($clients as $client): ?><option value="<?= e((string) $client['id']) ?>" <?= (string) ($filters['client_id'] ?? '') === (string) $client['id'] ? 'selected' : '' ?>><?= e($client['display_name']) ?></option><?php endforeach; ?></select></div>
+        <button class="button button--secondary" type="submit"><?= e(__('common.filter')) ?></button>
+        <?php if ($query !== []): ?><a class="button button--ghost" href="<?= e(url('/documents')) ?>"><?= e(__('common.reset')) ?></a><?php endif; ?>
+    </form>
+
+    <?php if ($documents === []): ?>
+        <div class="empty-state"><span class="empty-state__icon"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#file-text"></use></svg></span><h3 class="empty-state__title"><?= e(__('documents.empty_title')) ?></h3><p class="empty-state__copy"><?= e(__('documents.empty_body')) ?></p><?php if (!empty($canCreate)): ?><a class="button button--primary" href="<?= e(url('/documents/new')) ?>"><?= e(__('documents.new')) ?></a><?php endif; ?></div>
+    <?php else: ?>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th><?= e(__('documents.number')) ?></th><th><?= e(__('documents.title_field')) ?></th><th><?= e(__('documents.client')) ?></th><th><?= e(__('documents.project')) ?></th><th><?= e(__('documents.issue_date')) ?></th><th><?= e(__('documents.total')) ?></th><th><?= e(__('documents.status_label')) ?></th><th><span class="u-sr-only"><?= e(__('common.actions')) ?></span></th></tr></thead><tbody>
+            <?php foreach ($documents as $item): ?>
+                <?php
+                $number = trim((string) ($item['document_number'] ?? '')) !== ''
+                    ? (string) $item['document_number']
+                    : __('documents.draft_number', ['id' => (string) $item['id']]);
+                $statusTone = match ((string) $item['status']) {
+                    'issued' => 'success',
+                    'void' => 'error',
+                    default => 'warning',
+                };
+                ?>
+                <tr>
+                    <td><a class="table-link" href="<?= e(url('/documents/' . (int) $item['id'])) ?>"><?= e($number) ?></a><span class="table-meta"><?= e(__('documents.type.' . $item['document_type'])) ?></span></td>
+                    <td><?= e($item['title']) ?></td>
+                    <td><?= e($item['client_name']) ?></td>
+                    <td><?= e(($item['project_name'] ?? '') !== '' ? $item['project_name'] : '—') ?></td>
+                    <td><?= e($item['issue_date'] ?? '—') ?></td>
+                    <td class="u-numeric"><?= e(money_format_tnd((string) $item['total_amount'])) ?></td>
+                    <td><span class="badge badge--<?= e($statusTone) ?>"><?= e(__('documents.status.' . $item['status'])) ?></span></td>
+                    <td><a class="button button--icon button--ghost" href="<?= e(url('/documents/' . (int) $item['id'])) ?>" aria-label="<?= e(__('documents.open_document')) ?>"><svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#arrow-right"></use></svg></a></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody></table></div>
+        <?php if ($pageCount > 1): ?>
+            <nav class="pagination" aria-label="<?= e(__('common.pagination')) ?>"><span class="pagination__summary"><?= e(__('common.page_of', ['page' => (string) $page, 'pages' => (string) $pageCount])) ?></span><div class="pagination__actions">
+                <?php if ($page > 1): ?><a class="button button--secondary" href="<?= e(url('/documents?' . http_build_query($query + ['page' => $page - 1]))) ?>"><?= e(__('common.previous')) ?></a><?php endif; ?>
+                <?php if ($page < $pageCount): ?><a class="button button--secondary" href="<?= e(url('/documents?' . http_build_query($query + ['page' => $page + 1]))) ?>"><?= e(__('common.next')) ?></a><?php endif; ?>
+            </div></nav>
+        <?php endif; ?>
+    <?php endif; ?>
 </section>

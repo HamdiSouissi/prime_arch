@@ -40,6 +40,9 @@ final class CoreSeeder
             );
             $projectPhaseCount = $this->seedProjectPhases((array) config('tunisia.architecture.phases', []));
             $projectPhaseWeightCount = $this->initializeProjectPhaseWeights();
+            $documentTemplateCount = $this->seedDocumentTemplates(
+                require BASE_PATH . '/database/seeds/document_templates.php'
+            );
             $this->pdo->commit();
         } catch (\Throwable $error) {
             if ($this->pdo->inTransaction()) {
@@ -55,6 +58,7 @@ final class CoreSeeder
             'postal_codes' => $postalCodeCount,
             'project_phases' => $projectPhaseCount,
             'project_phase_weights' => $projectPhaseWeightCount,
+            'document_templates' => $documentTemplateCount,
         ];
     }
 
@@ -197,6 +201,52 @@ final class CoreSeeder
                 $count++;
             }
             $position += 10;
+        }
+        return $count;
+    }
+
+    /** @param array<int,array<string,mixed>> $items */
+    private function seedDocumentTemplates(array $items): int
+    {
+        $find = $this->pdo->prepare(
+            'SELECT id FROM document_templates WHERE template_key = :template_key LIMIT 1'
+        );
+        $insert = $this->pdo->prepare(
+            'INSERT INTO document_templates (
+                template_key, document_type, locale, name, title, terms_text, legal_notice,
+                validity_days, payment_terms_days, is_default, is_active
+             ) VALUES (
+                :template_key, :document_type, :locale, :name, :title, :terms_text, :legal_notice,
+                :validity_days, :payment_terms_days, 1, 1
+             )'
+        );
+        $count = 0;
+        foreach ($items as $item) {
+            $key = (string) ($item['template_key'] ?? '');
+            $type = (string) ($item['document_type'] ?? '');
+            $locale = (string) ($item['locale'] ?? '');
+            if (!preg_match('/^[a-z][a-z0-9_]{0,79}$/', $key)
+                || !in_array($type, ['quote', 'contract', 'invoice', 'credit_note'], true)
+                || !in_array($locale, ['fr', 'ar'], true)
+            ) {
+                throw new RuntimeException('Modèle de document invalide dans le seed.');
+            }
+            $find->execute(['template_key' => $key]);
+            if ($find->fetchColumn() !== false) {
+                continue;
+            }
+            $insert->execute([
+                'template_key' => $key,
+                'document_type' => $type,
+                'locale' => $locale,
+                'name' => (string) $item['name'],
+                'title' => (string) $item['title'],
+                'terms_text' => (string) $item['terms_text'],
+                'legal_notice' => (string) $item['legal_notice'],
+                'validity_days' => (int) $item['validity_days'],
+                'payment_terms_days' => (int) $item['payment_terms_days'],
+            ]);
+            $count++;
         }
         return $count;
     }
