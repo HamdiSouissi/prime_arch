@@ -226,6 +226,9 @@ matière que le cabinet n’a jamais eue) et `relances-factures` (il encaisse).
 
 ## 7. État de livraison
 
+> Récapitulatif des paquets, empreintes SHA-256, ordre d’installation et résultats des contrôles :
+> **`docs/LIVRAISON.md`**.
+
 Chaque module livré est un dossier autonome sous `modules/<slug>/`, empaquetable en ZIP
 (racine unique `<slug>/`) et installable depuis **Réglages → Modules** avec la case
 « code de confiance ». Aucun fichier du noyau n’est modifié à l’exception des deux aides

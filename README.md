@@ -103,4 +103,7 @@ composer test
 - `docs/ROADMAP.md` — phases et critères de progression.
 - `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
 - `docs/MODULES.md` — format, installation et sécurité des modules.
+- `docs/MODULE-PROPOSALS.md` — catalogue des douze modules livrés, garde-fous et prérequis noyau.
+- `docs/LIVRAISON.md` — dossier de livraison : inventaire, paquets, empreintes et vérifications.
+- `docs/SECURITE-PORTAIL-CLIENT.md` — revue de sécurité de l’espace client public.
 - `docs/OPERATIONS.md` — journal d’audit, sauvegarde, restauration et validation opérationnelle.
