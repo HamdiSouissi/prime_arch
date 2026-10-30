@@ -2,24 +2,46 @@
 declare(strict_types=1);
 
 /** @var string $content */
+use App\Core\Auth;
 use App\Core\Translator;
 use App\Core\View;
+use App\Services\ViewContext;
 
 $designEnabled = strtolower((string) config('app.env', 'production')) !== 'production';
 $isDesignPreview = $designEnabled && !empty($devOnly);
-$isAuthenticated = !empty($authenticated);
+$isAuthenticated = !empty($authenticated) || Auth::check();
 $workspace = $workspace ?? [];
 $userProfile = $userProfile ?? [];
-$navigation = $navigation ?? ($isDesignPreview ? [
-    ['label' => 'Tableau de bord', 'short' => 'Accueil', 'url' => url('/design/dashboard'), 'icon' => 'grid', 'key' => 'dashboard'],
-    ['label' => 'Clients', 'short' => 'Clients', 'url' => url('/design/clients'), 'icon' => 'people', 'key' => 'clients'],
-    ['label' => 'Projets', 'short' => 'Projets', 'url' => url('/design/projects'), 'icon' => 'briefcase', 'key' => 'projects'],
-    ['label' => 'Documents', 'short' => 'Docs', 'url' => url('/design/documents'), 'icon' => 'file-text', 'key' => 'documents'],
-    ['label' => 'Temps', 'short' => 'Temps', 'url' => url('/design/time'), 'icon' => 'clock', 'key' => 'time'],
-    ['label' => 'Réglages', 'short' => 'Réglages', 'url' => url('/design/settings'), 'icon' => 'settings', 'key' => 'settings'],
-] : [
-    ['label' => __('nav.home'), 'short' => __('nav.home'), 'url' => url('/'), 'icon' => 'home', 'key' => 'home'],
-]);
+$profileUrl = $profileUrl ?? '';
+$navigation = $navigation ?? [];
+
+// Barre d'onglets et en-tête identiques sur toutes les pages : les écrans qui ne
+// fournissent pas de navigation (404, erreurs) héritent du menu standard.
+if ($navigation === [] && $isAuthenticated && !$isDesignPreview) {
+    try {
+        $fallbackContext = (new ViewContext())->authenticated((string) ($title ?? ''), 'home');
+        $navigation = $fallbackContext['navigation'];
+        $workspace = $workspace !== [] ? $workspace : $fallbackContext['workspace'];
+        $userProfile = $userProfile !== [] ? $userProfile : $fallbackContext['userProfile'];
+        $profileUrl = $profileUrl !== '' ? $profileUrl : (string) $fallbackContext['profileUrl'];
+    } catch (\Throwable) {
+        // Base indisponible : la page d'erreur reste affichable avec un menu minimal.
+        $navigation = [];
+    }
+}
+
+if ($navigation === []) {
+    $navigation = $isDesignPreview ? [
+        ['label' => 'Tableau de bord', 'short' => 'Accueil', 'url' => url('/design/dashboard'), 'icon' => 'grid', 'key' => 'dashboard'],
+        ['label' => 'Clients', 'short' => 'Clients', 'url' => url('/design/clients'), 'icon' => 'people', 'key' => 'clients'],
+        ['label' => 'Projets', 'short' => 'Projets', 'url' => url('/design/projects'), 'icon' => 'briefcase', 'key' => 'projects'],
+        ['label' => 'Documents', 'short' => 'Docs', 'url' => url('/design/documents'), 'icon' => 'file-text', 'key' => 'documents'],
+        ['label' => 'Temps', 'short' => 'Temps', 'url' => url('/design/time'), 'icon' => 'clock', 'key' => 'time'],
+        ['label' => 'Réglages', 'short' => 'Réglages', 'url' => url('/design/settings'), 'icon' => 'settings', 'key' => 'settings'],
+    ] : [
+        ['label' => __('nav.home'), 'short' => __('nav.home'), 'url' => url('/'), 'icon' => 'home', 'key' => 'home'],
+    ];
+}
 $quickActions = $quickActions ?? ($isDesignPreview ? [
     ['label' => 'Nouveau client', 'description' => 'Consulter la gestion des clients', 'url' => url('/design/clients'), 'icon' => 'people'],
     ['label' => 'Nouveau projet', 'description' => 'Ouvrir le portefeuille de projets', 'url' => url('/design/projects'), 'icon' => 'briefcase'],
@@ -83,6 +105,7 @@ if ($isDesignPreview) {
             'showAppActions' => !empty($showAppActions) || $isAuthenticated,
             'workspace' => $workspace,
             'userProfile' => $userProfile,
+            'profileUrl' => $profileUrl,
         ]) ?>
         <main class="app-content" id="main" tabindex="-1">
             <?= $content ?>

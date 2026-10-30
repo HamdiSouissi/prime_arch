@@ -227,6 +227,7 @@
     z-index: 15;
     inset-block-start: 0;
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
@@ -239,8 +240,10 @@
     backdrop-filter: blur(24px) saturate(165%);
 }
 
+/* Le contexte (titre) se comprime ; les actions restent toujours entières et visibles. */
 .topbar__context {
     display: grid;
+    flex: 1 1 auto;
     gap: 1px;
     min-inline-size: 0;
 }
@@ -264,6 +267,8 @@
 
 .topbar__actions {
     display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
     align-items: center;
     gap: var(--space-2);
     min-inline-size: 0;
@@ -298,6 +303,7 @@
 
 .topbar-logout {
     display: inline-flex;
+    flex: 0 0 auto;
     margin: 0;
 }
 
@@ -358,6 +364,22 @@
     box-shadow: 0 3px 8px rgba(69, 106, 190, 0.22);
     font-size: var(--font-size-footnote);
     font-weight: 750;
+    text-decoration: none;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* La bulle d'initiales est un lien vers les réglages du profil (ou le tableau de bord). */
+a.topbar-avatar:hover,
+a.topbar-avatar:focus-visible {
+    color: #FFFFFF;
+    box-shadow: 0 5px 14px rgba(69, 106, 190, 0.32);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+a.topbar-avatar:focus-visible {
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 3px;
 }
 
 .app-content {
@@ -399,6 +421,14 @@
 
 .mobile-tabbar {
     display: none;
+}
+
+/* Entre 1101 et 1240 px la barre latérale est encore déployée : la recherche
+   se réduit pour laisser la place au sélecteur de langue et à l'horloge. */
+@media (max-width: 1240px) and (min-width: 1101px) {
+    .topbar-search {
+        inline-size: clamp(8rem, 18vw, 14rem);
+    }
 }
 
 @media (max-width: 1100px) and (min-width: 761px) {
@@ -458,10 +488,21 @@
         padding-inline: var(--space-2);
     }
 
-    .topbar-search {
-        inline-size: clamp(8rem, 26vw, 15rem);
+    /* En dessous de 1100 px, la recherche devient une icône : le sélecteur de
+       langue et l'horloge restent entièrement visibles. */
+    .topbar {
+        gap: var(--space-3);
     }
 
+    .topbar-search {
+        flex: 0 0 auto;
+        justify-content: center;
+        inline-size: 2.5rem;
+        min-inline-size: 2.5rem;
+        padding-inline: 0;
+    }
+
+    .topbar-search__label,
     .topbar-search__keys {
         display: none;
     }
@@ -548,12 +589,29 @@
     }
 
     .topbar {
+        gap: 0.35rem;
         min-block-size: 3.875rem;
-        padding-inline: var(--space-4);
+        padding-inline: var(--space-3);
     }
 
+    /* Le titre courant est repris par .page-header : le contexte laisse la place
+       aux actions, qui ne doivent jamais être rognées ni masquées. */
     .topbar__context {
         display: none;
+    }
+
+    .topbar__actions {
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: clamp(0.15rem, 1vw, 0.5rem);
+        min-inline-size: 0;
+    }
+
+    .topbar__actions > *,
+    .topbar-logout,
+    .topbar-avatar {
+        flex: 0 0 auto;
     }
 
     .topbar-info {
@@ -568,11 +626,6 @@
         display: none;
     }
 
-    .topbar__actions {
-        flex: 1;
-        justify-content: flex-end;
-    }
-
     .language-switcher {
         padding-inline: 0.2rem;
     }
@@ -582,21 +635,30 @@
     }
 
     .language-switcher__option {
-        min-inline-size: 1.9rem;
-        min-block-size: 1.85rem;
-        padding-inline: 0.35rem;
+        min-inline-size: 1.85rem;
+        min-block-size: 1.9rem;
+        padding-inline: 0.3rem;
         font-size: 0.7rem;
     }
 
     .topbar-search {
-        flex: 1;
-        inline-size: auto;
-        max-inline-size: 18rem;
-        min-block-size: 2.75rem;
+        flex: 0 0 auto;
+        justify-content: center;
+        inline-size: 2.5rem;
+        min-inline-size: 2.5rem;
+        min-block-size: 2.5rem;
+        padding-inline: 0;
     }
 
+    .topbar-search__label,
     .topbar-search__keys {
         display: none;
+    }
+
+    .topbar-avatar {
+        inline-size: 2.5rem;
+        block-size: 2.5rem;
+        flex-basis: 2.5rem;
     }
 
     .app-content {
@@ -605,16 +667,21 @@
         padding-block-end: calc(6.5rem + env(safe-area-inset-bottom));
     }
 
+    /* Barre d'onglets ancrée en bas : 35 < voile (40) < tiroir latéral (45),
+       au-dessus du contenu et de l'en-tête de page collant (12). */
     .mobile-tabbar {
         position: fixed;
         z-index: 35;
         inset-block-end: 0;
         inset-inline: 0;
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        /* Une colonne par entrée : la barre reste identique (mêmes 6 entrées,
+           même ordre) quelle que soit la page. */
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
         min-block-size: calc(4.35rem + env(safe-area-inset-bottom));
         padding-block-start: 0.35rem;
-        padding-inline: 0.4rem;
+        padding-inline: max(0.4rem, env(safe-area-inset-left)) max(0.4rem, env(safe-area-inset-right));
         padding-block-end: calc(0.35rem + env(safe-area-inset-bottom));
         border-block-start: 1px solid rgba(91, 112, 149, 0.16);
         background: rgba(255, 255, 255, 0.92);
@@ -631,6 +698,7 @@
         gap: 2px;
         min-inline-size: 0;
         min-block-size: 2.875rem;
+        max-inline-size: 100%;
         padding-block: 0.2rem;
         padding-inline: 1px;
         border-radius: var(--radius-sm);
@@ -639,6 +707,14 @@
         font-weight: 600;
         line-height: 1.1;
         text-align: center;
+    }
+
+    /* Libellés courts (français comme arabe) : jamais d'élargissement de la barre. */
+    .mobile-tabbar__link > span {
+        display: block;
+        overflow: hidden;
+        max-inline-size: 100%;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
 
@@ -658,16 +734,59 @@
     }
 }
 
-@media (max-width: 390px) {
+/* Très petits écrans : tout l'en-tête est conservé, simplement réduit. */
+@media (max-width: 430px) {
     .topbar {
-        gap: var(--space-2);
-        padding-inline: var(--space-3);
+        gap: 0.2rem;
+        padding-inline: var(--space-2);
     }
 
-    .topbar-search__label {
-        font-size: 0.75rem;
+    /* Filet de sécurité : si la place manque (320 px), les actions passent à la
+       ligne au lieu d'être rognées ou repoussées hors de l'écran. */
+    .topbar__actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.2rem;
+        row-gap: 0.2rem;
     }
 
+    .topbar__actions .button--icon,
+    .topbar-search {
+        inline-size: 2.35rem;
+        min-inline-size: 2.35rem;
+        min-block-size: 2.35rem;
+    }
+
+    .language-switcher {
+        padding: 0.15rem;
+    }
+
+    .language-switcher__option {
+        min-inline-size: 1.55rem;
+        min-block-size: 1.8rem;
+        padding-inline: 0.2rem;
+        font-size: 0.65rem;
+    }
+
+    .topbar-info {
+        min-block-size: 2.35rem;
+        padding-inline: 0.3rem;
+        font-size: 0.68rem;
+    }
+
+    .topbar-info__clock strong {
+        font-size: 0.72rem;
+    }
+
+    .topbar-avatar {
+        inline-size: 2.3rem;
+        block-size: 2.3rem;
+        flex-basis: 2.3rem;
+        font-size: 0.68rem;
+    }
+}
+
+@media (max-width: 390px) {
     .app-content {
         padding-inline: var(--space-3);
     }

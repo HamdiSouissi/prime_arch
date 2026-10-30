@@ -846,4 +846,7 @@ return [
     'js.module_deactivate_label' => 'Désactiver le module :name',
     'js.action_done' => 'Action terminée.',
     'js.demo_only' => 'Démo uniquement : aucune donnée n’a été enregistrée.',
+
+    'common.profile' => 'Profil',
+    'common.profile_open' => 'ouvrir les réglages du profil',
 ];

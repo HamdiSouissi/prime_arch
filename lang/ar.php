@@ -846,4 +846,7 @@ return [
     'js.module_deactivate_label' => 'تعطيل الوحدة :name',
     'js.action_done' => 'تم تنفيذ الإجراء.',
     'js.demo_only' => 'عرض فقط: لم يتم تسجيل أي بيانات.',
+
+    'common.profile' => 'الملف الشخصي',
+    'common.profile_open' => 'فتح إعدادات الملف الشخصي',
 ];

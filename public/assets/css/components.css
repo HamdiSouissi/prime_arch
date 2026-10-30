@@ -998,6 +998,13 @@ dialog[open] {
         padding-inline: var(--space-4);
     }
 
+    /* Les messages ne doivent jamais recouvrir la barre d'onglets fixe. */
+    .toast-region {
+        inset-block-end: calc(4.35rem + var(--space-4) + env(safe-area-inset-bottom));
+        inset-inline: var(--space-4);
+        max-inline-size: none;
+    }
+
     .dialog__body {
         padding-inline: var(--space-4);
     }

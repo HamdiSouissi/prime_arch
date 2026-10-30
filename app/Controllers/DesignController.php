@@ -106,6 +106,7 @@ final class DesignController
             'navigation' => $navigation,
             'workspace' => ['name' => 'Atelier Souissi', 'location' => 'Tunis', 'plan' => 'Plan Studio'],
             'userProfile' => ['name' => 'Amel Trabelsi', 'initials' => 'AT'],
+            'profileUrl' => url('/design/settings'),
             'devOnly' => true,
         ]));
     }

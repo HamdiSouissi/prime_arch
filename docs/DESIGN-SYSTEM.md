@@ -159,3 +159,27 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
 - Le symbole suit la langue active via `config('tunisia.currency.symbols')` : `DT` en français, `د.ت` en arabe ; il est
   placé après le montant dans l'ordre logique, ce qui correspond au sens de lecture droite à gauche.
 - Les montants sont formatés depuis la chaîne `DECIMAL` d'origine (pas de conversion en flottant) pour conserver les millimes.
+
+### Mise en page responsive (en-tête, barre d’onglets, contenus)
+
+- **En-tête toujours complet** : `.topbar__actions` ne se comprime jamais (`flex: 0 0 auto` pour chaque action) et le
+  contexte (`.topbar__context`) se réduit à sa place. Le titre courant est repris par `.page-header`, aussi l’en-tête
+  ne conserve-t-il que les commandes sur mobile.
+- **Réduction avant masquage** : sous 1100 px la recherche passe en icône (libellé masqué, `aria-label` conservé) ;
+  sous 760 px l’horloge n’affiche plus que l’heure ; sous 430 px les boutons, le sélecteur de langue et la bulle
+  d’initiales se réduisent. Aucune action de l’en-tête n’est retirée de l’interface, et le sélecteur de langue reste
+  visible de 320 px à 1440 px.
+- **Sélecteur de langue** : un formulaire POST par langue (`partials/language-switcher.php`), valeur dans un champ
+  caché, jamais de bouton désactivé. Il est en `flex: 0 0 auto` et ne peut donc pas être écrasé par la recherche.
+- **Bulle d’initiales** : c’est un lien (`<a class="topbar-avatar">`) vers les réglages accessibles à l’utilisateur
+  (`profileUrl`, calculé par `ViewContext`) ou, à défaut, vers le tableau de bord. `aria-label` explicite et focus natif.
+- **Barre d’onglets mobile** : `.mobile-tabbar` est ancrée (`position: fixed`, `inset-block-end: 0`), sur une grille
+  `grid-auto-flow: column` + `grid-auto-columns: minmax(0, 1fr)` : une colonne par entrée, quel que soit le nombre
+  d’entrées, avec `env(safe-area-inset-*)`. Le layout fournit la même navigation partout, y compris sur les pages 404
+  qui n’en déclarent pas. Ordre des plans : contenu `app-content` < `.page-header` collant (12) < `.topbar` (15) <
+  `.mobile-tabbar` (35) < voile du menu (40) < tiroir latéral (45).
+- **Aucun débordement horizontal** : `body { overflow-x: clip }`, `.app-content` et ses blocs sont en `min-inline-size: 0`
+  sous 760 px, les grilles et formulaires repassent en une colonne. Les tableaux larges (`.data-table`, `.audit-table`,
+  `.document-lines`) gardent une largeur minimale mais défilent **dans** `.table-wrap` : la page, elle, ne défile jamais
+  horizontalement.
+- **Tests de garde** : `tests/ResponsiveLayoutTest.php` vérifie ces invariants sur le balisage et les feuilles de style.

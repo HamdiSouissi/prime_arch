@@ -1277,3 +1277,122 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
         padding-block-start: var(--space-4);
     }
 }
+
+/* ==========================================================================
+   Contenus mobiles : aucun bloc ni formulaire plus large que la fenêtre.
+   Les tableaux larges conservent leur propre défilement interne (.table-wrap) ;
+   la page, elle, ne défile jamais horizontalement.
+   ========================================================================== */
+@media (max-width: 760px) {
+    .app-content,
+    .app-content > *,
+    .app-content .card,
+    .app-content .card > *,
+    .app-content :where(section, article, header, footer, form, fieldset, dl, ul, ol, figure, details) {
+        min-inline-size: 0;
+        max-inline-size: 100%;
+    }
+
+    /* Les éléments de grille et de flex peuvent enfin se comprimer. */
+    .app-content :where(
+        .grid, .content-grid, .dashboard-grid, .stats-grid, .stats-grid--three,
+        .metric-grid, .metric-grid--four, .project-cards, .module-grid,
+        .document-summary-grid, .client-overview-grid, .client-associated-grid,
+        .foundation-grid, .foundation-settings__grid, .summary-metrics,
+        .settings-layout, .detail-list, .filter-bar, .form-grid, .inline-options,
+        .stack-md, .stack-lg, .cluster, .document-actions
+    ) > * {
+        min-inline-size: 0;
+        max-inline-size: 100%;
+    }
+
+    .app-content :where(img, svg, video, canvas, iframe) {
+        max-inline-size: 100%;
+    }
+
+    .app-content :where(input, select, textarea) {
+        min-inline-size: 0;
+        max-inline-size: 100%;
+    }
+
+    .app-content :where(pre, code) {
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+
+    /* Défilement interne des tableaux : jamais celui de la page. */
+    .table-wrap {
+        max-inline-size: 100%;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .document-lines-wrap {
+        max-inline-size: 100%;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .settings-nav {
+        max-inline-size: 100%;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Formulaires : une seule colonne, champs et boutons pleine largeur. */
+    .form-grid,
+    .filter-bar,
+    .data-import-form,
+    .custom-definition__edit,
+    .phase-settings-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .form-grid__full,
+    .custom-definition__actions,
+    .field--align-end {
+        grid-column: auto;
+        justify-self: stretch;
+    }
+
+    .form-actions,
+    .form-actions .button {
+        inline-size: 100%;
+    }
+
+    .form-actions .button {
+        max-inline-size: 100%;
+    }
+
+    .user-access-form .check-label {
+        white-space: normal;
+    }
+
+    /* Totaux et actions : largeur fluide au lieu d'une largeur fixe. */
+    .document-totals {
+        inline-size: 100%;
+        margin-inline-start: 0;
+    }
+
+    .document-totals > div {
+        flex-wrap: wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .page-header__actions,
+    .page-header__actions .button,
+    .document-actions,
+    .pagination__actions {
+        max-inline-size: 100%;
+    }
+
+    .page-header__subtitle {
+        max-inline-size: 100%;
+    }
+
+    .badge,
+    .tag {
+        max-inline-size: 100%;
+        overflow-wrap: anywhere;
+    }
+}

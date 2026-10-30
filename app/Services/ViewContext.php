@@ -73,6 +73,8 @@ final class ViewContext
                 'name' => (string) ($user['name'] ?? ''),
                 'initials' => self::initials((string) ($user['name'] ?? '')),
             ],
+            // La bulle d'initiales ouvre les réglages accessibles, sinon le tableau de bord.
+            'profileUrl' => $settingsAvailable ? $settingsUrl : url('/dashboard'),
             'authenticated' => true,
             'showAppActions' => true,
             'showDesignActions' => false,
