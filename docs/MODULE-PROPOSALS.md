@@ -228,6 +228,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `metre-quantitatif` | 1.0.0 | `metre_lots`, `metre_postes`, `metre_bibliotheque_prix` | `projects.view` / `projects.manage` | Liste des projets métrés, fiche de métré (lots, postes, marges), édition d’un poste, DQE imprimable, export CSV, bibliothèque de prix |
 | `honoraires-bareme` | 1.0.0 | `bareme_missions`, `bareme_tranches`, `bareme_decomptes` | `projects.view` / `projects.manage` (+ `documents.create` pour le devis) | Liste des projets, fiche honoraires (décomptes), barèmes et tranches par phase, détail du calcul, génération d’un devis d’honoraires en brouillon |
 | `planning-equipe` | 1.0.0 | `planning_affectations`, `planning_conges` | `time.view` / `time.manage` (+ `time.view_all` et `time.manage_all` pour toute l’équipe) | Grille semaine/mois de la charge par collaborateur, affectations prévisionnelles, congés, détection de surcharge à seuil réglable, budget d’heures par projet |
+| `conformite-oat` | 1.0.0 | `conformite_inscriptions`, `conformite_assurances`, `conformite_formations`, `conformite_partenaires` | `projects.view` / `projects.manage` (+ `settings.view` / `settings.manage`) | Dossier professionnel : inscription et carte OAT, responsabilité civile, formation continue, bureaux d’études partenaires, alertes d’échéance à horizon réglable, attestation d’assurance imprimable par projet |
 
 ### Points de vigilance (à valider par le cabinet)
 
@@ -264,6 +265,17 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 - **Lecture seule du cœur** : `planning-equipe` lit `users`, `roles`, `projects`, `clients`,
   `project_phase_assignments` et `time_entries` (heures réalisées) et n’écrit que dans ses tables
   `planning_*`. Il ne crée aucun pointage et ne modifie ni coût ni budget.
+- **Conformité** : `conformite-oat` n’affirme **aucune validité légale** et n’embarque ni durée de
+  validité, ni obligation de formation, ni taux de couverture. Seules les dates saisies par le
+  cabinet déclenchent les alertes, dont l’horizon (60 jours par défaut) est un simple paramètre
+  d’écran. Les échéances réelles doivent être confirmées auprès de l’**OAT** et de l’assureur.
+  L’attestation imprimée est un **document de travail** établi à partir des données du cabinet :
+  elle ne remplace pas l’attestation originale de l’assureur, et aucune attestation n’est
+  imprimable lorsque la police retenue est expirée.
+- **Périmètre des tables** : `conformite-oat` ajoute `conformite_partenaires` aux trois tables
+  prévues au catalogue, pour couvrir les **bureaux d’études partenaires** cités dans le même
+  périmètre. Le module lit `users`, `projects` et `clients` et n’écrit que dans ses tables
+  `conformite_*`.
 
 ### Installation
 
@@ -274,6 +286,7 @@ cd modules && zip -r relances-factures-1.0.0.zip relances-factures
 cd modules && zip -r metre-quantitatif-1.0.0.zip metre-quantitatif
 cd modules && zip -r honoraires-bareme-1.0.0.zip honoraires-bareme
 cd modules && zip -r planning-equipe-1.0.0.zip planning-equipe
+cd modules && zip -r conformite-oat-1.0.0.zip conformite-oat
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -283,5 +296,5 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 ### Préfixes de tables
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
-`chantier_*`, `relances_*`, `metre_*`, `bareme_*` et `planning_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
+`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*` et `conformite_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.
