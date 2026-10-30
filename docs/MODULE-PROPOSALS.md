@@ -43,6 +43,9 @@ Ces ajouts sont légers mais débloquent l’essentiel de la valeur des modules.
 | **P4** | Commande CLI `bin/console module:run <slug> <tâche>` + exemple de cron documenté | Échéances, relances, purges ; sans cela un module ne peut agir qu’à l’ouverture d’un écran | S |
 | **P5** | Convention de stockage privé `storage/modules/<slug>/files/` + helper de dépôt/validation (MIME, taille, anti-lien) | Éviter que chaque module réinvente (et casse) le téléversement | S |
 | **P6** | Filtre `document.pdf.variables` (données additionnelles dans les modèles PDF) | Ajouter des mentions propres à un module sur devis/factures | S |
+| **P7** | Drapeau `public` par route : ne pas démarrer de session pour les chemins publics | Le noyau ouvre une session sur **toute** requête ; un espace client sans compte crée donc un fichier de session par visite | S |
+| **P8** | Jeton d’URL non journalisé : filtre de journalisation d’accès et/ou échange du jeton contre un cookie signé au premier appel | Les `access_log` du serveur web conservent l’URL, donc le jeton du portail | M |
+| **P9** | Service de fichiers privés signés (`StorageFile` + URL courte durée) | Permettre au portail client de remettre les PDF de documents émis sans exposer `storage/` | M |
 
 > **Décision à valider (P6/barre mobile) :** je recommande de **ne pas** ouvrir la barre
 > d’onglets aux modules : vous avez demandé qu’elle reste identique sur tous les onglets. Un
@@ -132,9 +135,13 @@ vivent dans des courriels.
 - Lien signé et expirable (sans création de compte) : avancement du projet, documents émis,
   photos de chantier ; journal des consultations ; révocation immédiate.
 - **Tables :** `portail_jetons`, `portail_acces`.
-- **Sécurité :** routes publiques à jeton HMAC, expiration, limitation de débit, aucun index
-  exposé, `noindex` ; **à ne pas improviser** — je le propose en dernier de la vague, avec revue
-  de sécurité dédiée.
+- **Sécurité :** routes publiques à jeton, expiration, limitation de débit, aucun index
+  exposé, `noindex` ; **à ne pas improviser** — livré avec revue de sécurité dédiée
+  (`docs/SECURITE-PORTAIL-CLIENT.md`).
+- **Mise en œuvre retenue :** secret aléatoire de 256 bits (empreinte SHA-256 en base) plutôt
+  qu’un jeton HMAC. La signature HMAC n’apportait rien ici — la révocation et la portée exigent
+  de toute façon une lecture en base — et un jeton aléatoire évite qu’un identifiant public
+  apparaisse dans les URL et les journaux, tout en rendant la révocation immédiate.
 
 #### 9. `fiscal-tn` — Échéancier et déclarations — **M**
 - Calendrier des obligations (TVA mensuelle/trimestrielle, retenue à la source, TCL), état
@@ -192,6 +199,10 @@ vivent dans des courriels.
 4. **Vague 3** : `comptabilite-export` (rapide), `fiscal-tn`, `crm-opportunites`,
    `portail-client` (avec revue de sécurité), `ged-versions`.
 
+État de la vague 3 : `comptabilite-export`, `fiscal-tn`, `crm-opportunites` et `portail-client`
+sont livrés (v1.0.0) ; `portail-client` a fait l’objet de la revue de sécurité dédiée demandée
+par le catalogue, consignée dans `docs/SECURITE-PORTAIL-CLIENT.md`. Reste `ged-versions`.
+
 Critères de priorisation retenus : valeur quotidienne pour l’architecte > impact trésorerie >
 risque technique. Les deux modules à **plus fort effet perçu** sont `suivi-chantier` (il crée de la
 matière que le cabinet n’a jamais eue) et `relances-factures` (il encaisse).
@@ -233,7 +244,9 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `fiscal-tn` | 1.0.0 | `fiscal_echeances`, `fiscal_declarations` | `documents.view` / `documents.manage` (+ `finance.view` / `finance.manage`, `settings.manage`) | Calendrier des obligations (TVA, retenue à la source, TCL, autre) à période et échéance libres, états « à préparer / déposée / payée », alertes à horizon réglable, récapitulatif par période, export CSV |
 
 | `crm-opportunites` | 1.0.0 | `crm_opportunites`, `crm_activites` | `clients.view` / `clients.manage` (+ `projects.view` / `projects.manage`) | Liste du pipeline (filtres étape, origine, responsable, relance et recherche libre), fiche opportunité (avancement d’étape, rattachement à un client et à un projet existants, journal des activités, édition), répartition par étape, export CSV |
-### Points de vigilance (à valider par le cabinet)
+| `portail-client` | 1.0.0 | `portail_jetons`, `portail_acces` | `clients.view` / `clients.manage` (+ `projects.view`, vérification d’appartenance à chaque requête publique) | Écran du cabinet : liens actifs et statistiques, création d’un lien (client, portée projet ou client, durée 1–365 jours, droits documents/montants/photos), révocation, prolongation, suppression, journal des consultations. Espace public autonome `/portail/{jeton}` : projets, phases, avancement, documents émis, photos ; pages d’état (invalide, expiré, révoqué, débit dépassé) |
+
+Il y a **dix modules livrés** (vagues 1 à 3, moins `ged-versions` encore à faire).
 
 - **Délais de permis** : le module n’impose aucun délai légal ; l’architecte saisit les échéances
   et le module se contente de signaler les retards. Les valeurs usuelles doivent être confirmées
@@ -291,6 +304,17 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
   à l’un de ses projets **existants** ; les fiches se créent dans les écrans Clients et Projets du
   noyau. Le module lit `clients`, `projects` et `users` et n’écrit que dans ses tables `crm_*` ; il
   ne touche ni aux documents, ni aux montants du noyau.
+- **Espace client** : `portail-client` est le **seul module à exposer des routes publiques**. Le
+  jeton (`random_bytes(32)`, 64 hexadécimaux) n’est jamais stocké ni journalisé en clair : la base
+  ne contient qu’une empreinte SHA-256, ce qui rend la révocation immédiate et une fuite de la
+  base inexploitable. Chaque requête revérifie l’expiration, la révocation, la portée (projet ou
+  client) et les droits cochés ; les documents sont limités à `status = issued` et les photos
+  passent obligatoirement par la route à jeton, jamais par un chemin de stockage. Les pages
+  publiques sont en **lecture seule** (aucune route POST publique), sans script, sans ressource
+  externe, avec `noindex`, `no-store`, `no-referrer` et `frame-ancestors 'none'`. Aucune donnée
+  financière interne (coûts, honoraires, taux, notes privées, règlements) n’est exposée ; les
+  montants des documents ne sont visibles que si le cabinet a coché le droit correspondant.
+  La revue de sécurité complète est dans **`docs/SECURITE-PORTAIL-CLIENT.md`**.
 - **Journaux comptables** : `comptabilite-export` est **strictement en lecture** — aucune table,
   aucune route d’écriture, aucun taux appliqué. Il reprend les montants figés dans les documents
   émis (HT + TVA + timbre − retenue) et les règlements du noyau ; les brouillons et les pièces
@@ -310,6 +334,7 @@ cd modules && zip -r conformite-oat-1.0.0.zip conformite-oat
 cd modules && zip -r comptabilite-export-1.0.0.zip comptabilite-export
 cd modules && zip -r fiscal-tn-1.0.0.zip fiscal-tn
 cd modules && zip -r crm-opportunites-1.0.0.zip crm-opportunites
+cd modules && zip -r portail-client-1.0.0.zip portail-client
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -319,7 +344,8 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 ### Préfixes de tables
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
-`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*`, `conformite_*`, `fiscal_*` et `crm_*`.
+`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*`, `conformite_*`, `fiscal_*`,
+`crm_*` et `portail_*`.
 `comptabilite-export` ne crée aucune table : il ne lit que `documents`, `document_payments`,
 `clients` et `projects`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.

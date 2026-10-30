@@ -1,0 +1,17 @@
+{
+    "slug": "portail-client",
+    "name": "Espace client en lecture seule",
+    "version": "1.0.0",
+    "description": "Liens d’accès clients sans compte : avancement des projets, documents émis et photos, journal des consultations, expiration et révocation immédiate. Routes publiques protégées par un jeton aléatoire haché, limitation de débit et aucune indexation.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\PortailClient",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "migrations": "migrations",
+    "lang": "lang",
+    "enabled_by_default": false
+}

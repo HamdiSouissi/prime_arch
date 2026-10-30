@@ -1,0 +1,17 @@
+/* Module « portail-client » — ajustements limités à l’écran du cabinet. */
+
+.portail-url {
+    display: block;
+    inline-size: 100%;
+    padding-block: 0.45rem;
+    padding-inline: 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-muted);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-caption);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
