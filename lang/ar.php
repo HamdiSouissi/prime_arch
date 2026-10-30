@@ -671,6 +671,7 @@ return [
     'documents.not_found' => 'لم تعد هذه الوثيقة موجودة.',
     'documents.not_draft' => 'هذا الإجراء مخصص للمسودات فقط.',
     'documents.issue_not_draft' => 'يمكن إصدار المسودة فقط.',
+    'documents.invalid_issue_date' => 'تاريخ الإصدار المطلوب غير صالح أو مستقبلي.',
     'documents.credit_limit_exceeded' => 'يتجاوز مبلغ الإشعار الدائن الرصيد المتبقي القابل للخصم من الفاتورة.',
     'documents.payment_invoice_required' => 'لا يمكن إضافة دفعة إلا إلى فاتورة صادرة.',
     'documents.payment_exceeds_balance' => 'يتجاوز المبلغ الرصيد المتبقي على الفاتورة.',

@@ -10,6 +10,15 @@ Le journal est consultable à `/admin/audit` par un administrateur. Il conserve 
 
 Les utilisateurs autorisés à gérer les projets peuvent téléverser une image JPEG, PNG ou WebP par envoi, jusqu’à 20 Mio, 10 000 pixels par côté et 40 mégapixels. Configurer PHP avec `upload_max_filesize=20M` et `post_max_size=24M` au minimum. Le serveur vérifie le MIME réel et les dimensions, attribue un nom aléatoire et conserve le fichier sous `storage/uploads/projects/`, hors de `public/`. L’affichage passe par une route authentifiée qui vérifie l’accès `projects.view` ; les images ne sont pas exposées comme fichiers statiques. La sauvegarde inclut ces fichiers via `storage/uploads/`.
 
+## Base de démonstration
+
+Une base de démonstration se prépare avec `php bin/migrate.php` puis `php bin/seed-demo.php`. Le script
+précharge les référentiels, crée une équipe (un compte par rôle), des clients, des projets, du temps et
+une chaîne de documents commerciale complète. Il est réexécutable, ne modifie aucune table de module et
+refuse de s’exécuter lorsque `APP_ENV` vaut `production` sans l’option `--force` : les comptes partagent
+un mot de passe de démonstration, généré aléatoirement et affiché une seule fois. Ne jamais l’exécuter
+sur la base du cabinet. Détail du contenu et procédure de retrait : `docs/DEMO-DATA.md`.
+
 ## Créer et contrôler une sauvegarde
 
 La sauvegarde s’exécute uniquement en CLI. Elle nécessite PHP 8.2+, `pdo_mysql`, l’extension `zip` (déjà requise par l’application) et les droits de lecture du schéma/données et d’écriture dans `storage/backups` et `storage/tmp`.

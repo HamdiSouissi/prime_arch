@@ -671,6 +671,7 @@ return [
     'documents.not_found' => 'Ce document n’existe plus.',
     'documents.not_draft' => 'Cette action est réservée aux brouillons.',
     'documents.issue_not_draft' => 'Seul un brouillon peut être émis.',
+    'documents.invalid_issue_date' => 'La date d’émission demandée est invalide ou future.',
     'documents.credit_limit_exceeded' => 'Le montant de cet avoir dépasse le solde encore créditable de la facture.',
     'documents.payment_invoice_required' => 'Un règlement ne peut être ajouté qu’à une facture émise.',
     'documents.payment_exceeds_balance' => 'Le montant dépasse le solde restant de la facture.',

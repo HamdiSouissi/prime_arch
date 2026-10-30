@@ -7,6 +7,7 @@ use App\Core\Database;
 use App\Models\DocumentRepository;
 use App\Models\DocumentTemplateRepository;
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PDO;
 use RuntimeException;
 use Throwable;
@@ -355,8 +356,14 @@ final class DocumentService
         ];
     }
 
-    /** Émet un brouillon, réserve son numéro et conserve l'instantané et le PDF dans la même opération. */
-    public function issue(int $id, int $issuedBy): void
+    /**
+     * Émet un brouillon, réserve son numéro et conserve l'instantané et le PDF dans la même opération.
+     *
+     * `$issueDate` permet de rattraper une date d'émission passée (reprise de données ou jeu de
+     * démonstration) ; par défaut l'émission est datée du jour. Une date future est refusée, et
+     * la numérotation reste celle de l'année d'émission réellement retenue.
+     */
+    public function issue(int $id, int $issuedBy, ?string $issueDate = null): void
     {
         $logoReference = null;
         $pdfStored = false;
@@ -379,7 +386,7 @@ final class DocumentService
                 $this->validateCreditLimit($document);
             }
 
-            $issueDate = (new DateTimeImmutable('today'))->format('Y-m-d');
+            $issueDate = self::resolveIssueDate($issueDate);
             $year = (int) substr($issueDate, 0, 4);
             $number = $this->documents->reserveNumber((string) $document['document_type'], $year);
             [$dueDate, $validUntil] = self::issueDates($document, $issueDate);
@@ -646,6 +653,26 @@ final class DocumentService
             throw new RuntimeException(__('documents.snapshot_invalid'));
         }
         return $decoded;
+    }
+
+    /** Valide une date d'émission demandée : format strict, jamais dans le futur. */
+    private static function resolveIssueDate(?string $issueDate): string
+    {
+        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+        if ($issueDate === null || $issueDate === '') {
+            return $today;
+        }
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $issueDate);
+        $errors = DateTimeImmutable::getLastErrors();
+        if ($date === false
+            || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
+            || $date->format('Y-m-d') !== $issueDate
+            || $issueDate > $today
+        ) {
+            throw new InvalidArgumentException(__('documents.invalid_issue_date'));
+        }
+
+        return $issueDate;
     }
 
     /** @return array{?string,?string} */

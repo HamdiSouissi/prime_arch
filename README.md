@@ -31,6 +31,11 @@ php bin/create-admin.php
 php -S localhost:8000 -t public
 ```
 
+Pour découvrir l'application avec des écrans peuplés, un jeu de démonstration réexécutable est
+disponible : `php bin/seed-demo.php` (voir `docs/DEMO-DATA.md`). Il crée une équipe, des clients,
+des projets, du temps et une chaîne de documents ; il refuse de s'exécuter sur un environnement
+`production` sans `--force` et n'utilise aucun mot de passe codé en dur.
+
 Le script `create-admin.php` demande le nom, le courriel et un mot de passe de 12 caractères minimum ; aucun compte ni secret par défaut n'est créé. L'administrateur se connecte sur `http://localhost:8000/login`. La racine `/` ouvre le tableau de bord si une session est active, sinon la connexion. `/health` permet de vérifier l'installation.
 
 En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_KEY` aléatoire, `APP_URL` en HTTPS, et placer uniquement `public/` derrière le serveur web.
@@ -110,6 +115,7 @@ fournis par le bloc `#app-i18n` (`app/Views/partials/i18n.php`).
 composer test                                   # suite complète
 vendor/bin/phpunit --filter NavigationDepthTest # le garde-fou des trois clics seul
 vendor/bin/phpunit --filter ModulesIntegrityTest # les modules installables
+vendor/bin/phpunit --filter DemoDataTest        # la cohérence du jeu de démonstration
 ```
 
 Deux tests lisent le code plutôt que des données : `tests/NavigationDepthTest.php` reconstruit le
@@ -123,6 +129,7 @@ un lien ou un module.
 - `docs/ARCHITECTURE.md` — architecture et cycle de vie d'une requête.
 - `docs/CONVENTIONS.md` — conventions de code.
 - `docs/DATA-SOURCES.md` — attribution des données géographiques et limites de validation.
+- `docs/DEMO-DATA.md` — jeu de données de démonstration, comptes, réexécution et retrait.
 - `docs/DESIGN-SYSTEM.md` — tokens, composants, accessibilité et RTL.
 - `docs/ROADMAP.md` — phases et critères de progression.
 - `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
