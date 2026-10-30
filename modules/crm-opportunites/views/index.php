@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Core\Auth;
 use App\Core\View;
 use Modules\CrmOpportunites\Services\CrmService;
 
@@ -191,7 +192,6 @@ $filterFields = [
                         <th scope="col"><?= e(__('crm.estimated_amount')) ?></th>
                         <th scope="col"><?= e(__('crm.follow.label')) ?></th>
                         <th scope="col"><?= e(__('crm.owner')) ?></th>
-                        <th scope="col"><?= e(__('crm.activities')) ?></th>
                         <th scope="col"><?= e(__('crm.client')) ?></th>
                         <th scope="col"><?= e(__('common.actions')) ?></th>
                     </tr>
@@ -203,15 +203,23 @@ $filterFields = [
                                 <strong><?= e((string) $row['title']) ?></strong>
                                 <span class="table-meta">
                                     <?= e((string) $row['prospect_name']) ?> ·
-                                    <?= e(__('crm.client_type.' . (string) $row['client_type'])) ?>
-                                    <?php if (trim((string) ($row['city'] ?? '')) !== ''): ?> · <?= e((string) $row['city']) ?><?php endif; ?>
+                                    <?= e(__('crm.client_type.' . (string) $row['client_type'])) ?><?php if (trim((string) ($row['city'] ?? '')) !== ''): ?> · <?= e((string) $row['city']) ?><?php endif; ?>
                                 </span>
+                                <span class="table-meta"><?= e(__('crm.origin.' . (string) $row['origin'])) ?></span>
                             </td>
                             <td>
                                 <span class="badge <?= e($stageBadge((string) $row['stage'])) ?>"><?= e(__('crm.stage.' . (string) $row['stage'])) ?></span>
-                                <span class="table-meta"><?= e(__('crm.origin.' . (string) $row['origin'])) ?></span>
+                                <?php if (($row['lost_reason'] ?? null) !== null && trim((string) $row['lost_reason']) !== ''): ?>
+                                    <span class="table-meta"><?= e((string) $row['lost_reason']) ?></span>
+                                <?php endif; ?>
                             </td>
-                            <td class="u-numeric"><?= e(CrmService::label($row['amount_millimes'] ?? null)) ?></td>
+                            <td class="u-numeric">
+                                <?php if (($row['estimated_amount'] ?? null) !== null): ?>
+                                    <?= e(money_format_tnd((string) $row['estimated_amount'])) ?>
+                                <?php else: ?>
+                                    <span class="muted">—</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php if (($row['next_action_on'] ?? null) !== null): ?>
                                     <?= e($dateLabel((string) $row['next_action_on'])) ?>
@@ -222,17 +230,13 @@ $filterFields = [
                             </td>
                             <td><?= e($orDash((string) ($row['owner_name'] ?? ''))) ?></td>
                             <td>
-                                <?= (int) ($row['activity_count'] ?? 0) ?>
-                                <span class="table-meta"><?= e(__('crm.last_activity')) ?> : <?= e($dateLabel($row['last_activity_on'] === null ? null : (string) $row['last_activity_on'])) ?></span>
-                            </td>
-                            <td>
                                 <?php if (($row['client_id'] ?? null) !== null): ?>
-                                    <?php if (App\Core\Auth::can('clients.view')): ?>
+                                    <?php if (Auth::can('clients.view')): ?>
                                         <a href="<?= e(url('/clients/' . (int) $row['client_id'])) ?>"><?= e((string) ($row['client_name'] ?? '')) ?></a>
                                     <?php else: ?>
                                         <?= e((string) ($row['client_name'] ?? '')) ?>
                                     <?php endif; ?>
-                                    <span class="table-meta"><?= e((string) ($row['client_reference'] ?? '')) ?></span>
+                                    <span class="table-meta"><?= e($orDash((string) ($row['client_reference'] ?? ''))) ?></span>
                                 <?php else: ?>
                                     <span class="muted"><?= e(__('crm.not_linked')) ?></span>
                                 <?php endif; ?>
@@ -244,6 +248,9 @@ $filterFields = [
                                         <form method="post" action="<?= e(url('/crm/opportunites/' . (int) $row['id'] . '/supprimer')) ?>"
                                               data-confirm="<?= e(__('crm.confirm_delete')) ?>">
                                             <?= csrf_field() ?>
+                                            <?php foreach ($filterFields as $filterName => $filterValue): ?>
+                                                <input type="hidden" name="<?= e($filterName) ?>" value="<?= e($filterValue) ?>">
+                                            <?php endforeach; ?>
                                             <button class="button button--small button--ghost" type="submit"><?= e(__('common.delete')) ?></button>
                                         </form>
                                     <?php endif; ?>
