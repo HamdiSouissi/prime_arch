@@ -247,7 +247,8 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `portail-client` | 1.0.0 | `portail_jetons`, `portail_acces`, `portail_tentatives` | `clients.view` / `clients.manage` (+ `projects.view`, vérification d’appartenance à chaque requête publique) | Écran du cabinet : liens actifs et statistiques, création d’un lien (client, portée projet ou client, durée 1–365 jours, droits documents/montants/photos), révocation, prolongation, suppression, journal des consultations. Espace public autonome `/portail/{jeton}` : projets, phases, avancement, documents émis, photos ; pages d’état (invalide, expiré, révoqué, débit dépassé) |
 | `ged-versions` | 1.0.0 | `ged_documents`, `ged_versions` | `documents.view` ou `projects.view` / `documents.manage` ou `projects.manage` | Liste des documents (recherche libre, catégorie, client, projet, archive), fiche documentaire (référence `GED-…`, classement, étiquettes, rétention, empreinte SHA-256), dépôt de versions successives avec note, téléchargement vérifié, archivage, édition et suppression, export CSV de l’index |
 
-Il y a **onze modules livrés** : les trois vagues du catalogue sont complètes.
+Il y a **douze modules livrés** : les trois vagues du catalogue sont complètes (le dossier
+`modules/_example-module/` du noyau est un modèle, pas une extension livrée).
 
 ### Points de vigilance (à valider par le cabinet)
 

@@ -147,7 +147,7 @@ $versionCount = count($versions);
         </div>
         <div>
             <dt class="detail-label"><?= e(__('ged.versions')) ?></dt>
-            <dd class="u-numeric"><?= $versionCount ?></dd>
+            <dd class="u-numeric"><?= (int) $versionCount ?></dd>
         </div>
         <div>
             <dt class="detail-label"><?= e(__('ged.total_size')) ?></dt>
