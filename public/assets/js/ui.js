@@ -275,6 +275,115 @@ function initTimer() {
     render();
 }
 
+function initGeographySelects() {
+    const form = document.querySelector("[data-geography-form]");
+    const governorate = form?.querySelector("[data-governorate-select]");
+    const delegation = form?.querySelector("[data-delegation-select]");
+    const postalInput = form?.querySelector("[data-postal-input]");
+    const postalOptions = form?.querySelector("[data-postal-options]");
+    if (!form || !governorate || !delegation) return;
+
+    const setPlaceholder = (select, label) => {
+        select.replaceChildren(new Option(label, ""));
+    };
+    const loadPostalCodes = async (delegationId) => {
+        if (!postalOptions) return;
+        postalOptions.replaceChildren();
+        if (!delegationId) return;
+        const endpoint = form.dataset.postalCodesUrl;
+        if (!endpoint) return;
+        try {
+            const response = await fetch(`${endpoint}?delegation_id=${encodeURIComponent(delegationId)}`, {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+            });
+            if (!response.ok) throw new Error("postal-codes");
+            const records = await response.json();
+            records.forEach((record) => {
+                const option = document.createElement("option");
+                option.value = String(record.code ?? "");
+                option.label = String(document.documentElement.lang === "ar" ? (record.locality_ar ?? "") : (record.locality_fr ?? ""));
+                postalOptions.append(option);
+            });
+        } catch {
+            showToast("Les codes postaux ne sont pas disponibles pour cette délégation.", "info");
+        }
+    };
+    const loadDelegations = async (governorateId, selectedId = "") => {
+        setPlaceholder(delegation, "Choisir une délégation");
+        delegation.disabled = !governorateId;
+        if (!governorateId) {
+            if (postalInput) postalInput.value = "";
+            await loadPostalCodes("");
+            return;
+        }
+
+        const endpoint = form.dataset.delegationsUrl;
+        if (!endpoint) return;
+        try {
+            const response = await fetch(`${endpoint}?governorate_id=${encodeURIComponent(governorateId)}`, {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" },
+            });
+            if (!response.ok) throw new Error("delegations");
+            const records = await response.json();
+            const options = document.createDocumentFragment();
+            records.forEach((record) => {
+                const option = document.createElement("option");
+                option.value = String(record.id);
+                option.textContent = String(document.documentElement.lang === "ar" ? (record.name_ar ?? "") : (record.name_latin ?? ""));
+                options.append(option);
+            });
+            delegation.append(options);
+            delegation.disabled = false;
+            if (selectedId && records.some((record) => String(record.id) === String(selectedId))) {
+                delegation.value = String(selectedId);
+            }
+            if (postalInput && !selectedId) postalInput.value = "";
+            await loadPostalCodes(delegation.value);
+        } catch {
+            delegation.disabled = true;
+            showToast("Impossible de charger les délégations. Réessayez.", "error");
+        }
+    };
+
+    const initialGovernorate = governorate.value;
+    const initialDelegation = delegation.dataset.selected || delegation.value;
+    const initialPostalCode = postalInput?.value ?? "";
+    loadDelegations(initialGovernorate, initialDelegation).then(() => {
+        if (postalInput) postalInput.value = initialPostalCode;
+    });
+    governorate.addEventListener("change", () => loadDelegations(governorate.value));
+    delegation.addEventListener("change", () => {
+        if (postalInput) postalInput.value = "";
+        loadPostalCodes(delegation.value);
+    });
+}
+
+function initVatRatesSelect() {
+    const ratesInput = document.querySelector("[name='vat_rates']");
+    const defaultSelect = document.querySelector("[name='vat_default']");
+    if (!(ratesInput instanceof HTMLInputElement) || !(defaultSelect instanceof HTMLSelectElement)) return;
+
+    const refreshOptions = () => {
+        const previous = defaultSelect.value;
+        const rates = [...new Set(ratesInput.value.split(",").map((rate) => rate.trim()))]
+            .filter((rate) => /^(?:100|[1-9]?[0-9])$/.test(rate));
+        defaultSelect.replaceChildren();
+        if (rates.length === 0) {
+            const placeholder = new Option("Choisir un taux", "");
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            defaultSelect.append(placeholder);
+            return;
+        }
+        rates.forEach((rate) => defaultSelect.append(new Option(`${rate} %`, rate)));
+        defaultSelect.value = rates.includes(previous) ? previous : rates[0];
+    };
+
+    ratesInput.addEventListener("input", refreshOptions);
+}
+
 function initUpload() {
     const zone = document.querySelector("[data-upload-zone]");
     const input = zone?.querySelector("input[type='file']");
@@ -424,4 +533,6 @@ export function initUI() {
     initViewToggle();
     initTimer();
     initUpload();
+    initGeographySelects();
+    initVatRatesSelect();
 }

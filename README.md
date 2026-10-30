@@ -1,36 +1,49 @@
 # Prime Arch
 
-Application web de gestion de cabinet d'architecture pour la **Tunisie**.
-Squelette vierge : PHP 8.2+ natif (sans framework), MySQL 8, MVC maison, modules type extensions WordPress.
+Application web de gestion d'un cabinet d'architecture en Tunisie. Le noyau est développé en PHP 8.2+ natif, selon une architecture MVC maison, MySQL 8/InnoDB, PDO et interfaces HTML/CSS/JavaScript vanilla. Seul `public/` est exposé au web.
 
 ## Prérequis
 
-- PHP 8.2+ (extensions `pdo_mysql`, `mbstring`, `gd` pour mPDF)
-- MySQL 8 (InnoDB, utf8mb4)
-- Composer 2
-- Apache (mod_rewrite) ou nginx + PHP-FPM
+- PHP 8.2+ avec `pdo_mysql`, `mbstring`, `fileinfo`, `gd` et `zip` ; l'algorithme de hachage Argon2id doit être disponible (`password_algos()`).
+- MySQL 8, InnoDB, `utf8mb4`.
+- Composer 2.
+- Apache avec `mod_rewrite` ou nginx + PHP-FPM.
 
-## Installation
+## Installation locale
 
 ```bash
 composer install
-cp .env.example .env        # puis renseigner DB_* et APP_URL
-php bin/migrate.php         # crée les tables
-php -S localhost:8000 -t public   # serveur de développement
+cp .env.example .env
 ```
 
-Ouvrir http://localhost:8000 : la page **« Installation OK »** doit s'afficher
-(l'indicateur « Base de données » est vert si la connexion fonctionne).
+Renseigner `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` et `APP_URL` dans `.env`. Générer une clé d'application aléatoire (ne jamais la versionner) :
 
-## Déploiement
+```bash
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
 
-- **Seul `public/` doit être exposé.** Pointer le `DocumentRoot` (ou `root` nginx) vers `prime-arch/public`.
-  Voir `nginx.conf.example`.
-- **Hébergement mutualisé** sans accès au DocumentRoot : placer le projet dans `public_html/prime-arch/`.
-  Le `.htaccess` racine (`Require all denied`) protège tout le projet ; `public/.htaccess` réautorise
-  uniquement `public/`. Renseigner `APP_URL` avec l'URL complète vers `public/`
-  (ex. `https://exemple.tn/prime-arch/public`).
-- En production : `APP_ENV=production`, `APP_DEBUG=false`, générer `APP_KEY`, activer HTTPS.
+Copier le résultat dans `APP_KEY`, puis préparer le schéma, les rôles et le premier administrateur :
+
+```bash
+php bin/migrate.php
+php bin/seed.php
+php bin/create-admin.php
+php -S localhost:8000 -t public
+```
+
+Le script `create-admin.php` demande le nom, le courriel et un mot de passe de 12 caractères minimum ; aucun compte ni secret par défaut n'est créé. L'administrateur se connecte sur `http://localhost:8000/login`. La racine `/` ouvre le tableau de bord si une session est active, sinon la connexion. `/health` permet de vérifier l'installation.
+
+En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_KEY` aléatoire, `APP_URL` en HTTPS, et placer uniquement `public/` derrière le serveur web.
+
+## Phase 1 livrée pour validation
+
+- Connexion/déconnexion, sessions renouvelées à l'authentification, CSRF, mots de passe Argon2id et limite de tentatives.
+- Rôles Administrateur, Architecte, Collaborateur, Comptable et Lecture seule, avec contrôle d'accès côté serveur.
+- Réglages du cabinet et valeurs fiscales configurables ; téléversement sécurisé de logo JPEG/PNG/WebP privé.
+- Référentiel bilingue préchargé des 24 gouvernorats et des 264 délégations ; table de codes postaux et validation à quatre chiffres.
+- Commandes d'installation, graines idempotentes et pages de fondation.
+
+Les codes postaux ne sont pas préchargés tant qu'une source exploitable et vérifiable n'a pas été validée. Voir `docs/DATA-SOURCES.md` et `docs/ROADMAP.md`.
 
 ## Tests
 
@@ -40,12 +53,9 @@ composer test
 
 ## Documentation
 
-- `docs/ARCHITECTURE.md` — architecture et cycle de vie d'une requête
-- `docs/MODULES.md` — spécification du format d'un module
-- `docs/CONVENTIONS.md` — conventions de code
-
-## État du squelette
-
-Fonctionnent : front controller, routeur, config/.env, connexion PDO, moteur de vues, traductions fr/ar,
-hooks, migrateur SQL. Squelettes à compléter (TODO dans le code) : authentification, modèles métier,
-gestion des modules (téléversement/activation), PDF (mPDF), seeds des délégations.
+- `docs/ARCHITECTURE.md` — architecture et cycle de vie d'une requête.
+- `docs/CONVENTIONS.md` — conventions de code.
+- `docs/DATA-SOURCES.md` — attribution des données géographiques et limites de validation.
+- `docs/DESIGN-SYSTEM.md` — tokens, composants, accessibilité et RTL.
+- `docs/ROADMAP.md` — phases et critères de progression.
+- `docs/MODULES.md` — format cible des modules.

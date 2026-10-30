@@ -39,6 +39,7 @@
   <symbol id="layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
   <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3 20 6v5.5c0 4.5-3.3 7.7-8 9.5-4.7-1.8-8-5-8-9.5V6l8-3Z"/><path d="m8.5 12 2.25 2.25 4.75-5"/></symbol>
   <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20.5a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="log-out" viewBox="0 0 24 24"><path d="M10 5H6.5A2.5 2.5 0 0 0 4 7.5v9A2.5 2.5 0 0 0 6.5 19H10M14.5 8.5 18 12l-3.5 3.5M18 12H9"/></symbol>
   <symbol id="eye" viewBox="0 0 24 24"><path d="M2.75 12s3.3-6 9.25-6 9.25 6 9.25 6-3.3 6-9.25 6-9.25-6-9.25-6Z"/><circle cx="12" cy="12" r="2.5"/></symbol>
   <symbol id="edit" viewBox="0 0 24 24"><path d="m14 5 5 5M4 20l4.2-.8L19.5 7.9a2.12 2.12 0 0 0-3-3L5.2 16.2 4 20Z"/><path d="M13 20h7"/></symbol>
   <symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6.5 7l.8 13h9.4l.8-13M9 7V4h6v3"/></symbol>

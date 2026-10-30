@@ -78,6 +78,7 @@ final class DesignController
         return Response::html(View::render('pages/auth/login', [
             'title' => 'Connexion',
             'devOnly' => true,
+            'demoMode' => true, 'returnTo' => '/dashboard',
         ], 'layouts/auth'));
     }
 

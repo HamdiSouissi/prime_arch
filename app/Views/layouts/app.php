@@ -2,11 +2,12 @@
 declare(strict_types=1);
 
 /** @var string $content */
-use App\Core\View;
 use App\Core\Translator;
+use App\Core\View;
 
 $designEnabled = strtolower((string) config('app.env', 'production')) !== 'production';
 $isDesignPreview = $designEnabled && !empty($devOnly);
+$isAuthenticated = !empty($authenticated);
 $workspace = $workspace ?? [];
 $userProfile = $userProfile ?? [];
 $navigation = $navigation ?? ($isDesignPreview ? [
@@ -26,14 +27,19 @@ $quickActions = $quickActions ?? ($isDesignPreview ? [
     ['label' => 'Saisie du temps', 'description' => 'Démarrer le chronomètre de démo', 'url' => url('/design/time'), 'icon' => 'timer'],
 ] : []);
 $commands = $commands ?? [];
-foreach ($navigation as $navigationItem) {
-    $commands[] = [
-        'label' => $navigationItem['label'],
-        'description' => 'Ouvrir la section',
-        'url' => $navigationItem['url'],
-        'icon' => $navigationItem['icon'],
-        'group' => 'Navigation',
-    ];
+if ($commands === []) {
+    foreach ($navigation as $navigationItem) {
+        if (array_key_exists('available', $navigationItem) && !$navigationItem['available']) {
+            continue;
+        }
+        $commands[] = [
+            'label' => $navigationItem['label'],
+            'description' => 'Ouvrir la section',
+            'url' => $navigationItem['url'],
+            'icon' => $navigationItem['icon'],
+            'group' => 'Navigation',
+        ];
+    }
 }
 if ($isDesignPreview) {
     $commands = array_merge($commands, [
@@ -62,9 +68,22 @@ if ($isDesignPreview) {
     <div class="dev-banner"><span class="dev-banner__dot" aria-hidden="true"></span>DEV ONLY · Écrans de démonstration — données fictives, aucune écriture</div>
 <?php endif; ?>
 <div class="app-shell" data-app-shell>
-    <?php View::partial('partials/sidebar', ['items' => $navigation, 'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home'), 'showDesignNav' => $isDesignPreview, 'workspace' => $workspace]) ?>
+    <?php View::partial('partials/sidebar', [
+        'items' => $navigation,
+        'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home'),
+        'showDesignNav' => $isDesignPreview,
+        'showWorkspace' => $isDesignPreview || $isAuthenticated,
+        'authenticated' => $isAuthenticated,
+        'workspace' => $workspace,
+    ]) ?>
     <div class="app-main">
-        <?php View::partial('partials/topbar', ['title' => $title ?? '', 'showDesignActions' => $isDesignPreview, 'workspace' => $workspace, 'userProfile' => $userProfile]) ?>
+        <?php View::partial('partials/topbar', [
+            'title' => $title ?? '',
+            'showDesignActions' => $isDesignPreview,
+            'showAppActions' => !empty($showAppActions) || $isAuthenticated,
+            'workspace' => $workspace,
+            'userProfile' => $userProfile,
+        ]) ?>
         <main class="app-content" id="main" tabindex="-1">
             <?= $content ?>
         </main>
@@ -74,6 +93,8 @@ if ($isDesignPreview) {
 <?php View::partial('partials/tabbar', ['items' => $navigation, 'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home')]) ?>
 <?php if ($isDesignPreview): ?>
     <?php View::partial('partials/quick-add', ['quickActions' => $quickActions]) ?>
+<?php endif; ?>
+<?php if ($isDesignPreview || $isAuthenticated): ?>
     <?php View::partial('partials/command-palette', ['commands' => $commands]) ?>
 <?php endif; ?>
 <?php View::partial('partials/toast', ['toastMessage' => $toastMessage ?? null]) ?>
