@@ -138,7 +138,7 @@ return [
 
     'honoraire.status.draft' => 'مسوّدة',
     'honoraire.status.validated' => 'معتمد',
-    'honoraire.status.invoiced' => 'تم إنشاء العرض',
+    'honoraire.status.quoted' => 'تم إنشاء العرض',
 
     'honoraire.invalid_name' => 'يجب أن يحتوي اسم الجدول على 2 إلى 150 حرفًا.',
     'honoraire.invalid_description' => 'لا يمكن أن يتجاوز الوصف 2000 حرف.',
@@ -165,7 +165,7 @@ return [
     'honoraire.decompte_validated' => 'تم اعتماد الحساب.',
     'honoraire.decompte_deleted' => 'تم حذف الحساب.',
     'honoraire.no_fee' => 'لم يُحسب أي أتعاب: تحقّق من شرائح الجدول ومن الأساس المدخل.',
-    'honoraire.already_invoiced' => 'هذا الحساب أُنجز منه عرض أتعاب بالفعل.',
+    'honoraire.already_quoted' => 'هذا الحساب أُنجز منه عرض أتعاب بالفعل.',
     'honoraire.delete_linked' => 'هذا الحساب مرتبط بعرض أتعاب: احذف الرابط أولًا من الوثائق.',
     'honoraire.document_created' => 'أُنشئت مسوّدة عرض الأتعاب.',
     'honoraire.document_exists' => 'يوجد عرض أتعاب مرتبط بهذا الحساب بالفعل.',

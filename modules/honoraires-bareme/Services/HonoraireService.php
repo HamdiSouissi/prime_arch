@@ -18,7 +18,7 @@ final class HonoraireService
     public const MAX_RATE = 100_000;
 
     /** Statuts d’un décompte, dans l’ordre du cycle de vie. */
-    public const STATUSES = ['draft', 'validated', 'invoiced'];
+    public const STATUSES = ['draft', 'validated', 'quoted'];
 
     /**
      * Valide la fiche d’un barème (mission).

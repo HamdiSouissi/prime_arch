@@ -13,7 +13,7 @@ $hasDocument = (int) ($decompte['document_id'] ?? 0) > 0;
 
 $statusClass = static fn (string $value): string => match ($value) {
     'validated' => 'badge--info',
-    'invoiced' => 'badge--success',
+    'quoted' => 'badge--success',
     default => 'badge--neutral',
 };
 ?>

@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS bareme_decomptes (
     basis_amount DECIMAL(15,3) UNSIGNED NOT NULL DEFAULT 0.000,
     fee_amount DECIMAL(15,3) UNSIGNED NOT NULL DEFAULT 0.000,
     breakdown JSON NULL,
-    status ENUM('draft', 'validated', 'invoiced') NOT NULL DEFAULT 'draft',
+    status ENUM('draft', 'validated', 'quoted') NOT NULL DEFAULT 'draft',
     document_id INT UNSIGNED NULL,
     notes TEXT NULL,
     created_by INT UNSIGNED NULL,

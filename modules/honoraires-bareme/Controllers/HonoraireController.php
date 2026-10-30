@@ -359,8 +359,8 @@ final class HonoraireController
 
             return Response::redirect(url('/honoraires'));
         }
-        if ((string) $decompte['status'] === 'invoiced') {
-            Session::flash('honoraire.error', __('honoraire.already_invoiced'));
+        if ((string) $decompte['status'] === 'quoted') {
+            Session::flash('honoraire.error', __('honoraire.already_quoted'));
 
             return Response::redirect(url('/honoraires/decomptes/' . (int) $decompte['id']));
         }

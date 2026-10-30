@@ -312,7 +312,7 @@ final class HonoraireRepository
     public function attachDocument(int $decompteId, int $documentId): bool
     {
         $statement = $this->pdo->prepare(
-            "UPDATE bareme_decomptes SET document_id = ?, status = 'invoiced' WHERE id = ?"
+            "UPDATE bareme_decomptes SET document_id = ?, status = 'quoted' WHERE id = ?"
         );
         $statement->execute([$documentId, $decompteId]);
 

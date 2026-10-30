@@ -138,7 +138,7 @@ return [
 
     'honoraire.status.draft' => 'Brouillon',
     'honoraire.status.validated' => 'Validé',
-    'honoraire.status.invoiced' => 'Devis généré',
+    'honoraire.status.quoted' => 'Devis généré',
 
     'honoraire.invalid_name' => 'Le nom du barème doit contenir entre 2 et 150 caractères.',
     'honoraire.invalid_description' => 'La description ne peut pas dépasser 2 000 caractères.',
@@ -165,7 +165,7 @@ return [
     'honoraire.decompte_validated' => 'Décompte validé.',
     'honoraire.decompte_deleted' => 'Décompte supprimé.',
     'honoraire.no_fee' => 'Aucun honoraire calculé : vérifiez les tranches du barème et l’assiette saisie.',
-    'honoraire.already_invoiced' => 'Ce décompte a déjà donné lieu à un devis.',
+    'honoraire.already_quoted' => 'Ce décompte a déjà donné lieu à un devis.',
     'honoraire.delete_linked' => 'Ce décompte est rattaché à un devis : supprimez d’abord le lien dans les documents.',
     'honoraire.document_created' => 'Devis d’honoraires créé en brouillon.',
     'honoraire.document_exists' => 'Un devis est déjà rattaché à ce décompte.',

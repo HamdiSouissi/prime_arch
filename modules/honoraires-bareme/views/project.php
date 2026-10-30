@@ -13,7 +13,7 @@ $projectId = (int) ($project['id'] ?? 0);
 
 $statusClass = static fn (string $status): string => match ($status) {
     'validated' => 'badge--info',
-    'invoiced' => 'badge--success',
+    'quoted' => 'badge--success',
     default => 'badge--neutral',
 };
 ?>
