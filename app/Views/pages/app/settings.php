@@ -98,7 +98,7 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
                     <label class="field__label" for="cabinet-postal-code"><?= e(__('settings.postal_code')) ?></label>
                     <input class="field__control" id="cabinet-postal-code" name="postal_code" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" value="<?= e($settings['postal_code'] ?? '') ?>" placeholder="1000" list="cabinet-postal-options" data-postal-input>
                     <datalist id="cabinet-postal-options" data-postal-options></datalist>
-                    <span class="field__hint">Format tunisien : quatre chiffres. Les listes exhaustives sont en attente d'une source validée.</span>
+                    <span class="field__hint"><?= e(__('settings.postal_code_help')) ?></span>
                     <?php if (!empty($errors['postal_code'])): ?><span class="field__hint field__hint--error"><?= e($errors['postal_code']) ?></span><?php endif; ?>
                 </div>
                 <div class="settings-logo-row">

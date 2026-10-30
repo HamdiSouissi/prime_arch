@@ -40,10 +40,10 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 - Connexion/déconnexion, sessions renouvelées à l'authentification, CSRF, mots de passe Argon2id et limite de tentatives.
 - Rôles Administrateur, Architecte, Collaborateur, Comptable et Lecture seule, avec contrôle d'accès côté serveur.
 - Réglages du cabinet et valeurs fiscales configurables ; téléversement sécurisé de logo JPEG/PNG/WebP privé.
-- Référentiel bilingue préchargé des 24 gouvernorats et des 264 délégations ; table de codes postaux et validation à quatre chiffres.
+- Référentiel bilingue des 24 gouvernorats et des 264 délégations ; 4 853 localités/codes postaux importés depuis un jeu communautaire sous licence MIT (2015), avec conservation des cas de délégation ambigus et validation à quatre chiffres.
 - Commandes d'installation, graines idempotentes et pages de fondation.
 
-Les codes postaux ne sont pas préchargés tant qu'une source exploitable et vérifiable n'a pas été validée. Voir `docs/DATA-SOURCES.md` et `docs/ROADMAP.md`.
+Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
 
 ## Tests
 

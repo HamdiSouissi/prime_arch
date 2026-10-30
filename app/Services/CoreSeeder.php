@@ -25,13 +25,19 @@ final class CoreSeeder
         $roles = $this->seedRoles();
         $governorates = require BASE_PATH . '/database/seeds/governorates.php';
         $delegations = require BASE_PATH . '/database/seeds/delegations.php';
+        $delegationGovernorateIsos = array_column($delegations, 'governorate_iso', 'code');
         $postalCodes = require BASE_PATH . '/database/seeds/postal_codes.php';
 
         $this->pdo->beginTransaction();
         try {
             $governorateIds = $this->seedGovernorates($governorates);
             $delegationIds = $this->seedDelegations($delegations, $governorateIds);
-            $postalCodeCount = $this->seedPostalCodes($postalCodes, $delegationIds);
+            $postalCodeCount = $this->seedPostalCodes(
+                $postalCodes,
+                $governorateIds,
+                $delegationIds,
+                $delegationGovernorateIsos
+            );
             $this->pdo->commit();
         } catch (\Throwable $error) {
             if ($this->pdo->inTransaction()) {
@@ -152,41 +158,70 @@ final class CoreSeeder
         return $ids;
     }
 
-    /** @param array<int,array{delegation_code:string,code:string,locality_fr:string,locality_ar:string}> $items
+    /** @param array<int,array{governorate_iso:string,delegation_code:?string,source_delegation:string,code:string,locality_latin:string,locality_ar:string}> $items
+     *  @param array<string,int> $governorateIds
      *  @param array<string,int> $delegationIds
+     *  @param array<string,string> $delegationGovernorateIsos
      */
-    private function seedPostalCodes(array $items, array $delegationIds): int
-    {
+    private function seedPostalCodes(
+        array $items,
+        array $governorateIds,
+        array $delegationIds,
+        array $delegationGovernorateIsos
+    ): int {
         $find = $this->pdo->prepare(
             'SELECT id FROM postal_codes
-             WHERE delegation_id = :delegation_id AND code = :code AND locality_fr = :locality_fr LIMIT 1'
+             WHERE governorate_id = :governorate_id AND source_delegation = :source_delegation
+               AND code = :code AND locality_latin = :locality_latin LIMIT 1'
         );
         $insert = $this->pdo->prepare(
-            'INSERT INTO postal_codes (delegation_id, code, locality_fr, locality_ar)
-             VALUES (:delegation_id, :code, :locality_fr, :locality_ar)'
+            'INSERT INTO postal_codes (delegation_id, governorate_id, source_delegation, code, locality_latin, locality_ar)
+             VALUES (:delegation_id, :governorate_id, :source_delegation, :code, :locality_latin, :locality_ar)'
         );
         $update = $this->pdo->prepare(
-            'UPDATE postal_codes SET locality_ar = :locality_ar
-             WHERE delegation_id = :delegation_id AND code = :code AND locality_fr = :locality_fr'
+            'UPDATE postal_codes SET delegation_id = :delegation_id, locality_ar = :locality_ar
+             WHERE governorate_id = :governorate_id AND source_delegation = :source_delegation
+               AND code = :code AND locality_latin = :locality_latin'
         );
         $count = 0;
 
         foreach ($items as $item) {
-            $delegationCode = (string) ($item['delegation_code'] ?? '');
+            $governorateIso = (string) ($item['governorate_iso'] ?? '');
+            $delegationCode = $item['delegation_code'] ?? null;
             $code = (string) ($item['code'] ?? '');
-            if (!isset($delegationIds[$delegationCode]) || !preg_match('/^\d{4}$/', $code)) {
-                throw new RuntimeException('Code postal ou délégation invalide dans le seed.');
+            $sourceDelegation = trim((string) ($item['source_delegation'] ?? ''));
+            $localityLatin = trim((string) ($item['locality_latin'] ?? ''));
+            $localityArabic = trim((string) ($item['locality_ar'] ?? ''));
+            if (!isset($governorateIds[$governorateIso]) || !preg_match('/^[0-9]{4}$/', $code)
+                || $sourceDelegation === '' || mb_strlen($sourceDelegation, 'UTF-8') > 150
+                || mb_strlen($localityLatin, 'UTF-8') > 150 || mb_strlen($localityArabic, 'UTF-8') > 150
+            ) {
+                throw new RuntimeException('Code postal ou référence géographique invalide dans le seed.');
+            }
+
+            $delegationId = null;
+            if ($delegationCode !== null) {
+                if (!is_string($delegationCode) || $delegationCode === ''
+                    || !isset($delegationIds[$delegationCode])
+                    || ($delegationGovernorateIsos[$delegationCode] ?? null) !== $governorateIso
+                ) {
+                    throw new RuntimeException('Délégation inconnue ou rattachée à un autre gouvernorat dans le seed postal.');
+                }
+                $delegationId = $delegationIds[$delegationCode];
             }
             $parameters = [
-                'delegation_id' => $delegationIds[$delegationCode],
+                'delegation_id' => $delegationId,
+                'governorate_id' => $governorateIds[$governorateIso],
+                'source_delegation' => $sourceDelegation,
                 'code' => $code,
-                'locality_fr' => (string) ($item['locality_fr'] ?? ''),
-                'locality_ar' => (string) ($item['locality_ar'] ?? ''),
+                'locality_latin' => $localityLatin,
+                'locality_ar' => $localityArabic,
             ];
             $find->execute([
-                'delegation_id' => $parameters['delegation_id'],
+                'governorate_id' => $parameters['governorate_id'],
+                'source_delegation' => $parameters['source_delegation'],
                 'code' => $parameters['code'],
-                'locality_fr' => $parameters['locality_fr'],
+                'locality_latin' => $parameters['locality_latin'],
             ]);
             if ($find->fetchColumn() === false) {
                 $insert->execute($parameters);

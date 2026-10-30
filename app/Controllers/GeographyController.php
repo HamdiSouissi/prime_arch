@@ -23,10 +23,19 @@ final class GeographyController
 
     public function postalCodes(Request $request): Response
     {
-        $delegationId = filter_var($request->query('delegation_id'), FILTER_VALIDATE_INT);
-        if ($delegationId === false || $delegationId < 1) {
-            return Response::json(['error' => 'invalid_delegation'], 422);
+        $delegationInput = $request->query('delegation_id');
+        if ($delegationInput !== null && $delegationInput !== '') {
+            $delegationId = filter_var($delegationInput, FILTER_VALIDATE_INT);
+            if ($delegationId === false || $delegationId < 1) {
+                return Response::json(['error' => 'invalid_delegation'], 422);
+            }
+            return Response::json((new GeographyRepository())->postalCodes((int) $delegationId));
         }
-        return Response::json((new GeographyRepository())->postalCodes((int) $delegationId));
+
+        $governorateId = filter_var($request->query('governorate_id'), FILTER_VALIDATE_INT);
+        if ($governorateId === false || $governorateId < 1) {
+            return Response::json(['error' => 'invalid_governorate'], 422);
+        }
+        return Response::json((new GeographyRepository())->postalCodesForGovernorate((int) $governorateId));
     }
 }

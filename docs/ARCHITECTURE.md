@@ -29,7 +29,7 @@
 
 ## Initialisation des données
 
-`php bin/migrate.php` applique les migrations versionnées. `php bin/seed.php` insère les rôles et le référentiel des 24 gouvernorats / 264 délégations de façon répétable. La table `postal_codes` est prête, mais son jeu de données est laissé vide en attendant une source vérifiable (voir `docs/DATA-SOURCES.md`).
+`php bin/migrate.php` applique les migrations versionnées. `php bin/seed.php` insère les rôles, les 24 gouvernorats, les 264 délégations et le jeu postal fourni, de façon répétable. Les données postales sont des suggestions communautaires anciennes et non officielles ; les cas sans rapprochement sûr restent rattachés au seul gouvernorat (voir `docs/DATA-SOURCES.md`).
 
 ## Dossiers
 

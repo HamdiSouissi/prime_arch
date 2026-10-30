@@ -50,6 +50,7 @@ return [
     'settings.governorate' => 'Gouvernorat',
     'settings.delegation' => 'Délégation',
     'settings.postal_code' => 'Code postal',
+    'settings.postal_code_help' => 'Format tunisien : quatre chiffres. Suggestions issues d’un annuaire communautaire sous licence MIT, daté de 2015 et non officiel ; confirmez le code auprès de La Poste tunisienne avant tout usage officiel. Sans délégation choisie, les suggestions de tout le gouvernorat s’affichent, y compris les groupes non rapprochés.',
     'settings.geography_source_note' => 'Les graphies latines des délégations suivent le référentiel cité dans la documentation ; elles ne constituent pas une validation administrative officielle.',
     'settings.logo' => 'Logo du cabinet',
     'settings.logo_help' => 'JPEG, PNG ou WebP, 2 Mo maximum. Le fichier est conservé hors de la racine publique.',

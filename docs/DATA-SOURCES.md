@@ -19,4 +19,17 @@ Les noms latins sont des graphies toponymiques, pas une validation administrativ
 
 ## Codes postaux
 
-Le schéma `postal_codes` et les filtres de format à quatre chiffres sont en place, mais `database/seeds/postal_codes.php` est volontairement vide. La source de délégations ne contient aucun code postal et aucun jeu de données de codes postaux avec provenance/licence suffisamment claire n'a été retenu. Les codes postaux ne sont pas inventés : une source officielle ou autorisée doit être validée avant leur chargement.
+Le seed `database/seeds/postal_codes.php` contient un jeu de données adapté depuis **TuniPost** :
+
+- Dépôt : <https://github.com/walidsa3d/tunipost>
+- Fichier : `tunipost/codes.csv`
+- Révision de la dernière modification identifiée du CSV : [`6578b92af6b73b935d3f09f875d00bb442652137`](https://github.com/walidsa3d/tunipost/commit/6578b92af6b73b935d3f09f875d00bb442652137) (16 août 2015). Le dépôt lui-même a été poussé pour la dernière fois en septembre 2015.
+- SHA-256 du CSV à cette révision : `f9f849164eb7f961e5c9d1f185c416c4139b225a0ac3bc68647514c108015267`.
+- Licence publiée avec le projet : **MIT**. L'avis de licence et de copyright est conservé dans `docs/licenses/TUNIPOST-MIT.txt`.
+- Adaptation : suppression de six doublons exacts, conservation des libellés latins de localité et des noms de délégation source, ajout de la référence au gouvernorat Prime Arch, puis rattachement contrôlé aux codes de délégation existants.
+
+Le CSV source contient 4 859 lignes. Le seed conserve **4 853 enregistrements distincts**, couvrant les 24 gouvernorats, 262 paires gouvernorat/délégation indiquées par la source et **970 valeurs de code postal distinctes**. Les codes sont stockés comme chaînes de quatre chiffres afin de préserver les zéros initiaux. Le CSV ne fournit pas de libellé arabe ; `locality_ar` est donc laissé vide plutôt que traduit ou inventé.
+
+Le rapprochement avec le référentiel Prime Arch rattache 257 des 262 groupes source à une délégation après correspondance exacte ou alias contrôlé, sans collision. Cinq groupes restent volontairement sans `delegation_id` : `JENDOUBA/JENDOUBA`, `KEBILI/DOUZ`, `KEF/TOUIREF`, `SFAX/SFAX EST` et `SOUSSE/SOUSSE`. Leur `governorate_id` et leur libellé source `source_delegation` sont conservés. Sept délégations actuelles restent également sans groupe source rattaché : Jendouba Sud, Sousse Sidi Abdelhamid, Zaouia Ksiba Thraya, Sfax Ouest, Thyna, Douz Nord et Douz Sud. Cela reflète notamment des libellés/découpages différents ; aucun code n'est réparti ou inventé pour combler ces écarts.
+
+**Limite importante :** TuniPost ne documente pas l'origine institutionnelle du CSV, ne fournit pas de date de vérification par La Poste tunisienne et n'affirme pas une conformité administrative actuelle. Le fichier est ancien (2015). Malgré la couverture annoncée par la source, Prime Arch ne peut donc pas garantir que cette liste soit exhaustive, encore à jour ou officiellement validée. Les suggestions de l'interface sont informatives ; confirmer le code auprès de La Poste tunisienne avant un usage réglementaire ou opérationnel sensible. Les sources sans licence identifiable n'ont pas été importées.

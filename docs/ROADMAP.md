@@ -10,10 +10,10 @@ Le projet avance par phases validées une à une. Une phase suivante ne commence
 - Connexion/déconnexion, mots de passe Argon2id, limitation des tentatives, session renouvelée après authentification, CSRF et contrôle d'accès par permissions.
 - Provisionnement du premier administrateur uniquement depuis la CLI ; aucune inscription publique ni identifiants par défaut.
 - Gestion des utilisateurs et rôles par l'administrateur ; réglages du cabinet et paramètres fiscaux configurables.
-- Référentiel bilingue des 24 gouvernorats et des 264 délégations ; table et interfaces de requête prêtes pour les codes postaux.
+- Référentiel bilingue des 24 gouvernorats et des 264 délégations ; 4 853 enregistrements postaux et suggestions par gouvernorat/délégation, avec cinq groupes source laissés sans délégation faute de rapprochement sûr.
 - Design system Prime Arch existant réutilisé pour les écrans authentifiés.
 
-**Objectif :** permettre l'installation, le provisionnement d'un administrateur, une connexion sécurisée, le contrôle des permissions et l'enregistrement des coordonnées du cabinet. La source de délégations est attribuée ; les codes postaux ne sont pas préchargés tant qu'une source suffisamment fiable et réutilisable n'a pas été validée. Le format de saisie est vérifié.
+**Objectif :** permettre l'installation, le provisionnement d'un administrateur, une connexion sécurisée, le contrôle des permissions et l'enregistrement des coordonnées du cabinet. Les sources des délégations et des suggestions postales sont documentées. Les codes postaux proviennent d'un annuaire communautaire ancien et non officiel ; leur exhaustivité et leur actualité ne sont pas garanties, et les cas ambigus ne sont pas rattachés arbitrairement. Le format à quatre chiffres est vérifié.
 
 ## Phase 2 — Clients et projets
 

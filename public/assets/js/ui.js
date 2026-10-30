@@ -289,11 +289,14 @@ function initGeographySelects() {
     const loadPostalCodes = async (delegationId) => {
         if (!postalOptions) return;
         postalOptions.replaceChildren();
-        if (!delegationId) return;
+        if (!delegationId && !governorate.value) return;
         const endpoint = form.dataset.postalCodesUrl;
         if (!endpoint) return;
+        const query = delegationId
+            ? `delegation_id=${encodeURIComponent(delegationId)}`
+            : `governorate_id=${encodeURIComponent(governorate.value)}`;
         try {
-            const response = await fetch(`${endpoint}?delegation_id=${encodeURIComponent(delegationId)}`, {
+            const response = await fetch(`${endpoint}?${query}`, {
                 credentials: "same-origin",
                 headers: { Accept: "application/json" },
             });
@@ -302,11 +305,14 @@ function initGeographySelects() {
             records.forEach((record) => {
                 const option = document.createElement("option");
                 option.value = String(record.code ?? "");
-                option.label = String(document.documentElement.lang === "ar" ? (record.locality_ar ?? "") : (record.locality_fr ?? ""));
+                const locality = document.documentElement.lang === "ar"
+                    ? String(record.locality_ar || record.locality_latin || "")
+                    : String(record.locality_latin || "");
+                option.label = [String(record.source_delegation ?? ""), locality].filter(Boolean).join(" · ");
                 postalOptions.append(option);
             });
         } catch {
-            showToast("Les codes postaux ne sont pas disponibles pour cette délégation.", "info");
+            showToast("Les codes postaux ne sont pas disponibles pour ce gouvernorat ou cette délégation.", "info");
         }
     };
     const loadDelegations = async (governorateId, selectedId = "") => {

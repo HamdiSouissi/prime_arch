@@ -49,20 +49,38 @@ final class GeographyRepository
         ], $statement->fetchAll());
     }
 
-    /** @return array<int,array{id:int,code:string,locality_fr:string,locality_ar:string}> */
+    /** @return array<int,array{id:int,code:string,locality_latin:string,locality_ar:string,source_delegation:string}> */
     public function postalCodes(int $delegationId): array
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, code, locality_fr, locality_ar
-             FROM postal_codes WHERE delegation_id = :delegation_id ORDER BY code, locality_fr'
+            'SELECT id, code, locality_latin, locality_ar, source_delegation
+             FROM postal_codes WHERE delegation_id = :delegation_id ORDER BY code, locality_latin'
         );
         $statement->execute(['delegation_id' => $delegationId]);
-        return array_map(static fn (array $row): array => [
+        return array_map(self::normalizePostalCode(...), $statement->fetchAll());
+    }
+
+    /** @return array<int,array{id:int,code:string,locality_latin:string,locality_ar:string,source_delegation:string}> */
+    public function postalCodesForGovernorate(int $governorateId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, code, locality_latin, locality_ar, source_delegation
+             FROM postal_codes WHERE governorate_id = :governorate_id ORDER BY source_delegation, code, locality_latin'
+        );
+        $statement->execute(['governorate_id' => $governorateId]);
+        return array_map(self::normalizePostalCode(...), $statement->fetchAll());
+    }
+
+    /** @return array{id:int,code:string,locality_latin:string,locality_ar:string,source_delegation:string} */
+    private static function normalizePostalCode(array $row): array
+    {
+        return [
             'id' => (int) $row['id'],
             'code' => (string) $row['code'],
-            'locality_fr' => (string) $row['locality_fr'],
+            'locality_latin' => (string) $row['locality_latin'],
             'locality_ar' => (string) $row['locality_ar'],
-        ], $statement->fetchAll());
+            'source_delegation' => (string) $row['source_delegation'],
+        ];
     }
 
     public function delegationBelongsTo(int $delegationId, int $governorateId): bool
