@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 176" role="img" aria-labelledby="title">
+  <title id="title">Aucun résultat dans la recherche</title>
+  <ellipse cx="119" cy="151" rx="69" ry="9" fill="#E8EEF9"/>
+  <circle cx="109" cy="78" r="42" fill="#EEF3FF" stroke="#B7C9F2" stroke-width="3"/>
+  <circle cx="109" cy="78" r="24" fill="#fff" stroke="#8EA9E2" stroke-width="3"/>
+  <path d="m139 108 28 28" stroke="#6C5CFF" stroke-width="8" stroke-linecap="round"/>
+  <path d="m100 78 6 6 12-14" fill="none" stroke="#14A68F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="181" cy="45" r="10" fill="#FFE9D9"/>
+  <path d="M181 41v8M177 45h8" stroke="#A83D1B" stroke-linecap="round" stroke-width="2"/>
+  <circle cx="54" cy="39" r="6" fill="#CEC8FF"/>
+</svg>

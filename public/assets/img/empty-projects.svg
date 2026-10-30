@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 176" role="img" aria-labelledby="title">
+  <title id="title">Illustration d'un projet à créer</title>
+  <defs><linearGradient id="g" x1="34" y1="22" x2="192" y2="158" gradientUnits="userSpaceOnUse"><stop stop-color="#DCE8FF"/><stop offset="1" stop-color="#EEE9FF"/></linearGradient></defs>
+  <ellipse cx="121" cy="150" rx="83" ry="12" fill="#E8EEF9"/>
+  <path d="m43 68 75-42 78 42-75 44L43 68Z" fill="url(#g)" stroke="#AFC4F4" stroke-width="2" stroke-linejoin="round"/>
+  <path d="m43 68 78 44v29l-78-44V68Z" fill="#D5E1FA" stroke="#AFC4F4" stroke-width="2" stroke-linejoin="round"/>
+  <path d="m121 112 75-44v29l-75 44v-29Z" fill="#C6D6FA" stroke="#AFC4F4" stroke-width="2" stroke-linejoin="round"/>
+  <path d="m78 49 76 42M93 40l77 42" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="187" cy="34" r="16" fill="#14C8B8" fill-opacity=".2"/>
+  <path d="M187 27v14M180 34h14" stroke="#078B7E" stroke-linecap="round" stroke-width="2.5"/>
+  <circle cx="48" cy="37" r="8" fill="#FFC53D" fill-opacity=".65"/>
+</svg>

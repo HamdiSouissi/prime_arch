@@ -1,0 +1,117 @@
+html {
+    scroll-behavior: smooth;
+    scroll-padding-block-start: 5.5rem;
+}
+
+body {
+    min-block-size: 100vh;
+    overflow-x: clip;
+    color: var(--color-ink);
+    background-color: var(--color-canvas);
+    background-image: var(--gradient-mesh);
+    font-family: var(--font-system);
+    font-size: var(--font-size-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+body::before {
+    position: fixed;
+    z-index: -1;
+    inset-block: 0;
+    inset-inline: 0;
+    content: "";
+    pointer-events: none;
+    background: radial-gradient(ellipse at 52% 44%, rgba(255, 255, 255, 0.66), transparent 62%);
+}
+
+a {
+    color: var(--color-primary-strong);
+    text-decoration: none;
+    text-underline-offset: 0.18em;
+}
+
+a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+button,
+input,
+select,
+textarea,
+a,
+summary,
+[tabindex]:not([tabindex="-1"]) {
+    -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+    box-shadow: var(--shadow-focus);
+}
+
+::selection {
+    color: var(--color-ink);
+    background: rgba(47, 107, 255, 0.18);
+}
+
+h1,
+h2,
+h3,
+h4 {
+    color: var(--color-ink);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.18;
+}
+
+p {
+    color: inherit;
+}
+
+small,
+.small {
+    font-size: var(--font-size-footnote);
+}
+
+.muted {
+    color: var(--color-ink-secondary);
+}
+
+.number,
+[data-number] {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[inputmode="decimal"] {
+    direction: ltr;
+    text-align: end;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    body::before {
+        display: none;
+    }
+}
