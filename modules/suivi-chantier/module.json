@@ -1,0 +1,17 @@
+{
+    "slug": "suivi-chantier",
+    "name": "Suivi de chantier",
+    "version": "1.0.0",
+    "description": "Journal de chantier, registre des réserves et procès-verbaux de réception, par projet.",
+    "author": "Prime Arch",
+    "namespace": "Modules\\SuiviChantier",
+    "requires": {
+        "php": ">=8.2",
+        "app": ">=0.1.0",
+        "modules": []
+    },
+    "entry": "Module.php",
+    "migrations": "migrations",
+    "lang": "lang",
+    "enabled_by_default": false
+}

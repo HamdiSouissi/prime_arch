@@ -209,3 +209,39 @@ matière que le cabinet n’a jamais eue) et `relances-factures` (il encaisse).
    aux alertes d’échéance) ?
 5. **Multi-cabinet** : les modules doivent-ils être conçus pour une seule installation (comme
    aujourd’hui) ou anticiper plusieurs cabinets partageant la base ?
+
+---
+
+## 7. État de livraison
+
+Chaque module livré est un dossier autonome sous `modules/<slug>/`, empaquetable en ZIP
+(racine unique `<slug>/`) et installable depuis **Réglages → Modules** avec la case
+« code de confiance ». Aucun fichier du noyau n’est modifié à l’exception des deux aides
+génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `form[data-confirm]`
+(`public/assets/js/ui.js` + clé `js.copied`).
+
+| Module | Version | Tables | Permission réutilisée | Écrans |
+|---|---|---|---|---|
+| `permis-batir` | 1.0.0 | `permis_batir_dossiers`, `permis_batir_pieces`, `permis_batir_evenements` | `projects.view` / `projects.manage` | Liste + export CSV, création, fiche (checklist de pièces, historique horodaté), édition |
+| `suivi-chantier` | 1.0.0 | `chantier_visites`, `chantier_reserves`, `chantier_receptions` | `projects.view` / `projects.manage` | Liste des chantiers, fiche chantier (journal, réserves, réceptions), PV de réception imprimable |
+
+### Points de vigilance (à valider par le cabinet)
+
+- **Délais de permis** : le module n’impose aucun délai légal ; l’architecte saisit les échéances
+  et le module se contente de signaler les retards. Les valeurs usuelles doivent être confirmées
+  auprès de l’**OAT** et des services municipaux compétents.
+- **Réceptions et réserves** : le PV généré est un **document de travail** ; sa forme définitive
+  doit être validée avec le maître d’ouvrage et, le cas échéant, le conseil juridique du cabinet.
+- **Aucune donnée financière** n’est créée par ces deux modules : ils ne modifient ni les
+  documents, ni les coûts, ni la numérotation du noyau.
+
+### Installation
+
+```bash
+cd modules && zip -r permis-batir-1.0.0.zip permis-batir
+cd modules && zip -r suivi-chantier-1.0.0.zip suivi-chantier
+```
+
+Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
+activer le module (les migrations sont appliquées à l’activation). Désactiver un module conserve
+ses tables et ses données ; la désinstallation complète n’est jamais silencieuse.
