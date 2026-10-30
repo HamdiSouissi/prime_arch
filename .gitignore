@@ -1,0 +1,17 @@
+/vendor/
+.env
+.idea/
+.vscode/
+.DS_Store
+.phpunit.cache/
+.phpunit.result.cache
+
+# Contenu généré (les .gitkeep et .htaccess restent versionnés)
+/storage/logs/*
+/storage/cache/*
+/storage/uploads/*
+/storage/pdf/*
+/storage/backups/*
+/storage/tmp/*
+!/storage/**/.gitkeep
+!/storage/**/.htaccess

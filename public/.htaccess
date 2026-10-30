@@ -1,0 +1,37 @@
+# Autorise l'accès à public/ (la racine du projet est en "Require all denied").
+Require all granted
+
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Transmet l'en-tête Authorization à PHP
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Tout ce qui n'est pas un fichier/dossier existant passe par le front controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Blocage des fichiers sensibles
+<FilesMatch "(^\.|\.(env|sql|md|lock|log|ini|yml|yaml|bak|dist|sh)$|^composer\.(json|lock)$)">
+    Require all denied
+</FilesMatch>
+
+# Seul index.php est exécutable
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+<Files "index.php">
+    Require all granted
+</Files>
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

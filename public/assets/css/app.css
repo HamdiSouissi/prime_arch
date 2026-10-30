@@ -1,0 +1,149 @@
+/* ============================================================
+   Prime Arch — design system de base (inspiré Apple HIG)
+   Variables, police système, mode sombre auto, RTL, cibles ≥ 44px
+   ============================================================ */
+
+:root {
+    color-scheme: light dark;
+
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Arabic", sans-serif;
+
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface-2: #fafafa;
+    --text: #1d1d1f;
+    --text-muted: #6e6e73;
+    --border: rgba(60, 60, 67, 0.18);
+    --accent: #0071e3;
+    --accent-contrast: #ffffff;
+    --success: #1f9d55;
+    --danger: #d70015;
+
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 24px;
+    --space-5: 32px;
+    --tap: 44px;                 /* cible tactile minimale */
+    --sidebar-w: 248px;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .06);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #000000;
+        --surface: #1c1c1e;
+        --surface-2: #2c2c2e;
+        --text: #f5f5f7;
+        --text-muted: #98989d;
+        --border: rgba(235, 235, 245, 0.18);
+        --accent: #0a84ff;
+        --success: #30d158;
+        --danger: #ff453a;
+        --shadow: none;
+    }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    outline-offset: 2px;
+}
+
+h1, h2, h3 { line-height: 1.2; margin: 0 0 var(--space-3); letter-spacing: -0.01em; }
+.muted { color: var(--text-muted); }
+
+/* ---------- Mise en page ---------- */
+.app-shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    padding: var(--space-3);
+    background: var(--surface);
+    border-inline-end: 1px solid var(--border);
+}
+.sidebar-brand { font-weight: 700; font-size: 1.15rem; padding: var(--space-2) var(--space-3) var(--space-3); }
+.sidebar-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.sidebar-link {
+    display: flex; align-items: center; gap: var(--space-3);
+    min-height: var(--tap); padding: 0 var(--space-3);
+    border-radius: var(--radius-sm); color: var(--text);
+}
+.sidebar-link:hover { background: var(--surface-2); }
+.sidebar-icon { width: 1.5em; text-align: center; color: var(--accent); }
+
+.app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 56px; padding: 0 var(--space-4);
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+}
+.topbar-title { margin: 0; font-size: 1.1rem; }
+.app-content { padding: var(--space-4); max-width: 1100px; width: 100%; }
+
+/* ---------- Composants ---------- */
+.card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.btn, button, input[type="submit"] {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: var(--tap); padding: 0 var(--space-4);
+    border: 0; border-radius: var(--radius);
+    background: var(--accent); color: var(--accent-contrast);
+    font: inherit; font-weight: 600; cursor: pointer;
+}
+.btn:hover, button:hover { filter: brightness(1.08); }
+.btn-secondary { background: var(--surface-2); color: var(--text); }
+
+input, select, textarea {
+    width: 100%; min-height: var(--tap); padding: 0 var(--space-3);
+    font: inherit; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+textarea { padding: var(--space-3); min-height: 120px; }
+label { display: block; font-weight: 600; margin-bottom: var(--space-1); }
+
+.status-list { list-style: none; padding: 0; margin: var(--space-3) 0 0; display: grid; gap: var(--space-2); }
+.status-list li::before { margin-inline-end: var(--space-2); font-weight: 700; }
+.status-list .ok::before { content: "✓"; color: var(--success); }
+.status-list .ko::before { content: "✕"; color: var(--danger); }
+
+/* ---------- Responsive : barre latérale repliée sur mobile ---------- */
+@media (max-width: 800px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; border-inline-end: 0; border-bottom: 1px solid var(--border); }
+    .sidebar-list { grid-auto-flow: column; overflow-x: auto; }
+    .app-content { padding: var(--space-3); }
+}
+
+/* ---------- RTL (arabe) ---------- */
+[dir="rtl"] body { font-family: var(--font); }
+/* Les propriétés logiques (margin-inline, border-inline…) gèrent déjà l'inversion.
+   TODO : icônes directionnelles, tableaux, champs numériques en LTR. */
+[dir="rtl"] input[type="tel"], [dir="rtl"] input[type="email"], [dir="rtl"] input[type="number"] { direction: ltr; text-align: end; }

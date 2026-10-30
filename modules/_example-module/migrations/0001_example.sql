@@ -1,0 +1,2 @@
+-- Migration d'exemple (préfixer les tables du module : "example_...")
+-- CREATE TABLE example_items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, label VARCHAR(150) NOT NULL) ENGINE=InnoDB;

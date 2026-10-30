@@ -1,0 +1,48 @@
+# Exemple de configuration nginx pour Prime Arch.
+# Adapter server_name, chemins et socket PHP-FPM.
+
+server {
+    listen 80;
+    server_name primearch.example.tn;
+
+    # Seul le dossier public/ est exposé.
+    root /var/www/prime-arch/public;
+    index index.php;
+
+    charset utf-8;
+    client_max_body_size 20M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Exécution PHP : uniquement le front controller
+    location = /index.php {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # Aucun autre fichier PHP n'est exécutable
+    location ~ \.php$ {
+        return 404;
+    }
+
+    # Fichiers cachés (.env, .git, .htaccess…)
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+
+    # Fichiers sensibles
+    location ~* \.(env|sql|md|json|lock|log|ini|yml|yaml|bak)$ {
+        deny all;
+    }
+
+    location ~* \.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?)$ {
+        expires 30d;
+        access_log off;
+        add_header Cache-Control "public";
+    }
+
+    # Production : ajouter un bloc "listen 443 ssl" (certificat Let's Encrypt).
+}
