@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Modules\GedVersions\Models;
 
 use App\Core\Database;
+use Modules\GedVersions\Services\GedService;
 use PDO;
 
 /**
@@ -187,7 +188,7 @@ final class GedRepository
             'author_value' => $authorId,
         ]);
         $documentId = (int) $this->pdo->lastInsertId();
-        $reference = \Modules\GedVersions\Services\GedService::reference($documentId, date('Y'));
+        $reference = GedService::reference($documentId, date('Y'));
         $update = $this->pdo->prepare('UPDATE ged_documents SET reference = :reference_value WHERE id = :document_id');
         $update->execute(['reference_value' => $reference, 'document_id' => $documentId]);
 
