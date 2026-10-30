@@ -232,6 +232,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `comptabilite-export` | 1.0.0 | Aucune (lecture seule) | `documents.view` ou `finance.view` (aucune écriture) | Journaux du mois : ventes (factures et avoirs, TVA, timbre, retenue) et encaissements, ventilation de la TVA par taux, export CSV par journal et par période |
 | `fiscal-tn` | 1.0.0 | `fiscal_echeances`, `fiscal_declarations` | `documents.view` / `documents.manage` (+ `finance.view` / `finance.manage`, `settings.manage`) | Calendrier des obligations (TVA, retenue à la source, TCL, autre) à période et échéance libres, états « à préparer / déposée / payée », alertes à horizon réglable, récapitulatif par période, export CSV |
 
+| `crm-opportunites` | 1.0.0 | `crm_opportunites`, `crm_activites` | `clients.view` / `clients.manage` (+ `projects.view` / `projects.manage`) | Liste du pipeline (filtres étape, origine, responsable, relance et recherche libre), fiche opportunité (avancement d’étape, rattachement à un client et à un projet existants, journal des activités, édition), répartition par étape, export CSV |
 ### Points de vigilance (à valider par le cabinet)
 
 - **Délais de permis** : le module n’impose aucun délai légal ; l’architecte saisit les échéances
@@ -283,6 +284,13 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
   montant ; l’écran rappelle que l’échéancier est un aide-mémoire à faire valider par
   l’**expert-comptable**. Une seule déclaration est conservée par obligation, et le module ne
   transmet rien à l’administration.
+- **Pipeline commercial** : `crm-opportunites` n’impose **ni probabilité de signature, ni montant
+  prévisionnel, ni étape, ni relance automatique** ; les étapes affichées sont un vocabulaire de
+  travail et le montant estimé est une simple saisie du cabinet. La « conversion » ne crée
+  **aucune fiche** : le module se contente de rattacher l’opportunité à un client et, facultativement,
+  à l’un de ses projets **existants** ; les fiches se créent dans les écrans Clients et Projets du
+  noyau. Le module lit `clients`, `projects` et `users` et n’écrit que dans ses tables `crm_*` ; il
+  ne touche ni aux documents, ni aux montants du noyau.
 - **Journaux comptables** : `comptabilite-export` est **strictement en lecture** — aucune table,
   aucune route d’écriture, aucun taux appliqué. Il reprend les montants figés dans les documents
   émis (HT + TVA + timbre − retenue) et les règlements du noyau ; les brouillons et les pièces
@@ -301,6 +309,7 @@ cd modules && zip -r planning-equipe-1.0.0.zip planning-equipe
 cd modules && zip -r conformite-oat-1.0.0.zip conformite-oat
 cd modules && zip -r comptabilite-export-1.0.0.zip comptabilite-export
 cd modules && zip -r fiscal-tn-1.0.0.zip fiscal-tn
+cd modules && zip -r crm-opportunites-1.0.0.zip crm-opportunites
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -310,7 +319,7 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 ### Préfixes de tables
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
-`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*`, `conformite_*` et `fiscal_*`.
+`chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*`, `conformite_*`, `fiscal_*` et `crm_*`.
 `comptabilite-export` ne crée aucune table : il ne lit que `documents`, `document_payments`,
 `clients` et `projects`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.
