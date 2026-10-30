@@ -190,4 +190,5 @@ return [
     'crm.mark_won' => 'Clôturer l’opportunité (étape « gagnée »)',
     'crm.new_project' => 'Créer un projet',
     'crm.project_help' => 'Facultatif. Le projet doit appartenir au client sélectionné.',
+    'crm.context_meta' => ':count opportunités',
 ];

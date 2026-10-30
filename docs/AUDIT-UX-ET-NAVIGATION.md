@@ -312,3 +312,76 @@ navigateur.
 | Palette de commandes dans un DOM réel (jsdom) | 13 vérifications, 0 échec |
 | Assertions de `NavigationAccessibilityTest` rejouées | 28 vérifications, 0 échec |
 | Modules livrés touchés | aucun |
+
+---
+
+## 8. Lot 1 — passerelles contextuelles livrées
+
+Le lot 1 supprime les derniers trajets de plus de trois clics : depuis une fiche projet, client ou
+document, chaque module concerné se propose lui-même. Le noyau n'exécute aucune requête métier : il
+applique un filtre et rend ce qu'on lui donne.
+
+### 8.1 Contrat des trois points d'extension
+
+| Filtre | Fiche | Contexte | Passerelles branchées |
+|---|---|---|---|
+| `project.detail.sections` | `/projects/{id}` | ligne `projects` | suivi-chantier, metre-quantitatif, honoraires-bareme, permis-batir, ged-versions, conformite-oat |
+| `client.detail.sections` | `/clients/{id}` | ligne `clients` | ged-versions, portail-client, crm-opportunites |
+| `document.detail.actions` | `/documents/{id}` | document (`document_type`, `status`) | relances-factures |
+
+Entrée ajoutée : `key`, `label`, `url` (obligatoires) puis `meta`, `icon`, `tone`
+(`info|success|warning|error|neutral`). Contrat complet pour les auteurs de modules : `docs/MODULES.md`.
+
+### 8.2 Ce que voit l'utilisateur
+
+| Fiche | Passerelle | Ce qui est affiché | Condition |
+|---|---|---|---|
+| Projet | Suivi de chantier | `4 visites · 2 réserves`, teinte d'alerte si réserve ouverte | `projects.view` |
+| Projet | Métré et DQE | `18 postes` | `projects.view` |
+| Projet | Honoraires et barèmes | `3 décomptes` | `projects.view` ou `documents.view` |
+| Projet | Permis de bâtir | `PC-2026-014 · En instruction`, teinte selon le statut | `projects.view` + dossier existant |
+| Projet | Dépôt documentaire | `12 pièces` | `documents.view/manage`, `projects.view` ou `clients.view` |
+| Projet | Conformité OAT | attestation d'assurance du projet | `projects.view` |
+| Client | Dépôt documentaire | `n pièces` (filtre `client=`) | idem |
+| Client | Espace client | `n liens actifs`, teinte de succès si un lien court | `clients.view` ou `projects.view` |
+| Client | Prospects et opportunités | `n opportunités` hors gagnées/perdues | `clients.view` |
+| Document | Relances de factures | `reste 1 250,500 DT` | facture **émise** dont le solde est > 0 |
+
+Un module absent ou désactivé ne laisse ni trou ni espace vide ; un utilisateur sans droit ne voit
+rien du module. Le module ne crée aucune permission : il réutilise les droits du noyau.
+
+### 8.3 Fil d'Ariane
+
+`partials/breadcrumb.php` rend un `nav` discret au-dessus du titre de la fiche, avec
+`aria-current="page"` sur le dernier élément et un chevron décoratif qui s'inverse en arabe
+(`[dir="rtl"]`). Rien n'est rendu en dessous de deux entrées.
+
+| Fiche | Fil |
+|---|---|
+| Projet | Tableau de bord › Projets › *client* › projet |
+| Client | Tableau de bord › Clients › client |
+| Document | Tableau de bord › Documents › *client* › numéro |
+
+### 8.4 Effet sur la règle des 3 clics
+
+| Trajet | Avant | Après lot 1 |
+|---|---|---|
+| Projet → suivi de chantier | menu (2) + liste (1) + projet (1) = **4** | 1 clic depuis la fiche projet |
+| Projet → permis de bâtir (dossier du projet) | **5** | 1 clic |
+| Client → espace client | 4 | 1 clic |
+| Document/facture → relances | 4 | 1 clic |
+| Projet → retour à la liste | 1 (bouton) | 1 (bouton) **ou** 1 (fil) |
+| Document → client | 1 (lot 0) | 1 (lot 0) **ou** 1 (fil) |
+
+### 8.5 Vérifications exécutées
+
+| Contrôle | Résultat |
+|---|---|
+| Analyse syntaxique PHP | 288 fichiers, 0 erreur |
+| Logique réelle des 9 passerelles, exécutée en PHP 8.2 avec doublures de dépôts | 40 vérifications FR, 0 échec ; 40 en AR, 0 échec |
+| Rendu réel des partials (`breadcrumb`, `context-links`, `sidebar`, `page-header`) | conformes, y compris en `rtl` |
+| Parité des clés FR/AR des 12 modules | 1 598 clés de chaque côté, 9 modules + noyau sans écart |
+| Icônes des passerelles | 9 noms sur 9 présents dans `public/assets/img/icons.svg` |
+| Routes ciblées par les passerelles | 9 sur 9 existantes, paramètres de requête conformes |
+| Modules livrés touchés | 9 (ajout d'une passerelle et de son compteur, aucun changement de comportement) |
+

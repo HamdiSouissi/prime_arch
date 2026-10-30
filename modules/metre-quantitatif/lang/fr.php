@@ -146,4 +146,5 @@ return [
     'metre.library_updated' => 'Article mis à jour.',
     'metre.library_deleted' => 'Article supprimé.',
     'metre.library_code_taken' => 'Un article porte déjà ce code.',
+    'metre.context_meta' => ':count postes',
 ];

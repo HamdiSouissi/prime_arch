@@ -10,6 +10,7 @@ use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\PortailClient\Controllers\PortalAdminController;
 use Modules\PortailClient\Controllers\PortalController;
+use Modules\PortailClient\Services\PortailContext;
 
 /**
  * Module « portail-client » : espace client en lecture seule, accessible par lien.
@@ -45,6 +46,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        PortailContext::register();
     }
 
     /** Routes du cabinet (authentifiées) puis routes publiques à jeton, en lecture seule. */

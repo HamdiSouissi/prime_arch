@@ -179,4 +179,5 @@ return [
     'portail.invalid_project' => 'Choisissez un projet existant.',
     'portail.invalid_project_client' => 'Ce projet n’appartient pas au client sélectionné.',
     'portail.invalid_days' => 'Indiquez une durée de validité entre 1 et 365 jours.',
+    'portail.context_meta' => ':count liens actifs',
 ];

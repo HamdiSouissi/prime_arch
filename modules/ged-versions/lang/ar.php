@@ -161,4 +161,5 @@ return [
     'ged.error.storage_failed' => 'فشل حفظ الملف.',
     'ged.error.last_version' => 'يجب أن تحتفظ الوثيقة بإصدار واحد على الأقل.',
     'ged.error.too_many_versions' => 'بلغت هذه الوثيقة حدّ :max إصدارًا.',
+    'ged.context_meta' => ':count وثائق',
 ];

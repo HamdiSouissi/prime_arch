@@ -179,4 +179,5 @@ return [
     'portail.invalid_project' => 'اختر مشروعًا موجودًا.',
     'portail.invalid_project_client' => 'هذا المشروع لا ينتمي إلى العميل المختار.',
     'portail.invalid_days' => 'أدخل مدة صلاحية بين 1 و365 يومًا.',
+    'portail.context_meta' => ':count روابط نشطة',
 ];

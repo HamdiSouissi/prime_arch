@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\GedVersions\Controllers\GedController;
+use Modules\GedVersions\Services\GedContext;
 
 /**
  * Module « ged-versions » : dépôt documentaire privé, versionné et recherchable.
@@ -42,6 +43,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        GedContext::register();
     }
 
     /** Routes du module : liste et export d’abord, puis fiches, versions et actions CSRF. */

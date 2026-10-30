@@ -100,6 +100,20 @@ final class GedRepository
     }
 
     /** @return array<string,mixed>|null */
+    /** Nombre de pièces actives rattachées à un projet ou à un client (passerelle des fiches). */
+    public function contextCount(string $column, int $id): int
+    {
+        if (!in_array($column, ['project_id', 'client_id'], true)) {
+            return 0;
+        }
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM ged_documents WHERE ' . $column . ' = ? AND archived_at IS NULL'
+        );
+        $statement->execute([$id]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function find(int $documentId): ?array
     {
         if ($documentId < 1) {

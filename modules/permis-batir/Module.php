@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\PermisBatir\Controllers\DossierController;
+use Modules\PermisBatir\Services\PermisContext;
 
 /**
  * Module « permis-batir » : dossiers de permis de bâtir.
@@ -42,6 +43,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        PermisContext::register();
     }
 
     /** Déclare les routes du module ; l'ordre compte, `/permis/new` précède `/permis/{id}`. */

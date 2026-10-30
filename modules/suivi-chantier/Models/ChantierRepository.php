@@ -82,6 +82,28 @@ final class ChantierRepository
         ];
     }
 
+    /**
+     * Compteurs d'un projet pour la passerelle de la fiche projet (trois agrégats, une requête).
+     *
+     * @return array{visits:int,open_reserves:int,receptions:int}
+     */
+    public function contextCounts(int $projectId): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT (SELECT COUNT(*) FROM chantier_visites WHERE project_id = ?) AS visits,
+                    (SELECT COUNT(*) FROM chantier_reserves WHERE project_id = ? AND status <> 'lifted') AS open_reserves,
+                    (SELECT COUNT(*) FROM chantier_receptions WHERE project_id = ?) AS receptions"
+        );
+        $statement->execute([$projectId, $projectId, $projectId]);
+        $row = $statement->fetch();
+
+        return [
+            'visits' => (int) ($row['visits'] ?? 0),
+            'open_reserves' => (int) ($row['open_reserves'] ?? 0),
+            'receptions' => (int) ($row['receptions'] ?? 0),
+        ];
+    }
+
     /** @return array<string,mixed>|null Projet avec son client, sans donnée financière. */
     public function findProject(int $projectId): ?array
     {

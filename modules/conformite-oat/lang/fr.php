@@ -176,4 +176,5 @@ return [
     'conformite.partenaire_deactivated' => 'Partenaire désactivé.',
     'conformite.partenaire_not_found' => 'Ce partenaire n’existe plus.',
     'conformite.save_failed' => 'L’enregistrement a échoué. Réessayez.',
+    'conformite.context_meta' => 'attestation OAT',
 ];

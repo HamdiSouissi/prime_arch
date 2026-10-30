@@ -234,6 +234,15 @@ final class HonoraireRepository
      *
      * @return array<int,array<string,mixed>>
      */
+    /** Nombre de décomptes du projet, pour la passerelle de la fiche projet. */
+    public function contextCounts(int $projectId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM bareme_decomptes WHERE project_id = ?');
+        $statement->execute([$projectId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function decomptes(int $projectId): array
     {
         $statement = $this->pdo->prepare(

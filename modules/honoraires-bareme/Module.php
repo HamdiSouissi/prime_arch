@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\HonorairesBareme\Controllers\HonoraireController;
+use Modules\HonorairesBareme\Services\HonorairesContext;
 
 /**
  * Module « honoraires-bareme » : barèmes, décomptes par phase et devis d’honoraires.
@@ -43,6 +44,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        HonorairesContext::register();
     }
 
     /** Routes du module ; les chemins fixes sont déclarés avant `/honoraires/{projectId}`. */

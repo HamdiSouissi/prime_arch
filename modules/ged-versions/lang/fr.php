@@ -161,4 +161,5 @@ return [
     'ged.error.storage_failed' => 'L’enregistrement du fichier a échoué.',
     'ged.error.last_version' => 'Le document doit conserver au moins une version.',
     'ged.error.too_many_versions' => 'Ce document a atteint la limite de :max versions.',
+    'ged.context_meta' => ':count pièces',
 ];

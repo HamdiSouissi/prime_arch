@@ -6,9 +6,17 @@ declare(strict_types=1);
 /** @var string|null $eyebrow */
 /** @var array<string,string>|null $primaryAction */
 /** @var array<string,string>|null $secondaryAction */
+/** @var array<int,array{label:string,url?:string}>|null $breadcrumb */
+
+// Le fil d'Ariane est rendu au-dessus du titre, dans la même colonne : il ne décale
+// donc jamais les actions de l'en-tête.
+$breadcrumbItems = is_array($breadcrumb ?? null) ? $breadcrumb : [];
 ?>
 <header class="page-header" data-large-title>
     <div class="page-header__copy">
+        <?php if ($breadcrumbItems !== []): ?>
+            <?php \App\Core\View::partial('partials/breadcrumb', ['items' => $breadcrumbItems]) ?>
+        <?php endif; ?>
         <?php if (!empty($eyebrow)): ?>
             <p class="page-header__eyebrow"><?= e($eyebrow) ?></p>
         <?php endif; ?>

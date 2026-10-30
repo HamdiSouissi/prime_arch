@@ -1145,3 +1145,168 @@ dialog[open] {
     min-inline-size: 3rem;
     font-size: var(--font-size-footnote);
 }
+
+/* Fil d'Ariane : une ligne discrète au-dessus du titre, retour d'un cran garanti en un clic. */
+.breadcrumb {
+    margin-block-end: var(--space-2);
+    min-inline-size: 0;
+}
+
+.breadcrumb__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--color-ink-tertiary);
+    font-size: var(--font-size-footnote);
+}
+
+.breadcrumb__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-inline-size: 0;
+}
+
+/* Séparateur décoratif : il suit le sens de lecture, donc aussi en arabe (rtl). */
+.breadcrumb__item + .breadcrumb__item::before {
+    content: "›";
+    color: var(--color-ink-disabled);
+    font-size: 0.9em;
+}
+
+/* En arabe (rtl), le chevron doit pointer vers la gauche pour suivre le sens de lecture. */
+[dir="rtl"] .breadcrumb__item + .breadcrumb__item::before {
+    content: "‹";
+}
+
+.breadcrumb__link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 1.75rem;
+    padding-inline: 0.15rem;
+    border-radius: var(--radius-xs);
+    color: var(--color-ink-secondary);
+    text-decoration: none;
+}
+
+.breadcrumb__link:hover {
+    color: var(--color-primary-strong);
+    text-decoration: underline;
+}
+
+.breadcrumb__current {
+    color: var(--color-ink);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+/* Passerelles contextuelles : une pastille par module lié à la fiche affichée. */
+.context-links {
+    margin-block: var(--space-3) var(--space-4);
+}
+
+.context-links__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.context-link {
+    --context-link-accent: var(--color-ink-tertiary);
+    --context-link-tint: var(--color-surface-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-block-size: 2.5rem;
+    padding-block: 0.35rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-solid);
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-subhead);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--transition-fast), border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+/* L'icône porte la couleur sémantique : la pastille reste discrète au repos. */
+.context-link .icon {
+    color: var(--context-link-accent);
+}
+
+.context-link:hover {
+    border-color: var(--context-link-accent);
+    background: var(--context-link-tint);
+    color: var(--color-ink);
+    text-decoration: none;
+}
+
+.context-link__label {
+    white-space: nowrap;
+}
+
+.context-link__meta {
+    padding-inline-start: 0.35rem;
+    border-inline-start: 1px solid var(--color-border);
+    color: var(--color-ink-tertiary);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.context-link--info {
+    --context-link-accent: var(--color-info);
+    --context-link-tint: var(--color-info-tint);
+}
+
+.context-link--success {
+    --context-link-accent: var(--color-success);
+    --context-link-tint: var(--color-success-tint);
+}
+
+.context-link--warning {
+    --context-link-accent: var(--color-warning);
+    --context-link-tint: var(--color-warning-tint);
+}
+
+.context-link--error {
+    --context-link-accent: var(--color-error);
+    --context-link-tint: var(--color-error-tint);
+}
+
+/* Une réserve ouverte ou une facture impayée doit se voir sans survol. */
+.context-link--warning,
+.context-link--error {
+    background: var(--context-link-tint);
+    border-color: transparent;
+}
+
+.context-link:focus-visible {
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 2px;
+}
+
+@media (max-width: 430px) {
+    .context-link {
+        font-size: var(--font-size-footnote);
+    }
+
+    .context-link__meta {
+        white-space: normal;
+    }
+}
+
+@media print {
+    .breadcrumb,
+    .context-links {
+        display: none;
+    }
+}

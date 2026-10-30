@@ -432,6 +432,7 @@ final class CrmController
         $origin = (string) $request->query('origin', '');
         $owner = (string) $request->query('owner', '');
         $follow = (string) $request->query('follow', '');
+        $client = (string) $request->query('client', '');
         $search = trim((string) $request->query('q', ''));
         if (mb_strlen($search, 'UTF-8') > self::MAX_SEARCH) {
             $search = mb_substr($search, 0, self::MAX_SEARCH, 'UTF-8');
@@ -441,6 +442,7 @@ final class CrmController
             'origin' => in_array($origin, CrmService::ORIGINS, true) ? $origin : '',
             'owner_id' => $owner === 'none' || ctype_digit($owner) ? $owner : '',
             'follow' => in_array($follow, ['late', 'today', 'week', 'none'], true) ? $follow : '',
+            'client_id' => ctype_digit($client) ? $client : '',
             'search' => $search,
         ];
 
@@ -454,6 +456,7 @@ final class CrmController
         $origin = (string) $request->input('origin_filter', '');
         $owner = (string) $request->input('owner_filter', '');
         $follow = (string) $request->input('follow_filter', '');
+        $client = (string) $request->input('client_filter', '');
         $search = trim((string) $request->input('q_filter', ''));
         if (mb_strlen($search, 'UTF-8') > self::MAX_SEARCH) {
             $search = mb_substr($search, 0, self::MAX_SEARCH, 'UTF-8');
@@ -463,6 +466,7 @@ final class CrmController
             'origin' => in_array($origin, CrmService::ORIGINS, true) ? $origin : '',
             'owner' => $owner === 'none' || ctype_digit($owner) ? $owner : '',
             'follow' => in_array($follow, ['late', 'today', 'week', 'none'], true) ? $follow : '',
+            'client' => ctype_digit($client) ? $client : '',
             'q' => $search,
         ], static fn (string $value): bool => $value !== '');
 

@@ -67,6 +67,11 @@ final class CrmRepository
             $conditions[] = 'o.owner_id = :owner_value';
             $parameters['owner_value'] = (int) $owner;
         }
+        $clientId = (string) ($filters['client_id'] ?? '');
+        if (ctype_digit($clientId)) {
+            $conditions[] = 'o.client_id = :client_value';
+            $parameters['client_value'] = (int) $clientId;
+        }
         $follow = (string) ($filters['follow'] ?? '');
         if ($follow === 'late') {
             $conditions[] = "o.stage NOT IN ('won', 'lost') AND o.next_action_on IS NOT NULL AND o.next_action_on < :today_late";
@@ -124,6 +129,17 @@ final class CrmRepository
      *
      * @return array<int,array<string,mixed>>
      */
+    /** Nombre d'opportunités encore ouvertes pour un client (passerelle de la fiche client). */
+    public function openCountForClient(int $clientId): int
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT COUNT(*) FROM crm_opportunites WHERE client_id = ? AND stage NOT IN ('won', 'lost')"
+        );
+        $statement->execute([$clientId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function activities(int $opportuniteId): array
     {
         $statement = $this->pdo->prepare(

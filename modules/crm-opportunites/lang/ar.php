@@ -189,4 +189,5 @@ return [
     'crm.mark_won' => 'إغلاق الفرصة (مرحلة «مكسوبة»)',
     'crm.new_project' => 'إنشاء مشروع',
     'crm.project_help' => 'اختياري. يجب أن ينتمي المشروع إلى العميل المحدّد.',
+    'crm.context_meta' => ':count فرص',
 ];

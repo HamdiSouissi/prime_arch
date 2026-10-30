@@ -176,4 +176,5 @@ return [
     'honoraire.quote_line_prefix' => 'Honoraires',
     'honoraire.quote_line_unit' => 'forfait',
     'honoraire.fix_errors' => 'Corrigez les champs signalés puis validez à nouveau.',
+    'honoraire.context_meta' => ':count décomptes',
 ];

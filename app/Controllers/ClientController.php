@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\HookManager;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
@@ -152,6 +153,8 @@ final class ClientController
             return Response::html(View::render('pages/404', [], 'layouts/app'), 404);
         }
         $context = (new ViewContext())->authenticated((string) $client['display_name'], 'clients');
+        // Passerelles vers les modules liés à ce client (portail, CRM, GED…).
+        $sections = HookManager::applyFilters('client.detail.sections', [], $client);
         $canViewDocuments = Auth::can('documents.view') || Auth::can('documents.manage')
             || Auth::can('documents.issue') || Auth::can('documents.create')
             || Auth::can('documents.payments.manage') || Auth::can('documents.templates.manage')
@@ -171,6 +174,12 @@ final class ClientController
             'contactValues' => Session::pullFlash('clients.contact_values', []),
             'notice' => Session::pullFlash('clients.notice'),
             'canManage' => Auth::can('clients.manage'),
+            'sections' => is_array($sections) ? array_values($sections) : [],
+            'breadcrumb' => [
+                ['label' => __('nav.dashboard'), 'url' => url('/dashboard')],
+                ['label' => __('nav.clients'), 'url' => url('/clients')],
+                ['label' => (string) $client['display_name']],
+            ],
         ]));
     }
 

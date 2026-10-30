@@ -121,4 +121,5 @@ return [
     'chantier.pv.architect' => 'المهندس المعماري',
     'chantier.pv.contractor' => 'المقاول',
     'chantier.pv.disclaimer' => 'وثيقة عمل أعدّها المكتب: تُعرض على الأطراف للتأشير وتُستكمل حسب شروط الصفقة.',
+    'chantier.context_meta' => ':visits زيارات · :reserves تحفظات',
 ];

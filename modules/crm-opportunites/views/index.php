@@ -54,6 +54,7 @@ $exportQuery = array_filter([
     'origin' => (string) ($filters['origin'] ?? ''),
     'owner' => (string) ($filters['owner_id'] ?? ''),
     'follow' => (string) ($filters['follow'] ?? ''),
+    'client' => (string) ($filters['client_id'] ?? ''),
     'q' => (string) ($filters['search'] ?? ''),
 ], static fn (string $value): bool => $value !== '');
 $filterFields = [
@@ -61,6 +62,7 @@ $filterFields = [
     'origin_filter' => (string) ($filters['origin'] ?? ''),
     'owner_filter' => (string) ($filters['owner_id'] ?? ''),
     'follow_filter' => (string) ($filters['follow'] ?? ''),
+    'client_filter' => (string) ($filters['client_id'] ?? ''),
     'q_filter' => (string) ($filters['search'] ?? ''),
 ];
 ?>
@@ -119,6 +121,10 @@ $filterFields = [
         </div>
     </div>
     <form class="filter-row" method="get" action="<?= e(url('/crm')) ?>">
+        <?php if ((string) ($filters['client_id'] ?? '') !== ''): ?>
+            <?php /* Filtre posé par la fiche client : il survit à toute modification des autres filtres. */ ?>
+            <input type="hidden" name="client" value="<?= e((string) $filters['client_id']) ?>">
+        <?php endif; ?>
         <div class="field">
             <label class="field__label" for="crm-filter-stage"><?= e(__('crm.stage.label')) ?></label>
             <select class="field__control" id="crm-filter-stage" name="stage">

@@ -100,6 +100,31 @@ final class DossierRepository
 
     /** Dossiers rattachés à un projet, pour l’affichage dans les écrans du module. */
     /** @return array<int,array<string,mixed>> */
+    /**
+     * État du dossier de permis le plus récent d'un projet (passerelle de la fiche projet).
+     *
+     * @return array{count:int,status:string,reference:string}|null
+     */
+    public function contextSummary(int $projectId): ?array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT reference, status FROM permis_batir_dossiers WHERE project_id = ? ORDER BY id DESC LIMIT 1'
+        );
+        $statement->execute([$projectId]);
+        $row = $statement->fetch();
+        if (!is_array($row)) {
+            return null;
+        }
+        $count = $this->pdo->prepare('SELECT COUNT(*) FROM permis_batir_dossiers WHERE project_id = ?');
+        $count->execute([$projectId]);
+
+        return [
+            'count' => (int) $count->fetchColumn(),
+            'status' => (string) $row['status'],
+            'reference' => (string) $row['reference'],
+        ];
+    }
+
     public function forProject(int $projectId): array
     {
         $statement = $this->pdo->prepare(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\HookManager;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
@@ -193,8 +194,12 @@ final class DocumentController
             return Response::html(View::render('pages/404', [], 'layouts/app'), 404);
         }
         $context = (new ViewContext())->authenticated((string) $detail['document']['title'], 'documents');
+        // Actions proposées par les modules sur un document (relance d'impayé, GED…).
+        $sections = HookManager::applyFilters('document.detail.actions', [], $detail['document']);
         return Response::html(View::render('pages/documents/show', $context + [
             'document' => $detail['document'],
+            'sections' => is_array($sections) ? array_values($sections) : [],
+            'breadcrumb' => self::documentBreadcrumb($detail['document']),
             'lines' => $detail['lines'],
             'snapshot' => $detail['snapshot'],
             'payments' => $detail['payments'],
@@ -210,6 +215,28 @@ final class DocumentController
             'canViewClients' => Auth::can('clients.view'),
             'canViewProjects' => Auth::can('projects.view'),
         ]));
+    }
+
+    /**
+     * Fil d'Ariane d'un document : tableau de bord → documents → (client) → numéro.
+     *
+     * @param array<string,mixed> $document
+     * @return array<int,array{label:string,url?:string}>
+     */
+    private static function documentBreadcrumb(array $document): array
+    {
+        $items = [
+            ['label' => __('nav.dashboard'), 'url' => url('/dashboard')],
+            ['label' => __('nav.documents'), 'url' => url('/documents')],
+        ];
+        $clientName = trim((string) ($document['client_name'] ?? ''));
+        if ($clientName !== '' && Auth::can('clients.view') && (int) ($document['client_id'] ?? 0) > 0) {
+            $items[] = ['label' => $clientName, 'url' => url('/clients/' . (int) $document['client_id'])];
+        }
+        $number = trim((string) ($document['document_number'] ?? ''));
+        $items[] = ['label' => $number !== '' ? $number : (string) ($document['title'] ?? '')];
+
+        return $items;
     }
 
     public function issue(Request $request, string $id): Response

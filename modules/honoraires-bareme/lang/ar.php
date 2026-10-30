@@ -176,4 +176,5 @@ return [
     'honoraire.quote_line_prefix' => 'الأتعاب',
     'honoraire.quote_line_unit' => 'بالقيمة الإجمالية',
     'honoraire.fix_errors' => 'صحّح الحقول المشار إليها ثم أعد التحقّق.',
+    'honoraire.context_meta' => ':count مستخلصات',
 ];

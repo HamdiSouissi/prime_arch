@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\MetreQuantitatif\Controllers\MetreController;
+use Modules\MetreQuantitatif\Services\MetreContext;
 
 /**
  * Module « metre-quantitatif » : avant-métré, DQE et bibliothèque de prix.
@@ -42,6 +43,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        MetreContext::register();
     }
 
     /** Routes du module ; `/metre/bibliotheque` est déclarée avant `/metre/{projectId}`. */

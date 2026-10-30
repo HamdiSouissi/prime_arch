@@ -32,16 +32,20 @@ $balanceLabel = str_starts_with(trim((string) ($financialPosition['balance_due']
     ? __('documents.credit_balance')
     : __('documents.balance_due');
 ?>
+<?php $sections = is_array($sections ?? null) ? $sections : []; ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => (string) ($document['title'] ?? __('documents.title')),
     'eyebrow' => $number . ' · ' . __('documents.type.' . ($document['document_type'] ?? 'quote')),
     'subtitle' => __('documents.detail_intro'),
     'primaryAction' => $draft && !empty($canManage) ? ['label' => __('documents.edit'), 'icon' => 'edit', 'url' => url('/documents/' . (int) $document['id'] . '/edit')] : null,
+    'breadcrumb' => is_array($breadcrumb ?? null) ? $breadcrumb : [],
     'secondaryAction' => ['label' => __('documents.back'), 'icon' => 'arrow-left', 'url' => url('/documents')],
 ]) ?>
 
 <?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
 <?php if (!empty($errors['general'])): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($errors['general']) ?></p><?php endif; ?>
+
+<?php View::partial('partials/context-links', ['links' => $sections]) ?>
 
 <section class="card stack-md" aria-labelledby="document-status-heading">
     <div class="card-header"><div><h2 class="card-header__title" id="document-status-heading"><?= e(__('documents.status_label')) ?></h2><p class="section-heading__note"><?= e(__('documents.status.' . ($document['status'] ?? 'draft'))) ?> · <?= e(__('documents.type.' . ($document['document_type'] ?? 'quote'))) ?></p></div><span class="badge badge--<?= e($statusTone) ?>"><?= e(__('documents.status.' . ($document['status'] ?? 'draft'))) ?></span></div>

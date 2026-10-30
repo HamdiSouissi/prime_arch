@@ -176,4 +176,5 @@ return [
     'conformite.partenaire_deactivated' => 'تم تعطيل الشريك.',
     'conformite.partenaire_not_found' => 'هذا الشريك لم يعد موجودًا.',
     'conformite.save_failed' => 'فشل التسجيل. أعد المحاولة.',
+    'conformite.context_meta' => 'شهادة المطابقة',
 ];

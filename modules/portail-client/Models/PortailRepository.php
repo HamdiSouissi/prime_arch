@@ -74,6 +74,18 @@ final class PortailRepository
     }
 
     /** @return array<string,mixed>|null */
+    /** Nombre de liens encore utilisables pour un client (passerelle de la fiche client). */
+    public function activeLinkCount(int $clientId, string $today): int
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM portail_jetons
+             WHERE client_id = ? AND revoked_at IS NULL AND expires_on >= ?'
+        );
+        $statement->execute([$clientId, $today]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function find(int $id): ?array
     {
         $statement = $this->pdo->prepare('SELECT ' . self::LINK_COLUMNS . self::LINK_JOINS . ' WHERE j.id = :id LIMIT 1');

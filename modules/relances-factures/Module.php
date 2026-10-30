@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\RelancesFactures\Controllers\RelanceController;
+use Modules\RelancesFactures\Services\RelancesContext;
 
 /**
  * Module « relances-factures » : balance âgée, règles et courriers de relance.
@@ -42,6 +43,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        RelancesContext::register();
     }
 
     /** Routes du module ; les chemins statiques sont déclarés avant les chemins paramétrés. */

@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\ConformiteOat\Controllers\ConformiteController;
+use Modules\ConformiteOat\Services\ConformiteContext;
 
 /**
  * Module « conformite-oat » : dossier professionnel du cabinet et assurances.
@@ -43,6 +44,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        ConformiteContext::register();
     }
 
     /** Routes du module ; les chemins fixes sont déclarés avant les routes dynamiques. */

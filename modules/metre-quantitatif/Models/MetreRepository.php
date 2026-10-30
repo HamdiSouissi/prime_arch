@@ -97,6 +97,17 @@ final class MetreRepository
     }
 
     /** @return array<int,array<string,mixed>> */
+    /** Nombre de postes du projet, pour la passerelle de la fiche projet. */
+    public function contextCounts(int $projectId): int
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM metre_postes p INNER JOIN metre_lots l ON l.id = p.lot_id WHERE l.project_id = ?'
+        );
+        $statement->execute([$projectId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function lots(int $projectId): array
     {
         $statement = $this->pdo->prepare(

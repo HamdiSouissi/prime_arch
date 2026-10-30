@@ -22,13 +22,17 @@ $addressParts = array_filter([
 ?>
 <?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
 <?php if (!empty($errors['general'])): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($errors['general']) ?></p><?php endif; ?>
+<?php $sections = is_array($sections ?? null) ? $sections : []; ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => (string) $client['display_name'],
+    'breadcrumb' => is_array($breadcrumb ?? null) ? $breadcrumb : [],
     'eyebrow' => __('clients.record') . ' · ' . (string) ($client['reference'] ?? ''),
     'subtitle' => __('clients.type.' . $client['client_type']) . ' · ' . __('clients.status.' . $client['status']),
     'secondaryAction' => !empty($canManageProjects) ? ['label' => __('projects.create'), 'icon' => 'plus', 'url' => url('/projects/new?client_id=' . (int) $client['id'])] : null,
     'primaryAction' => !empty($canManage) ? ['label' => __('clients.edit'), 'icon' => 'edit', 'url' => url('/clients/' . (int) $client['id'] . '/edit')] : null,
 ]) ?>
+
+<?php View::partial('partials/context-links', ['links' => $sections]) ?>
 
 <div class="client-record-layout">
     <div class="client-record-main">

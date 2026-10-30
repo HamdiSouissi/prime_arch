@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\CrmOpportunites\Controllers\CrmController;
+use Modules\CrmOpportunites\Services\CrmContext;
 
 /**
  * Module « crm-opportunites » : prospects et pipeline commercial du cabinet.
@@ -42,6 +43,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        CrmContext::register();
     }
 
     /** Routes du module : liste et export d’abord, puis fiches et actions protégées par CSRF. */

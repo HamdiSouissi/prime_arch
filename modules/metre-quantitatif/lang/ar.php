@@ -146,4 +146,5 @@ return [
     'metre.library_updated' => 'تم تحديث المادة.',
     'metre.library_deleted' => 'تم حذف المادة.',
     'metre.library_code_taken' => 'توجد مادة بهذا الرمز.',
+    'metre.context_meta' => ':count بنود',
 ];

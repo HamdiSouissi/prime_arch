@@ -103,6 +103,18 @@
     text-transform: uppercase;
 }
 
+/* Séparateur « Modules externes » : la ligne et l'interligne détachent nettement les
+   entrées apportées par les modules de celles du noyau. */
+.sidebar-section-label--modules {
+    margin-block-start: var(--space-4);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--color-border);
+}
+
+.sidebar-list--modules {
+    padding-block-start: 0;
+}
+
 .sidebar-list {
     display: grid;
     gap: 0.35rem;
@@ -473,6 +485,17 @@ a.topbar-avatar:focus-visible {
 
     .sidebar-list {
         gap: var(--space-2);
+    }
+
+    /* Rail compact : le libellé serait illisible, c'est la liste qui porte le séparateur. */
+    .sidebar-section-label--modules {
+        display: none;
+    }
+
+    .sidebar-list--modules {
+        margin-block-start: var(--space-3);
+        padding-block-start: var(--space-3);
+        border-block-start: 1px solid var(--color-border);
     }
 
     .sidebar-link {

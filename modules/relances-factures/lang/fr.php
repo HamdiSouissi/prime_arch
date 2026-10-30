@@ -188,4 +188,5 @@ return [
     // Dernier rappel.
     'relance.modele.final.subject' => 'Dernier rappel : facture :invoice',
     'relance.modele.final.body' => "Madame, Monsieur,\n\nEn l’absence de règlement de la facture :invoice (:amount, échue le :due, :days jours de retard), nous vous adressons un dernier rappel avant de soumettre le dossier à notre conseil.\n\nNous vous invitons à nous contacter sans délai pour convenir d’un échéancier.\n\n:cabinet",
+    'relance.context_meta' => 'reste :amount',
 ];

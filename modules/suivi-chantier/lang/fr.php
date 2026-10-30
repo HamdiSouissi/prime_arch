@@ -121,4 +121,5 @@ return [
     'chantier.pv.architect' => 'L’architecte',
     'chantier.pv.contractor' => 'L’entreprise',
     'chantier.pv.disclaimer' => 'Document de travail établi par le cabinet : à faire viser par les parties et à compléter selon les clauses du marché.',
+    'chantier.context_meta' => ':visits visites · :reserves réserves',
 ];

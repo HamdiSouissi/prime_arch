@@ -188,4 +188,5 @@ return [
     // Dernier rappel.
     'relance.modele.final.subject' => 'إنذار أخير: الفاتورة :invoice',
     'relance.modele.final.body' => "سيدي، سيدتي،\n\nفي غياب تسديد الفاتورة :invoice (:amount، المستحقة في :due، :days يومًا من التأخير)، نوجّه إليكم إنذارًا أخيرًا قبل إحالة الملف على مستشارنا.\n\nندعوكم إلى الاتصال بنا دون تأخير للاتفاق على جدولة الدفع.\n\n:cabinet",
+    'relance.context_meta' => 'المتبقي :amount',
 ];

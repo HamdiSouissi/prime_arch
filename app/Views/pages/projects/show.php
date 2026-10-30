@@ -44,13 +44,17 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
 ?>
 <?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
 <?php if (!empty($errors['general'])): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($errors['general']) ?></p><?php endif; ?>
+<?php $sections = is_array($sections ?? null) ? $sections : []; ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => (string) $project['name'],
+    'breadcrumb' => is_array($breadcrumb ?? null) ? $breadcrumb : [],
     'eyebrow' => __('projects.record') . ' · ' . (string) ($project['reference'] ?? ''),
     'subtitle' => __('projects.status.' . $projectStatus) . ' · ' . (string) ($project['project_type'] ?? __('projects.type_unspecified')),
     'secondaryAction' => ['label' => __('projects.back_to_list'), 'icon' => 'arrow-left', 'url' => url('/projects')],
     'primaryAction' => !empty($canManage) ? ['label' => __('projects.edit'), 'icon' => 'edit', 'url' => url('/projects/' . (int) $project['id'] . '/edit')] : null,
 ]) ?>
+
+<?php View::partial('partials/context-links', ['links' => $sections]) ?>
 
 <div class="content-grid project-detail-grid">
     <div class="stack-lg">

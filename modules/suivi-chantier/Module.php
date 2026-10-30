@@ -9,6 +9,7 @@ use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
 use Modules\SuiviChantier\Controllers\ChantierController;
+use Modules\SuiviChantier\Services\ChantierContext;
 
 /**
  * Module « suivi-chantier » : journal, réserves et réceptions.
@@ -42,6 +43,9 @@ final class Module
 
             return $items;
         });
+
+        // Passerelle vers la fiche projet / client / document du noyau.
+        ChantierContext::register();
     }
 
     /** Routes du module ; `/chantier` (liste) est déclarée avant `/chantier/{projectId}`. */

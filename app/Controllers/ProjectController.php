@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Auth;
+use App\Core\HookManager;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
@@ -183,8 +184,13 @@ final class ProjectController
         $canViewTime = Auth::can('time.view') || Auth::can('time.manage')
             || Auth::can('time.view_all') || Auth::can('time.manage_all');
         $timeRepository = new TimeEntryRepository();
+        // Passerelles vers les modules qui traitent de ce projet : chaque module décide de sa
+        // propre visibilité et vérifie ses droits, le noyau ne fait que rendre la liste.
+        $sections = HookManager::applyFilters('project.detail.sections', [], $project);
         return Response::html(View::render('pages/projects/show', $context + [
             'project' => $project,
+            'sections' => is_array($sections) ? array_values($sections) : [],
+            'breadcrumb' => self::projectBreadcrumb($project),
             'projectImages' => (new ProjectImageRepository())->forProject((int) $project['id']),
             'imageErrors' => Session::pullFlash('projects.image_errors', []),
             'imageNotice' => Session::pullFlash('projects.image_notice'),
@@ -205,6 +211,31 @@ final class ProjectController
             'canViewTime' => $canViewTime,
             'canConfigure' => Auth::can('projects.configure'),
         ]));
+    }
+
+    /**
+     * Fil d'Ariane d'une fiche projet : tableau de bord → projets → (client) → projet.
+     *
+     * @param array<string,mixed> $project
+     * @return array<int,array{label:string,url?:string}>
+     */
+    private static function projectBreadcrumb(array $project): array
+    {
+        $items = [
+            ['label' => __('nav.dashboard'), 'url' => url('/dashboard')],
+            ['label' => __('nav.projects'), 'url' => url('/projects')],
+        ];
+        $clientName = trim((string) ($project['client_name'] ?? ''));
+        if ($clientName !== '') {
+            $clientItem = ['label' => $clientName];
+            if (Auth::can('clients.view') && (int) ($project['client_id'] ?? 0) > 0) {
+                $clientItem['url'] = url('/clients/' . (int) $project['client_id']);
+            }
+            $items[] = $clientItem;
+        }
+        $items[] = ['label' => (string) ($project['name'] ?? '')];
+
+        return $items;
     }
 
     public function edit(Request $request, string $id): Response

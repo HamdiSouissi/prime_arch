@@ -75,6 +75,39 @@ public function uninstall(): void;
 
 L’autoload PSR-4 est ajouté à partir du `namespace` du manifeste. Une vue privée se rend avec `View::renderModule('example-module', 'home', $viewData)`, depuis `views/home.php`. Les traductions `fr.php` et `ar.php` du dossier `lang/` sont chargées lors du démarrage; préfixez leurs clés avec le slug (par exemple `example-module.titre`). Les ressources CSS/JS/images autorisées sont accessibles aux utilisateurs authentifiés via `/module-assets/<slug>?file=css/module.css`.
 
+### Passerelles depuis les fiches du noyau
+
+Trois filtres permettent à un module d'apparaître directement sur une fiche du noyau, en un clic.
+Ils reçoivent une liste de sections et la fiche concernée, et renvoient la liste complète :
+
+| Filtre | Contexte passé | Fiche |
+|---|---|---|
+| `project.detail.sections` | `$project` (ligne `projects`) | `/projects/{id}` |
+| `client.detail.sections` | `$client` (ligne `clients`) | `/clients/{id}` |
+| `document.detail.actions` | `$document` (`document_type`, `status`, montants) | `/documents/{id}` |
+
+Chaque entrée ajoutée est un tableau de six clés, dont deux obligatoires :
+
+```php
+$sections[] = [
+    'key' => 'mon-module',            // identifiant stable, unique sur la fiche
+    'label' => __('mon-module.title'), // libellé traduit (fr + ar)
+    'url' => url('/mon-module/' . (int) $project['id']),
+    'meta' => __('mon-module.context_meta', ['count' => (string) $count]), // facultatif
+    'icon' => 'folder',               // facultatif, nom présent dans public/assets/img/icons.svg
+    'tone' => 'info',                 // facultatif : info, success, warning, error, neutral
+];
+```
+
+Règles :
+
+- **Aucune permission nouvelle** : le module vérifie les droits du noyau (`projects.view`, `clients.view`,
+  `documents.view`/`documents.manage`) et se retire lui-même quand l'utilisateur n'y a pas accès.
+- **Le noyau ne requête rien** pour les modules : il applique le filtre et rend le résultat tel quel.
+  Il n'entoure pas les erreurs des callbacks ; un module doit rester défensif (identifiant absent, etc.).
+- **Dégradation silencieuse** : module absent ou désactivé ⇒ la fiche est inchangée, sans espace vide.
+- **Ordre** : l'ordre d'ajout est conservé, les entrées du noyau passées en entrée restent en tête.
+
 Les extensions utilisent `HookManager` pour enregistrer des filtres (par exemple `sidebar.items`) et des actions/événements. Les événements émis par le noyau comprennent : `module.installed`, `module.activated`, `module.deactivated`, `module.booting` et `module.booted`. Les callbacks de hook sont du code PHP du module et s’exécutent avec les droits du processus PHP.
 
 ## Migrations et dépendances
