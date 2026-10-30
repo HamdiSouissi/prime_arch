@@ -227,6 +227,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `relances-factures` | 1.0.0 | `relances_regles`, `relances_modeles`, `relances_evenements`, `relances_exclusions` | `documents.view` / `documents.manage` | Balance âgée, file de relances, courrier à copier-coller, historique, règles et modèles FR/AR |
 | `metre-quantitatif` | 1.0.0 | `metre_lots`, `metre_postes`, `metre_bibliotheque_prix` | `projects.view` / `projects.manage` | Liste des projets métrés, fiche de métré (lots, postes, marges), édition d’un poste, DQE imprimable, export CSV, bibliothèque de prix |
 | `honoraires-bareme` | 1.0.0 | `bareme_missions`, `bareme_tranches`, `bareme_decomptes` | `projects.view` / `projects.manage` (+ `documents.create` pour le devis) | Liste des projets, fiche honoraires (décomptes), barèmes et tranches par phase, détail du calcul, génération d’un devis d’honoraires en brouillon |
+| `planning-equipe` | 1.0.0 | `planning_affectations`, `planning_conges` | `time.view` / `time.manage` (+ `time.view_all` et `time.manage_all` pour toute l’équipe) | Grille semaine/mois de la charge par collaborateur, affectations prévisionnelles, congés, détection de surcharge à seuil réglable, budget d’heures par projet |
 
 ### Points de vigilance (à valider par le cabinet)
 
@@ -254,6 +255,15 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
   taux ; l’écran rappelle que le barème doit être confirmé auprès de l’**OAT** et du contrat. Chaque
   décompte fige l’assiette et le barème utilisés. Le devis généré est un **brouillon** créé dans
   les documents du noyau : il doit être relu avant émission.
+- **Aucune capacité de travail imposée** : `planning-equipe` n’embarque ni horaire légal, ni
+  durée hebdomadaire, ni taux de charge. Le seuil de surcharge est un paramètre d’écran, et le
+  budget d’heures est celui saisi sur la fiche projet : lorsqu’il est vide, aucun écart n’est
+  calculé et aucune valeur n’est inventée. Les **jours fériés ne sont pas modélisés** : ils
+  doivent être saisis comme congés pour réduire la charge ; ce point doit être confirmé avec le
+  cabinet.
+- **Lecture seule du cœur** : `planning-equipe` lit `users`, `roles`, `projects`, `clients`,
+  `project_phase_assignments` et `time_entries` (heures réalisées) et n’écrit que dans ses tables
+  `planning_*`. Il ne crée aucun pointage et ne modifie ni coût ni budget.
 
 ### Installation
 
@@ -263,6 +273,7 @@ cd modules && zip -r suivi-chantier-1.0.0.zip suivi-chantier
 cd modules && zip -r relances-factures-1.0.0.zip relances-factures
 cd modules && zip -r metre-quantitatif-1.0.0.zip metre-quantitatif
 cd modules && zip -r honoraires-bareme-1.0.0.zip honoraires-bareme
+cd modules && zip -r planning-equipe-1.0.0.zip planning-equipe
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -272,5 +283,5 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 ### Préfixes de tables
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
-`chantier_*`, `relances_*`, `metre_*` et `bareme_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
+`chantier_*`, `relances_*`, `metre_*`, `bareme_*` et `planning_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.
