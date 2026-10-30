@@ -2,7 +2,7 @@
 
 ## Intention
 
-Prime Arch est l’espace de travail d’un cabinet d’architecture tunisien. L’interface reprend les principes d’Apple HIG — clarté, hiérarchie, retour immédiat, commandes familières — avec une interprétation légère de Liquid Glass : surfaces translucides, flou discret, reflets doux et profondeur mesurée. Le thème livré est **clair uniquement**. Les aperçus `/design/*` sont des maquettes DEV ONLY, alimentées par des exemples fictifs et sans écriture métier.
+Prime Arch est l’espace de travail d’un cabinet d’architecture tunisien. L’interface reprend les principes d’Apple HIG — clarté, hiérarchie, retour immédiat, commandes familières — avec une interprétation légère de Liquid Glass : surfaces translucides, flou discret, reflets doux et profondeur mesurée. Le thème livré reste **clair par défaut** ; les préférences `prefers-color-scheme: dark` du système activent automatiquement une palette sombre, sans bascule manuelle ni thème sombre initial. Les aperçus `/design/*` sont des maquettes DEV ONLY, alimentées par des exemples fictifs et sans écriture métier.
 
 Les écrans sont conçus pour une lecture rapide des dossiers, des phases de projet, du temps et des montants en dinars tunisiens. Les montants de démonstration utilisent trois décimales. Les taux fiscaux et mentions PDF sont indicatifs ; une validation par un expert-comptable reste nécessaire.
 
@@ -15,7 +15,8 @@ Les écrans sont conçus pour une lecture rapide des dossiers, des phases de pro
 3. `layout.css` — shell, sidebar, topbar, tabbar et responsive ;
 4. `components.css` — primitives et composants réutilisables ;
 5. `pages.css` — compositions propres aux écrans ;
-6. `print.css` — sortie imprimée, sans chrome d’application.
+6. `dark.css` — adaptations automatiques limitées à `prefers-color-scheme: dark` ;
+7. `print.css` — sortie imprimée claire, sans chrome d’application.
 
 Le reset est déclaré directement dans `app.css`. Toutes les feuilles sont placées dans des `@layer` afin que les styles des modules puissent s’insérer sans augmenter artificiellement la spécificité.
 
@@ -32,6 +33,8 @@ Le reset est déclaré directement dans `app.css`. Toutes les feuilles sont plac
 | Formes | `--radius-*`, `--tap-target` | Cartes 20–24 px, boutons 14 px, cibles 44 px, pills |
 | Profondeur | `--shadow-soft`, `--shadow-card`, `--shadow-float` | Ombres multicouches très diffuses |
 | Mouvement | `--transition-fast`, `--transition-normal` | 160–220 ms, courbe de réponse souple |
+
+La palette claire reste celle de repli. `tokens.css` surcharge les surfaces, textes, accents sémantiques et ombres sous `prefers-color-scheme: dark`; `dark.css` adapte les surfaces restées historiques en valeurs littérales. Aucun choix utilisateur n’est mémorisé et aucune dépendance JavaScript n’est requise.
 
 La police utilise la pile système `-apple-system`, `BlinkMacSystemFont`, SF Pro, Segoe UI, Roboto et Noto Sans Arabic. L’échelle suit les repères HIG : Large Title 34 px, Title 28/22/20 px, Headline 17 px, Body 17 px, Callout 16 px, Subhead 15 px, Footnote 13 px et Caption 12 px. Les montants utilisent `font-variant-numeric: tabular-nums`.
 
@@ -104,7 +107,7 @@ Les illustrations `empty-*.svg` restent vectorielles, légères et cohérentes a
 
 ## Accessibilité — checklist de livraison
 
-- [x] Thème clair uniquement ; le méta `color-scheme` est `light` et aucune bascule sombre automatique n’est activée.
+- [x] Thème clair par défaut ; le mode sombre suit automatiquement `prefers-color-scheme: dark`, et les contrôles natifs suivent `color-scheme: light dark`.
 - [x] Texte normal gris-bleu sur surfaces blanches/pastel, ratio visé ≥ 4,5:1 ; focus clavier net de 3 px.
 - [x] Contrôles principaux et navigation mobile d’au moins 44 px ; boutons icon-only avec nom accessible.
 - [x] Navigation clavier, lien d’évitement, titres hiérarchisés, labels de formulaires, tableaux sémantiques et annonces de toast.
@@ -112,7 +115,7 @@ Les illustrations `empty-*.svg` restent vectorielles, légères et cohérentes a
 - [x] Écrans utilisables en `dir="rtl"`, y compris les espacements, l’ordre logique et les champs numériques/contacts LTR.
 - [x] États vides illustrés mais accompagnés d’un titre et d’une explication textuelle.
 
-Les couples principaux ont été contrôlés par calcul de luminance relative WCAG (sRGB) : `#25334B` sur blanc = 12,70:1 ; `#53627A` sur blanc = 6,18:1 ; `#62718A` sur blanc = 4,94:1 ; `#2458E8` sur blanc = 5,78:1 ; `#176B49`, `#805900`, `#B4234A` et `#1D4FA8` sur blanc dépassent 6:1. Le texte blanc sur les extrémités du dégradé des boutons (`#2D65F5` et `#6C5CFF`) atteint au minimum 4,55:1 ; ne pas éclaircir ces couleurs sur les boutons remplis.
+Les couples principaux clairs ont été contrôlés par calcul de luminance relative WCAG (sRGB) : `#25334B` sur blanc = 12,70:1 ; `#53627A` sur blanc = 6,18:1 ; `#62718A` sur blanc = 4,94:1 ; `#2458E8` sur blanc = 5,78:1 ; `#176B49`, `#805900`, `#B4234A` et `#1D4FA8` sur blanc dépassent 6:1. En sombre, les couples principaux calculés dépassent également 4,5:1 : `#EDF3FB` sur `#111821` = 15,99:1 ; `#C4D0E0` sur `#1D2938` = 9,43:1 ; `#AAB8CC` sur `#1D2938` = 7,32:1 ; `#B4CAFF` sur `#1D2938` = 9,00:1 ; les paires des statuts succès, avertissement, erreur et information sur leurs fonds sombres dépassent 6,5:1. Le texte blanc sur les extrémités du dégradé des boutons (`#2D65F5` et `#6C5CFF`) atteint au minimum 4,55:1 ; ne pas éclaircir ces couleurs sur les boutons remplis.
 
 Pour auditer une nouvelle paire de tokens, calculer pour chaque canal sRGB `c/12.92` si `c ≤ 0,04045`, sinon `((c+0,055)/1,055)^2,4`, puis `L = 0,2126R + 0,7152G + 0,0722B`. Le ratio est `(Lclair + 0,05) / (Lfoncé + 0,05)` et doit être ≥ 4,5 pour du texte normal.
 

@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\GeographyRepository;
+use App\Services\AuditLogger;
 use App\Services\CabinetLogoStorage;
 use App\Services\CabinetSettings;
 use App\Services\ViewContext;
@@ -116,6 +117,7 @@ final class SettingsController
         if ($current['logo'] !== '' && $current['logo'] !== $values['logo']) {
             $logoStorage->remove($current['logo']);
         }
+        (new AuditLogger())->record('settings.updated', 'cabinet', null, [], Auth::id());
         Session::flash('settings.notice', __('settings.saved'));
         return Response::redirect(url('/settings'));
     }

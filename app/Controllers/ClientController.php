@@ -11,6 +11,7 @@ use App\Core\View;
 use App\Models\ClientRepository;
 use App\Models\CustomFieldRepository;
 use App\Models\GeographyRepository;
+use App\Services\AuditLogger;
 use App\Services\ClientService;
 use App\Services\ViewContext;
 use Throwable;
@@ -86,6 +87,7 @@ final class ClientController
             Session::flash('clients.values', $validated['values']);
             return Response::redirect(url('/clients/new'));
         }
+        (new AuditLogger())->record('clients.created', 'client', $id, [], Auth::id());
         Session::flash('clients.notice', __('clients.created'));
         return Response::redirect(url('/clients/' . $id));
     }
@@ -161,6 +163,7 @@ final class ClientController
             Session::flash('clients.values', $validated['values']);
             return Response::redirect(url('/clients/' . $clientId . '/edit'));
         }
+        (new AuditLogger())->record('clients.updated', 'client', (int) $clientId, [], Auth::id());
         Session::flash('clients.notice', __('clients.updated'));
         return Response::redirect(url('/clients/' . $clientId));
     }
@@ -191,6 +194,12 @@ final class ClientController
             error_log((string) $error);
             Session::flash('clients.errors', ['general' => __('clients.save_failed')]);
             return Response::redirect(url('/clients/' . $clientId));
+        }
+        if ($deleted) {
+            (new AuditLogger())->record('clients.contact.deleted', 'client_contact', (int) $personId, [
+                'client_id' => (int) $clientId,
+                'contact_action' => 'deleted',
+            ], Auth::id());
         }
         Session::flash('clients.notice', $deleted ? __('clients.contact_deleted') : __('clients.invalid_contact'));
         return Response::redirect(url('/clients/' . $clientId));
@@ -230,11 +239,21 @@ final class ClientController
         $contact['phone'] = $contact['phone'] !== '' ? $contact['phone'] : null;
         try {
             if ($contactId === null) {
-                $repository->createContact((int) $clientId, $contact);
+                $createdContactId = $repository->createContact((int) $clientId, $contact);
+                (new AuditLogger())->record('clients.contact.created', 'client_contact', $createdContactId, [
+                    'client_id' => (int) $clientId,
+                    'contact_action' => 'created',
+                    'is_primary' => $contact['is_primary'],
+                ], Auth::id());
                 Session::flash('clients.notice', __('clients.contact_created'));
             } elseif (!$repository->updateContact((int) $clientId, (int) $personId, $contact)) {
                 Session::flash('clients.errors', ['general' => __('clients.invalid_contact')]);
             } else {
+                (new AuditLogger())->record('clients.contact.updated', 'client_contact', (int) $personId, [
+                    'client_id' => (int) $clientId,
+                    'contact_action' => 'updated',
+                    'is_primary' => $contact['is_primary'],
+                ], Auth::id());
                 Session::flash('clients.notice', __('clients.contact_updated'));
             }
         } catch (Throwable $error) {

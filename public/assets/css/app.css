@@ -6,6 +6,7 @@
 @import url("./layout.css") layer(layout);
 @import url("./components.css") layer(components);
 @import url("./pages.css") layer(pages);
+@import url("./dark.css") layer(pages);
 @import url("./print.css") layer(print);
 
 @layer utilities {

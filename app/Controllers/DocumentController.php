@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\DocumentRepository;
 use App\Models\DocumentTemplateRepository;
+use App\Services\AuditLogger;
 use App\Services\DocumentService;
 use App\Services\ViewContext;
 use RuntimeException;
@@ -100,6 +101,9 @@ final class DocumentController
             Session::flash('documents.values', $validated['values']);
             return Response::redirect(url('/documents/new'));
         }
+        (new AuditLogger())->record('documents.created', 'document', $id, [
+            'document_type' => (string) ($validated['values']['document_type'] ?? ''),
+        ], Auth::id());
         Session::flash('documents.notice', __('documents.created'));
         return Response::redirect(url('/documents/' . $id));
     }
@@ -166,6 +170,9 @@ final class DocumentController
             Session::flash('documents.values', $validated['values']);
             return Response::redirect(url('/documents/' . $documentId . '/edit'));
         }
+        (new AuditLogger())->record('documents.updated', 'document', (int) $documentId, [
+            'document_type' => (string) ($validated['values']['document_type'] ?? ''),
+        ], Auth::id());
         Session::flash('documents.notice', __('documents.updated'));
         return Response::redirect(url('/documents/' . $documentId));
     }
@@ -219,6 +226,7 @@ final class DocumentController
             Session::flash('documents.errors', ['general' => __('documents.issue_failed')]);
             return Response::redirect(url('/documents/' . $documentId));
         }
+        (new AuditLogger())->record('documents.issued', 'document', (int) $documentId, [], Auth::id());
         Session::flash('documents.notice', __('documents.issued'));
         return Response::redirect(url('/documents/' . $documentId));
     }
@@ -284,6 +292,7 @@ final class DocumentController
             Session::flash('documents.payment_values', $validated['values']);
             return Response::redirect(url('/documents/' . $documentId));
         }
+        (new AuditLogger())->record('documents.payment.added', 'document', (int) $documentId, [], Auth::id());
         Session::flash('documents.notice', __('documents.payment_added'));
         return Response::redirect(url('/documents/' . $documentId));
     }
@@ -301,6 +310,7 @@ final class DocumentController
             Session::flash('documents.errors', ['general' => __('documents.not_draft')]);
             return Response::redirect(url('/documents/' . $documentId));
         }
+        (new AuditLogger())->record('documents.draft.deleted', 'document', (int) $documentId, [], Auth::id());
         Session::flash('documents.notice', __('documents.deleted'));
         return Response::redirect(url('/documents'));
     }

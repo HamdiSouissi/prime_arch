@@ -1,0 +1,317 @@
+/* Adaptation automatique au thème système ; le clair reste le thème de repli. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+
+    body::before {
+        display: none;
+    }
+
+    .skip-link {
+        color: #FFFFFF;
+        background: #2458E8;
+    }
+
+    .sidebar,
+    .sidebar-workspace,
+    .topbar,
+    .topbar-search,
+    .topbar-search__keys,
+    .mobile-tabbar,
+    .app-shell.is-mobile-menu-open .sidebar {
+        border-color: var(--color-border);
+        color: var(--color-ink);
+        background: var(--color-surface);
+    }
+
+    .sidebar {
+        box-shadow: var(--shadow-soft);
+    }
+
+    .topbar-avatar {
+        border-color: var(--color-border-strong);
+        color: #FFFFFF;
+        background: linear-gradient(145deg, #344875, #31568A 58%, #1D6868);
+    }
+
+    .sidebar-link:hover,
+    .sidebar-link[aria-current="page"] {
+        border-color: var(--color-border-strong);
+        color: var(--color-primary-strong);
+        background: var(--color-primary-tint);
+        box-shadow: none;
+    }
+
+    .sidebar-link.is-disabled:hover {
+        border-color: transparent;
+        background: transparent;
+    }
+
+    .topbar {
+        border-block-end-color: var(--color-border);
+    }
+
+    .topbar-search:hover,
+    .topbar-search__keys {
+        background: var(--color-surface-raised);
+    }
+
+    .dev-banner {
+        border-color: var(--color-border);
+        color: var(--color-info);
+        background: var(--color-info-tint);
+    }
+
+    .app-shell.is-mobile-menu-open .mobile-menu-backdrop {
+        background: rgba(0, 0, 0, 0.58);
+    }
+
+    .mobile-tabbar {
+        box-shadow: 0 -7px 24px rgba(0, 0, 0, 0.32);
+    }
+
+    .button--secondary,
+    .btn-secondary,
+    .table-wrap,
+    .segmented-control,
+    .data-table th,
+    .data-table tbody tr:hover,
+    dialog,
+    .toast,
+    .empty-state,
+    .view-toggle {
+        border-color: var(--color-border);
+        color: var(--color-ink);
+        background: var(--color-surface);
+    }
+
+    .data-table td,
+    .detail-list__item,
+    .document-row {
+        border-color: var(--color-border);
+    }
+
+    .button:not(.button--primary):not(.button--tinted):not(.button--danger):not(.button--ghost),
+    .btn:not(.btn-primary):not(.btn-secondary):not(.btn-ghost) {
+        color: var(--color-ink);
+        background: var(--color-surface-raised);
+    }
+
+    .button--primary,
+    .btn-primary {
+        color: #FFFFFF;
+    }
+
+    .button--secondary:hover,
+    .btn-secondary:hover {
+        background: var(--color-surface-raised);
+    }
+
+    .button--tinted,
+    .button--ghost,
+    .btn-ghost {
+        color: var(--color-primary-strong);
+    }
+
+    .button--danger {
+        color: var(--color-error);
+        background: var(--color-error-tint);
+    }
+
+    .field__control,
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+        border-color: var(--color-border-strong);
+        color: var(--color-ink);
+        background-color: var(--color-surface-solid);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-ink-tertiary);
+    }
+
+    .badge--neutral {
+        color: var(--color-ink-secondary);
+        background: var(--color-surface-muted);
+    }
+
+    .avatar {
+        border-color: var(--color-border);
+        color: var(--color-primary-strong);
+        background: linear-gradient(145deg, #2A3D5C, #3A345B 60%, #234943);
+    }
+
+    .progress,
+    .week-chart__track {
+        background: var(--color-surface-muted);
+    }
+
+    .switch::after {
+        border-color: var(--color-border-strong);
+        background: var(--color-surface-muted);
+    }
+
+    .switch::before {
+        background: #F4F7FC;
+    }
+
+    dialog {
+        background: var(--color-surface-raised);
+        box-shadow: var(--shadow-float);
+    }
+
+    dialog::backdrop {
+        background: rgba(0, 0, 0, 0.66);
+    }
+
+    .command-item__icon,
+    .timeline__marker {
+        color: var(--color-primary-strong);
+        background: var(--color-primary-tint);
+    }
+
+    .timeline__item:not(:last-child)::after {
+        background: linear-gradient(180deg, rgba(143, 174, 255, 0.42), rgba(173, 192, 219, 0.12));
+    }
+
+    .auth-card,
+    .settings-logo-row,
+    .summary-metrics > div,
+    .mini-card,
+    .module-shortcut,
+    .stat-card,
+    .deadline-item,
+    .project-card,
+    .profile-card,
+    .custom-field,
+    .document-preview,
+    .module-card,
+    .upload-dropzone,
+    .timer-card,
+    .auth-aside,
+    .quick-add-item,
+    .settings-nav,
+    .settings-form,
+    .settings-panel,
+    .contact-edit-form,
+    .contact-new-form,
+    .phase-settings-row,
+    .custom-definition,
+    .document-summary-grid > div {
+        border-color: var(--color-border);
+        color: var(--color-ink);
+        background: var(--color-surface);
+    }
+
+    .stat-card--turquoise .stat-card__icon,
+    .activity-item:nth-child(3n + 2) .activity-item__icon {
+        color: var(--color-info);
+        background: var(--color-info-tint);
+    }
+
+    .stat-card--coral .stat-card__icon,
+    .activity-item:nth-child(3n) .activity-item__icon,
+    .project-card:nth-child(3n) .project-card__symbol,
+    .module-card:nth-child(3n) .module-card__icon {
+        color: var(--color-warning);
+        background: var(--color-warning-tint);
+    }
+
+    .stat-card--pink .stat-card__icon {
+        color: var(--color-error);
+        background: var(--color-error-tint);
+    }
+
+    .stat-card--mint .stat-card__icon {
+        color: var(--color-success);
+        background: var(--color-success-tint);
+    }
+
+    .project-card__symbol,
+    .module-card__icon,
+    .project-card:nth-child(3n + 2) .project-card__symbol,
+    .module-card:nth-child(3n + 2) .module-card__icon {
+        color: var(--color-primary-strong);
+        background: var(--color-primary-tint);
+    }
+
+    .upload-dropzone {
+        border-style: dashed;
+        background: var(--color-surface-muted);
+    }
+
+    .upload-dropzone__icon {
+        color: var(--color-primary-strong);
+        background: var(--color-surface-raised);
+    }
+
+    .auth-layout {
+        background: var(--gradient-mesh), var(--color-canvas);
+    }
+
+    .settings-nav__item:hover,
+    .quick-add-item:hover {
+        color: var(--color-ink);
+        background: var(--color-surface-raised);
+    }
+
+    .page-header {
+        border-color: var(--color-border);
+        background: var(--color-surface);
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+        .sidebar,
+        .sidebar-workspace,
+        .topbar,
+        .topbar-search,
+        .topbar-search__keys,
+        .mobile-tabbar,
+        .app-shell.is-mobile-menu-open .sidebar,
+        .button--secondary,
+        .btn-secondary,
+        .table-wrap,
+        .segmented-control,
+        .data-table th,
+        .data-table tbody tr:hover,
+        .card,
+        .glass-card,
+        .panel,
+        .auth-card,
+        .auth-aside,
+        .stat-card,
+        .deadline-item,
+        .project-card,
+        .profile-card,
+        .custom-field,
+        .document-preview,
+        .module-card,
+        .upload-dropzone,
+        .timer-card,
+        .quick-add-item,
+        .settings-nav,
+        .settings-form,
+        .settings-panel,
+        .settings-logo-row,
+        .summary-metrics > div,
+        .mini-card,
+        .module-shortcut,
+        .contact-edit-form,
+        .contact-new-form,
+        .phase-settings-row,
+        .custom-definition,
+        .document-summary-grid > div,
+        .page-header,
+        .toast,
+        .empty-state,
+        .view-toggle,
+        dialog {
+            background: var(--color-surface-solid);
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+        }
+    }
+}

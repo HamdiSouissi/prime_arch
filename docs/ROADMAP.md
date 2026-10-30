@@ -50,6 +50,14 @@ Le projet avance par phases validées une à une. Une phase suivante ne commence
 
 ## Phase 6 — Finition et exploitation
 
-**Fonctionnalités prévues :** mode sombre automatique, audit, sauvegardes et essais de restauration, permissions affinées, conformité aux règles tunisiennes confirmées, tests d'intégration et de sécurité, amélioration responsive et accessibilité.
+**Statut : implémentation en cours de validation opérationnelle.**
 
-**Objectif :** durcir l'application avant usage réel en cabinet, sans présenter comme validées les règles fiscales ou juridiques qui nécessitent l'avis de l'expert-comptable et de l'OAT.
+- Thème clair conservé par défaut ; palette sombre appliquée automatiquement sous `prefers-color-scheme: dark`, avec adaptations CSS et contrôles de contraste documentés.
+- Migrations `0011_create_audit_logs.sql` et `0012_create_auth_throttle_markers.sql`, journal consultable par les administrateurs et événements d’authentification, de gestion et de documents sans copie des champs personnels ou financiers.
+- Sauvegarde complète CLI, manifeste/empreintes, vérification en lecture seule et restauration protégée réservée à une base et des dossiers de stockage vides ; limites et procédure dans `docs/OPERATIONS.md`.
+- Rôles non-administrateurs avec permissions énumérées explicitement ; accès aux réglages sensibles et à l’audit limité à l’administrateur.
+- Tests unitaires ajoutés pour l’assainissement du journal, les chemins de sauvegarde et les permissions. Ils n’ont pas été exécutés faute de PHP, Composer/PHPUnit et MySQL dans l’environnement courant.
+- Les essais de restauration réelle, les vérifications navigateur/lecteur d’écran et les essais d’intégration restent à réaliser sur un environnement équipé.
+- **Conformité tunisienne non validée** : taux, mentions, modèles et obligations doivent être confirmés par l’expert-comptable du cabinet et l’OAT avant toute utilisation officielle. Aucun taux ni règle juridique n’est inventé dans cette phase.
+
+**Objectif :** durcir l'application avant usage réel en cabinet, sans présenter comme validées les règles fiscales ou juridiques qui nécessitent une expertise externe.

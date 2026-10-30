@@ -65,6 +65,14 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 - Les modules sont du code PHP non sandboxé : installer uniquement des archives de confiance. La désactivation conserve le code et les données.
 - Format, limites d’archive et cycle de vie dans `docs/MODULES.md`.
 
+### Phase 6 — Finition et exploitation (en cours de validation)
+
+- Le clair reste le rendu normal ; le sombre suit automatiquement la préférence `prefers-color-scheme: dark` du système.
+- Journal d’audit administrateur, sauvegarde ZIP privée en CLI, vérification d’intégrité et restauration limitée à une base vide.
+- Permissions des rôles intégrés explicites et moindres privilèges ; les réglages de cabinet contenant des données sensibles sont réservés à l’administrateur.
+- Les tests de sécurité et de politique de permissions sont ajoutés, mais doivent encore être exécutés avec PHP/PHPUnit/MySQL. Aucune règle fiscale ou juridique tunisienne n’est déclarée conforme sans validation de l’expert-comptable et de l’OAT.
+- Procédures d’exploitation et limites : `docs/OPERATIONS.md`.
+
 Avant utilisation de la phase 3, les migrations `0006` à `0008` doivent avoir été exécutées avec succès ; les rôles intégrés doivent ensuite être resynchronisés avec `php bin/seed.php`. L’état d’exécution des migrations ne peut pas être déduit du code seul.
 
 Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
@@ -84,3 +92,4 @@ composer test
 - `docs/ROADMAP.md` — phases et critères de progression.
 - `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
 - `docs/MODULES.md` — format, installation et sécurité des modules.
+- `docs/OPERATIONS.md` — journal d’audit, sauvegarde, restauration et validation opérationnelle.

@@ -13,6 +13,7 @@ use App\Models\CustomFieldRepository;
 use App\Models\GeographyRepository;
 use App\Models\ProjectRepository;
 use App\Models\TimeEntryRepository;
+use App\Services\AuditLogger;
 use App\Services\ProjectPlanService;
 use App\Services\ProjectService;
 use App\Services\ViewContext;
@@ -103,6 +104,7 @@ final class ProjectController
             Session::flash('projects.values', $validated['values']);
             return Response::redirect(url('/projects/new'));
         }
+        (new AuditLogger())->record('projects.created', 'project', $id, [], Auth::id());
         Session::flash('projects.notice', __('projects.created'));
         return Response::redirect(url('/projects/' . $id));
     }
@@ -202,6 +204,9 @@ final class ProjectController
             Session::flash('projects.values', $validated['values']);
             return Response::redirect(url('/projects/' . $projectId . '/edit'));
         }
+        (new AuditLogger())->record('projects.updated', 'project', (int) $projectId, [
+            'status' => (string) ($validated['values']['status'] ?? ''),
+        ], Auth::id());
         Session::flash('projects.notice', __('projects.updated'));
         return Response::redirect(url('/projects/' . $projectId));
     }
@@ -232,6 +237,12 @@ final class ProjectController
             'missing' => __('projects.not_found'),
             default => __('projects.invalid_phase_action'),
         };
+        if ($result === 'updated') {
+            (new AuditLogger())->record('projects.phase.status.updated', 'project_phase', (int) $phaseId, [
+                'project_id' => (int) $projectId,
+                'phase_action' => $action,
+            ], Auth::id());
+        }
         Session::flash($result === 'updated' ? 'projects.notice' : 'projects.errors',
             $result === 'updated' ? $message : ['general' => $message]
         );
@@ -275,6 +286,7 @@ final class ProjectController
             Session::flash('projects.errors', ['general' => __('projects.save_failed')]);
             return Response::redirect(url('/projects/' . $projectId));
         }
+        (new AuditLogger())->record('projects.plan.updated', 'project', (int) $projectId, [], Auth::id());
         Session::flash('projects.notice', __('projects.plan_saved'));
         return Response::redirect(url('/projects/' . $projectId));
     }
@@ -300,6 +312,12 @@ final class ProjectController
         } catch (Throwable $error) {
             error_log((string) $error);
             $result = 'invalid';
+        }
+        if ($result === 'updated') {
+            (new AuditLogger())->record('projects.phase.progress.updated', 'project_phase', (int) $phaseId, [
+                'project_id' => (int) $projectId,
+                'progress_percent' => $progress,
+            ], Auth::id());
         }
         $message = match ($result) {
             'updated' => __('projects.progress_saved'),

@@ -13,7 +13,7 @@
 1. `public/index.php` charge l'autoload Composer et lance `App\Core\Application`.
 2. `Application::boot()` : lit `.env` (`Env`), charge `config/*.php` (`Config`), fuseau `Africa/Tunis`,
    démarre la session, fixe la langue (`Translator`).
-3. `config/routes.php` enregistre les routes du cœur dans le `Router` : connexion, déconnexion, tableau de bord, clients et contacts, projets et phases, champs personnalisés, réglages, administration des utilisateurs et référentiel géographique.
+3. `config/routes.php` enregistre les routes du cœur dans le `Router` : connexion, déconnexion, tableau de bord, clients et contacts, projets et phases, champs personnalisés, réglages, administration des utilisateurs, journal d’audit administrateur et référentiel géographique.
 4. `ModuleManager::boot()` lit les modules actifs dans la table `modules`, vérifie manifestes, compatibilités et dépendances, puis démarre leurs hooks, routes et traductions en ordre topologique.
 5. `Router::dispatch()` exécute les middlewares d'authentification, de rôle et de CSRF avant le contrôleur, qui retourne une `Response`.
 6. Les vues (`app/Views`) sont rendues par `View::render()` dans `layouts/app` ou `layouts/auth`.
@@ -27,6 +27,8 @@ Les modules téléversés et leurs vues, migrations et ressources résident sous
 - L'identifiant de session est renouvelé après connexion ; les cookies sont `HttpOnly`, `SameSite=Lax` et `Secure` sous HTTPS. La déconnexion détruit les données et le cookie de session.
 - Les routes POST privées requièrent un jeton CSRF. `AuthMiddleware` impose une session, et `AdminMiddleware` exige la permission `users.manage`.
 - Les permissions sont chargées depuis le rôle courant à chaque requête afin que la désactivation d'un compte prenne effet immédiatement.
+- Les rôles intégrés hors administrateur énumèrent leurs droits au lieu d’utiliser des jokers de domaine ; le journal `audit_logs` n’enregistre pas les champs de formulaire ni l’adresse IP brute.
+- Les commandes de sauvegarde/restauration sont limitées à la CLI ; une restauration exige une base vide et des dossiers privés de stockage vides. Voir `docs/OPERATIONS.md`.
 - Le téléversement du logo n'accepte que JPEG, PNG et WebP, vérifie le MIME réel et les dimensions, génère un nom aléatoire et stocke le fichier hors de `public/`.
 
 ## Initialisation des données

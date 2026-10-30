@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\HourlyRateRepository;
+use App\Services\AuditLogger;
 use App\Services\HourlyRateService;
 use App\Services\ViewContext;
 use PDOException;
@@ -54,7 +55,7 @@ final class HourlyRateController
             return Response::redirect(url('/settings/hourly-rates'));
         }
         try {
-            (new HourlyRateRepository())->create($validated['values'], Auth::id());
+            $rateId = (new HourlyRateRepository())->create($validated['values'], Auth::id());
         } catch (PDOException $error) {
             error_log((string) $error);
             $duplicate = (int) ($error->errorInfo[1] ?? 0) === 1062;
@@ -69,6 +70,10 @@ final class HourlyRateController
             Session::flash('finance.rate_values', $validated['values']);
             return Response::redirect(url('/settings/hourly-rates'));
         }
+        (new AuditLogger())->record('finance.rates.created', 'hourly_rate', $rateId, [
+            'user_id' => (int) $validated['values']['user_id'],
+            'effective_from' => (string) $validated['values']['effective_from'],
+        ], Auth::id());
         Session::flash('finance.rate_notice', __('finance.rate_created'));
         return Response::redirect(url('/settings/hourly-rates'));
     }

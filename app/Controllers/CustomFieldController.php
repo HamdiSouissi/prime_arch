@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\CustomFieldRepository;
+use App\Services\AuditLogger;
 use App\Services\CustomFieldService;
 use App\Services\ViewContext;
 use PDOException;
@@ -52,7 +53,7 @@ final class CustomFieldController
             return Response::redirect(url('/settings/custom-fields'));
         }
         try {
-            (new CustomFieldRepository())->create($validated['data']);
+            $fieldId = (new CustomFieldRepository())->create($validated['data']);
         } catch (PDOException $error) {
             if ($error->getCode() === '23000') {
                 Session::flash('custom_fields.errors', ['field_key' => __('custom_fields.key_exists')]);
@@ -67,6 +68,11 @@ final class CustomFieldController
             Session::flash('custom_fields.errors', ['general' => __('custom_fields.save_failed')]);
             return Response::redirect(url('/settings/custom-fields'));
         }
+        (new AuditLogger())->record('custom_fields.created', 'custom_field', $fieldId, [
+            'entity_type' => (string) $validated['data']['entity_type'],
+            'field_type' => (string) $validated['data']['field_type'],
+            'is_required' => (bool) $validated['data']['is_required'],
+        ], Auth::id());
         Session::flash('custom_fields.notice', __('custom_fields.created'));
         return Response::redirect(url('/settings/custom-fields'));
     }
@@ -103,6 +109,10 @@ final class CustomFieldController
             Session::flash('custom_fields.errors', ['general' => __('custom_fields.save_failed')]);
             return Response::redirect(url('/settings/custom-fields'));
         }
+        (new AuditLogger())->record('custom_fields.updated', 'custom_field', (int) $fieldId, [
+            'entity_type' => (string) $field['entity_type'],
+            'is_required' => $required,
+        ], Auth::id());
         Session::flash('custom_fields.notice', __('custom_fields.updated'));
         return Response::redirect(url('/settings/custom-fields'));
     }
@@ -130,6 +140,10 @@ final class CustomFieldController
             Session::flash('custom_fields.errors', ['general' => __('custom_fields.save_failed')]);
             return Response::redirect(url('/settings/custom-fields'));
         }
+        (new AuditLogger())->record('custom_fields.toggled', 'custom_field', (int) $fieldId, [
+            'entity_type' => (string) $field['entity_type'],
+            'is_active' => $activeInput === '1',
+        ], Auth::id());
         Session::flash('custom_fields.notice', __('custom_fields.updated'));
         return Response::redirect(url('/settings/custom-fields'));
     }

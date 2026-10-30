@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Core\Translator;
 use App\Core\View;
 use App\Models\DocumentTemplateRepository;
+use App\Services\AuditLogger;
 use App\Services\DocumentTemplateService;
 use App\Services\ViewContext;
 use Throwable;
@@ -59,13 +60,17 @@ final class DocumentTemplateController
             return Response::redirect(url('/settings/document-templates'));
         }
         try {
-            (new DocumentTemplateRepository())->create($validated['values'], Auth::id());
+            $templateId = (new DocumentTemplateRepository())->create($validated['values'], Auth::id());
         } catch (Throwable $error) {
             error_log((string) $error);
             Session::flash('document_templates.errors', ['general' => __('documents.templates_save_failed')]);
             Session::flash('document_templates.values', $validated['values']);
             return Response::redirect(url('/settings/document-templates'));
         }
+        (new AuditLogger())->record('documents.templates.created', 'document_template', $templateId, [
+            'document_type' => (string) $validated['values']['document_type'],
+            'locale' => (string) $validated['values']['locale'],
+        ], Auth::id());
         Session::flash('document_templates.notice', __('documents.template_created'));
         return Response::redirect(url('/settings/document-templates'));
     }
@@ -99,6 +104,10 @@ final class DocumentTemplateController
             Session::flash('document_templates.row_values', [(string) $templateId => $validated['values']]);
             return Response::redirect(url('/settings/document-templates'));
         }
+        (new AuditLogger())->record('documents.templates.updated', 'document_template', (int) $templateId, [
+            'document_type' => (string) $validated['values']['document_type'],
+            'locale' => (string) $validated['values']['locale'],
+        ], Auth::id());
         Session::flash('document_templates.notice', __('documents.template_updated'));
         return Response::redirect(url('/settings/document-templates'));
     }

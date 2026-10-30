@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AuthController;
+use App\Controllers\AuditController;
 use App\Controllers\ClientController;
 use App\Controllers\CustomFieldController;
 use App\Controllers\DocumentController;
@@ -98,6 +99,7 @@ return function (Router $router): void {
     $router->get('/admin/users', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
     $router->post('/admin/users', [UserController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
     $router->post('/admin/users/{id}', [UserController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/admin/audit', [AuditController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
 
     $router->get('/api/geography/delegations', [GeographyController::class, 'delegations'], [AuthMiddleware::class]);
     $router->get('/api/geography/postal-codes', [GeographyController::class, 'postalCodes'], [AuthMiddleware::class]);

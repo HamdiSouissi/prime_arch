@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\ProjectRepository;
 use App\Models\TimeEntryRepository;
+use App\Services\AuditLogger;
 use App\Services\TimeEntryService;
 use App\Services\ViewContext;
 use DateTimeImmutable;
@@ -104,13 +105,14 @@ final class TimeEntryController
         }
         $values = self::entryValues($validated['values'], (int) Auth::id());
         try {
-            (new TimeEntryRepository())->create($values);
+            $entryId = (new TimeEntryRepository())->create($values);
         } catch (Throwable $error) {
             error_log((string) $error);
             Session::flash('time.errors', ['general' => __('time.save_failed')]);
             Session::flash('time.values', $validated['values']);
             return Response::redirect(url('/time/new'));
         }
+        (new AuditLogger())->record('time.created', 'time_entry', $entryId, [], Auth::id());
         Session::flash('time.notice', __('time.created'));
         return Response::redirect(url('/time'));
     }
@@ -174,6 +176,7 @@ final class TimeEntryController
             Session::flash('time.values', $validated['values']);
             return Response::redirect(url('/time/' . $entryId . '/edit'));
         }
+        (new AuditLogger())->record('time.updated', 'time_entry', (int) $entryId, [], Auth::id());
         Session::flash('time.notice', __('time.updated'));
         return Response::redirect(url('/time'));
     }

@@ -14,7 +14,7 @@ $currentUserId = Auth::id();
     'pageTitle' => __('users.title'),
     'subtitle' => 'Les comptes sont créés par un administrateur. Aucun lien d’inscription public n’est disponible.',
     'eyebrow' => 'Sécurité du cabinet',
-    'secondaryAction' => ['label' => __('settings.title'), 'icon' => 'settings', 'url' => url('/settings')],
+    'secondaryAction' => ['label' => 'Journal d’audit', 'icon' => 'clock', 'url' => url('/admin/audit')],
 ]) ?>
 
 <?php if (!empty($notice)): ?>

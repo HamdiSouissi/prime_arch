@@ -9,6 +9,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Services\AuditLogger;
 use App\Services\AuthService;
 use Throwable;
 
@@ -77,6 +78,8 @@ final class AuthController
 
     public function logout(Request $request): Response
     {
+        $userId = Auth::id();
+        (new AuditLogger())->record('auth.logout', 'user', $userId, [], $userId);
         Auth::logout();
         return Response::redirect(url('/login'));
     }

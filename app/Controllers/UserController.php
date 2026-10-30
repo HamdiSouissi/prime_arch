@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\UserRepository;
+use App\Services\AuditLogger;
 use App\Services\AuthService;
 use App\Services\ViewContext;
 use PDOException;
@@ -52,7 +53,7 @@ final class UserController
         }
 
         try {
-            $repository->create($name, $email, AuthService::hashPassword($password), $role);
+            $createdId = $repository->create($name, $email, AuthService::hashPassword($password), $role);
         } catch (PDOException $error) {
             if ($error->getCode() === '23000') {
                 Session::flash('users.errors', ['email' => __('users.email_exists')]);
@@ -68,6 +69,7 @@ final class UserController
             return Response::redirect(url('/admin/users'));
         }
 
+        (new AuditLogger())->record('users.created', 'user', $createdId, ['role' => $role], Auth::id());
         Session::flash('users.notice', __('users.created'));
         return Response::redirect(url('/admin/users'));
     }
@@ -109,6 +111,10 @@ final class UserController
             return Response::redirect(url('/admin/users'));
         }
 
+        (new AuditLogger())->record('users.access.updated', 'user', (int) $userId, [
+            'role' => $role,
+            'is_active' => $activeInput === '1',
+        ], Auth::id());
         Session::flash('users.notice', __('users.updated'));
         return Response::redirect(url('/admin/users'));
     }

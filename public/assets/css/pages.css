@@ -1100,3 +1100,21 @@
     .pagination__actions { inline-size: 100%; }
     .pagination__actions .button { flex: 1; }
 }
+
+.audit-table {
+    min-inline-size: 58rem;
+}
+
+.audit-details {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding-inline-start: 1rem;
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-caption);
+}
+
+.audit-details span {
+    color: var(--color-ink-tertiary);
+    font-weight: 650;
+}

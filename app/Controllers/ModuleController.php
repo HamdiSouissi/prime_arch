@@ -8,6 +8,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
+use App\Services\AuditLogger;
 use App\Services\ModuleException;
 use App\Services\ModuleService;
 use App\Services\ViewContext;
@@ -40,6 +41,8 @@ final class ModuleController
 
         try {
             $result = (new ModuleService())->install($request->file('module_zip') ?? [], Auth::id());
+            $slug = (string) ($result['manifest']['slug'] ?? '');
+            (new AuditLogger())->record('modules.installed', 'module', $slug, ['module' => $slug], Auth::id());
             $name = (string) ($result['manifest']['name'] ?? 'Module');
             Session::flash('modules.notice', $result['enabled']
                 ? '« ' . $name . ' » a été installé et activé.'
@@ -60,6 +63,7 @@ final class ModuleController
     {
         try {
             (new ModuleService())->activate($slug);
+            (new AuditLogger())->record('modules.activated', 'module', $slug, ['module' => $slug], Auth::id());
             Session::flash('modules.notice', 'Le module « ' . $slug . ' » est activé.');
         } catch (ModuleException $error) {
             Session::flash('modules.errors', ['general' => $error->getMessage()]);
@@ -74,6 +78,7 @@ final class ModuleController
     {
         try {
             (new ModuleService())->deactivate($slug);
+            (new AuditLogger())->record('modules.deactivated', 'module', $slug, ['module' => $slug], Auth::id());
             Session::flash('modules.notice', 'Le module « ' . $slug . ' » est désactivé. Son code et ses données sont conservés.');
         } catch (ModuleException $error) {
             Session::flash('modules.errors', ['general' => $error->getMessage()]);

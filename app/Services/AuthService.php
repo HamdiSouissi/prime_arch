@@ -49,6 +49,10 @@ final class AuthService
         $ipFingerprint = hash_hmac('sha256', "ip\0" . $ipAddress, $pepper);
 
         $this->pdo->exec('DELETE FROM auth_attempts WHERE attempted_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 DAY)');
+        $this->pdo->exec(
+            'DELETE FROM auth_throttle_markers WHERE attempted_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL '
+            . self::WINDOW_MINUTES . ' MINUTE)'
+        );
         $count = $this->pdo->prepare(
             'SELECT fingerprint, COUNT(*) AS attempts FROM auth_attempts
              WHERE fingerprint IN (:email_fingerprint, :ip_fingerprint)
@@ -63,9 +67,33 @@ final class AuthService
         foreach ($count->fetchAll() as $row) {
             $attemptCounts[(string) $row['fingerprint']] = (int) $row['attempts'];
         }
-        if (($attemptCounts[$emailFingerprint] ?? 0) >= self::MAX_EMAIL_FAILURES
-            || ($attemptCounts[$ipFingerprint] ?? 0) >= self::MAX_IP_FAILURES
-        ) {
+        $emailAttempts = $attemptCounts[$emailFingerprint] ?? 0;
+        $ipAttempts = $attemptCounts[$ipFingerprint] ?? 0;
+        if ($emailAttempts >= self::MAX_EMAIL_FAILURES || $ipAttempts >= self::MAX_IP_FAILURES) {
+            $blockedFingerprints = [];
+            if ($emailAttempts >= self::MAX_EMAIL_FAILURES) {
+                $blockedFingerprints[] = $emailFingerprint;
+            }
+            if ($ipAttempts >= self::MAX_IP_FAILURES) {
+                $blockedFingerprints[] = $ipFingerprint;
+            }
+            // La clé unique supprime les doublons, y compris lorsque plusieurs requêtes se bloquent ensemble.
+            $mark = $this->pdo->prepare(
+                'INSERT IGNORE INTO auth_throttle_markers (fingerprint) VALUES (:fingerprint)'
+            );
+            $newThrottleMarker = false;
+            foreach ($blockedFingerprints as $fingerprint) {
+                $mark->execute(['fingerprint' => $fingerprint]);
+                $newThrottleMarker = $newThrottleMarker || $mark->rowCount() === 1;
+            }
+            if ($newThrottleMarker) {
+                (new AuditLogger($this->pdo))->record(
+                    'auth.login.throttled',
+                    'authentication',
+                    null,
+                    ['result' => 'throttled']
+                );
+            }
             return 'throttled';
         }
 
@@ -76,6 +104,7 @@ final class AuthService
             $insert = $this->pdo->prepare('INSERT INTO auth_attempts (fingerprint) VALUES (:fingerprint)');
             $insert->execute(['fingerprint' => $emailFingerprint]);
             $insert->execute(['fingerprint' => $ipFingerprint]);
+            (new AuditLogger($this->pdo))->record('auth.login.failed', 'authentication', null, ['result' => 'invalid']);
             return 'invalid';
         }
 
@@ -88,6 +117,13 @@ final class AuthService
         $delete = $this->pdo->prepare('DELETE FROM auth_attempts WHERE fingerprint = :fingerprint');
         $delete->execute(['fingerprint' => $emailFingerprint]);
         Auth::login((int) $user['id']);
+        (new AuditLogger($this->pdo))->record(
+            'auth.login.succeeded',
+            'user',
+            (int) $user['id'],
+            [],
+            (int) $user['id']
+        );
         return 'success';
     }
 

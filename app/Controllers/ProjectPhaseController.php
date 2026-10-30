@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Core\Session;
 use App\Core\View;
 use App\Models\ProjectRepository;
+use App\Services\AuditLogger;
 use App\Services\ViewContext;
 use Throwable;
 
@@ -47,12 +48,16 @@ final class ProjectPhaseController
             return Response::redirect(url('/settings/project-phases'));
         }
         try {
-            $phases->createPhase($name, $sortOrder);
+            $phaseId = $phases->createPhase($name, $sortOrder);
         } catch (Throwable $error) {
             error_log((string) $error);
             Session::flash('project_phases.errors', ['general' => __('project_phases.save_failed')]);
             return Response::redirect(url('/settings/project-phases'));
         }
+        (new AuditLogger())->record('project_phases.created', 'project_phase_definition', $phaseId, [
+            'sort_order' => $sortOrder,
+            'is_active' => true,
+        ], Auth::id());
         Session::flash('project_phases.notice', __('project_phases.created'));
         return Response::redirect(url('/settings/project-phases'));
     }
@@ -97,6 +102,10 @@ final class ProjectPhaseController
             Session::flash('project_phases.errors', ['general' => __('project_phases.save_failed')]);
             return Response::redirect(url('/settings/project-phases'));
         }
+        (new AuditLogger())->record('project_phases.updated', 'project_phase_definition', (int) $phaseId, [
+            'sort_order' => $sortOrder,
+            'is_active' => $active,
+        ], Auth::id());
         Session::flash('project_phases.notice', __('project_phases.updated'));
         return Response::redirect(url('/settings/project-phases'));
     }
