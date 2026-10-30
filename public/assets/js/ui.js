@@ -725,10 +725,36 @@ export function initUI() {
         } else {
             form.classList.add("is-submitting");
             form.setAttribute("aria-busy", "true");
+            // Le bouton déclencheur n'est jamais désactivé : un contrôle désactivé est exclu des
+            // données envoyées, ce qui supprimerait sa valeur (name/value) du POST.
+            const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
             form.querySelectorAll("button[type='submit'], input[type='submit']").forEach((button) => {
+                if (button === submitter) {
+                    button.setAttribute("aria-disabled", "true");
+                    button.setAttribute("data-submitting", "true");
+                    return;
+                }
                 button.disabled = true;
+                button.setAttribute("data-disabled-by-submit", "true");
             });
         }
+    });
+
+    // Retour arrière ou restauration depuis le cache du navigateur : ne jamais laisser
+    // un formulaire bloqué dans son état d'envoi (boutons inertes, champs désactivés).
+    window.addEventListener("pageshow", () => {
+        document.querySelectorAll("form.is-submitting").forEach((form) => {
+            form.classList.remove("is-submitting");
+            form.removeAttribute("aria-busy");
+            form.querySelectorAll("[data-submitting], [data-disabled-by-submit]").forEach((control) => {
+                control.removeAttribute("data-submitting");
+                control.removeAttribute("data-disabled-by-submit");
+                control.removeAttribute("aria-disabled");
+                if (control instanceof HTMLButtonElement || control instanceof HTMLInputElement) {
+                    control.disabled = false;
+                }
+            });
+        });
     });
 
     document.addEventListener("keydown", (event) => {

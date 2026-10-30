@@ -43,17 +43,22 @@ if (!function_exists('config')) {
 
 if (!function_exists('current_path')) {
     /**
-     * Chemin de la requête en cours, sans la query string ni le sous-dossier d'installation.
+     * Chemin de la requête en cours (query string conservée), sans le sous-dossier d'installation.
      * Utilisé par exemple pour revenir sur la même page après un changement de langue.
      */
     function current_path(): string
     {
-        $uri = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $requestUri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+        $uri = (string) parse_url($requestUri, PHP_URL_PATH);
         $base = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? ''))), '/');
         if ($base !== '' && str_starts_with($uri, $base)) {
             $uri = substr($uri, strlen($base)) ?: '/';
         }
-        return '/' . trim($uri, '/');
+        $path = '/' . trim($uri, '/');
+        // La query string est conservée (filtres, pagination) sans caractère de contrôle.
+        $query = (string) parse_url($requestUri, PHP_URL_QUERY);
+        $query = trim(str_replace(["\r", "\n"], '', $query));
+        return $query === '' ? $path : $path . '?' . $query;
     }
 }
 

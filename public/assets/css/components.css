@@ -1088,6 +1088,11 @@ dialog[open] {
     gap: 0.15rem;
 }
 
+.language-switcher__form {
+    display: inline-flex;
+    margin: 0;
+}
+
 .language-switcher__option {
     min-inline-size: 2.25rem;
     min-block-size: 2rem;
@@ -1117,6 +1122,11 @@ dialog[open] {
     color: #FFFFFF;
     background: var(--color-primary-strong);
     box-shadow: 0 4px 12px rgba(36, 88, 232, 0.24);
+}
+
+/* Le bouton déclencheur reste actif (sa valeur doit être envoyée) mais ne peut pas être recliqué. */
+[data-submitting] {
+    pointer-events: none;
 }
 
 .language-switcher__option:focus-visible {
