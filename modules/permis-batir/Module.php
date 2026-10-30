@@ -34,6 +34,7 @@ final class Module
                 'url' => url('/permis'),
                 'icon' => 'shield',
                 'key' => 'permis-batir',
+                'section' => 'production',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

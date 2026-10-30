@@ -189,7 +189,7 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 | 2 | **Palette vide de données** (6 entrées seulement) | recherche serveur + clavier + récents (§3.B) | M |
 | 3 | **Fiche projet sans passerelles modules** | filtres P1 + cartes de contexte | M |
 | 4 | **Tableau de bord réel inutilisable** : salutation, rôle, compteurs géographiques — aucun KPI métier (`pages/app/dashboard.php`, 68 lignes) quand la maquette montre 4 indicateurs, 3 échéances, un graphique | Reprendre la maquette en données réelles : projets en cours, encours client, échéances 14 jours, heures de la semaine, dernières activités | M |
-| 5 | **Aucun bouton « Nouveau » global en production** : le bouton et le tiroir d'actions rapides sont rendus **uniquement** en mode maquette (`layouts/app.php`, `if ($isDesignPreview)`) | Rendre le bouton visible pour tous, avec menu : client / projet / devis / temps / dépense | S |
+| 5 | **Aucun bouton « Nouveau » global en production** : le bouton et le tiroir d'actions rapides sont rendus **uniquement** en mode maquette (`layouts/app.php`, `if ($isDesignPreview)`) | **fait au lot 3** : bouton pour tous, actions réelles client / projet / devis / temps (pas de « dépense » : aucune fonction n'existe dans le noyau) | S |
 | 6 | **Fiches sans liens sortants** (documents) | §3.F | S |
 | 7 | **Le mode sombre est déclaré mais bridé** : `<meta name="color-scheme" content="light">` alors que `tokens.css` gère `light dark` → contrôles natifs et barres de défilement restent clairs en thème sombre | **fait au lot 0** : `light dark` + deux `theme-color` par média | S |
 | 8 | **Filtres incohérents** : listes du noyau avec bouton « Filtrer » (soumission), certains écrans en filtrage instantané (`initFilters`) | Filtrage instantané partout, bouton supprimé, état dans l'URL | S |
@@ -229,7 +229,7 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 | **Lot 0 — correctifs** (1 journée) | défilement du menu, `color-scheme`, `aria-current`, `scope`, palette clavier/accents, liens des fiches document | S | supprime 3 échecs, rend 7 modules visibles |
 | **Lot 1 — contexte** (3–5 jours) | filtres P1 + cartes de contexte dans projet / client / document + fil d'Ariane | M | **tous les trajets projet↔module passent à 1 clic** |
 | **Lot 2 — recherche** (3 jours) — **livré** | `/api/recherche`, palette à sections, récents, raccourcis | M | destination atteinte en 2 frappes, 0 clic |
-| **Lot 3 — coquille** (3 jours) | menu groupé + mobile « Plus » + bouton global « Nouveau » | M | mobile : plus aucun trajet > 3 clics |
+| **Lot 3 — coquille** (3 jours) — **livré** | menu groupé + mobile « Plus » + bouton global « Nouveau » | M | mobile : plus aucun trajet > 3 clics |
 | **Lot 4 — tableau de bord** (3–4 jours) | KPI réels, échéances 14 jours, activité, heures | M | première page utile |
 | **Lot 5 — garde-fou** (1–2 jours) | test PHPUnit de profondeur ≤ 3 + documentation | S | la règle ne peut plus régresser |
 
@@ -486,3 +486,73 @@ aucun débordement à 390 px, rendu correct en arabe (`dir="rtl"`) et en thème 
 préparées avec `LIMIT 8` et échappement, normalisation du terme, balisage combobox/listbox/`aria-live`,
 appel `fetch` avec `AbortController` et anti-rebond, `textContent` sans `innerHTML`, cinq récents dédupliqués,
 fiche courante exposée par le layout, libellés FR/AR et contribution du module permis.
+
+## 11. Lot 3 — coquille de navigation livrée
+
+### 11.1 Menu latéral groupé
+
+Le contrat `sidebar.items` gagne une clé **facultative** `section` (`pilotage`, `production`, `finance`,
+`conformite`, `administration`) ; une entrée sans section rejoint « Modules externes ». Les entrées du noyau la
+déclarent dans `ViewContext`, les douze modules livrés aussi (leur version passe à 1.1.0, permis-batir à 1.2.0).
+`NavigationSections` répartit, ordonne et omet les sections vides.
+
+| Section | Entrées (12 modules actifs) |
+|---|---|
+| Pilotage | Tableau de bord, Planning d'équipe |
+| Production | Clients, Projets, Temps, Suivi de chantier, Métré et DQE, Permis de bâtir, Dépôt documentaire |
+| Finance | Documents, Honoraires et barèmes, Relances de factures, Fiscalité tunisienne, Comptabilité |
+| Conformité | Conformité OAT, Prospects et opportunités, Espace client |
+| Administration | Réglages |
+| Modules externes | ce qui ne déclare pas de section |
+
+Chaque section est un `ul` nommé (`aria-labelledby`) : le lecteur d'écran annonce « Production, liste de quatre
+éléments ». Le filtre n'est appliqué **qu'une fois**, dans le layout : menu, barre d'onglets et feuille mobile
+partagent la même liste, sans doublon d'entrée.
+
+Deux collisions d'icônes du rail sont corrigées : `crm-opportunites` passe à `chart` (au lieu de `people`, déjà pris
+par Clients) et `planning-equipe` à `timer` (au lieu de `calendar`). Le libellé reste accessible au survol (`title`)
+et par `aria-label` dans le rail de 761 à 1 100 px.
+
+### 11.2 Barre mobile : quatre onglets + « Plus »
+
+`Accueil · Clients · Projets · Docs · Plus`. Le cinquième onglet ouvre `partials/mobile-menu.php` : une feuille
+pleine largeur avec les mêmes sections, un champ de filtre (normalisation d'accents identique à la palette), un état
+vide et l'horloge du cabinet. « Plus » porte `aria-current` quand la page courante n'est pas dans les quatre onglets
+(Temps, Réglages, module), donc l'utilisateur sait toujours où il se trouve. Budget de clics : une entrée de module
+reste à **2 gestes** (Plus, entrée) au lieu de 2 clics par le tiroir latéral, et la barre gagne une place.
+
+Les libellés remontent de 0,59 rem à **0,68 rem** (0,55 rem sous 390 px auparavant) ; « Docs » remplace « Documents »
+pour que rien ne soit tronqué à 320 px. Le bouton « Plus » occupe sa colonne (`inline-size: 100%`) comme les liens.
+
+### 11.3 Bouton « Nouveau » pour tous
+
+Le bouton de l'en-tête et le tiroir d'actions rapides ne dépendent plus de `$isDesignPreview`. `ViewContext` fournit
+les quatre actions réellement disponibles selon les droits — `/clients/new`, `/projects/new`, `/documents/new`,
+`/time` — et le bouton n'apparaît que si la liste n'est pas vide. « Dépense » n'existe pas dans le noyau : aucune
+action factice n'est proposée.
+
+L'ajout du bouton a obligé à resserrer l'en-tête : les actions acceptent de céder de la place (`flex: 0 1 auto`) et
+la recherche se réduit jusqu'à 8 rem, le contexte se tronque avec une ellipse. Sous 430 px, l'horloge quitte
+l'en-tête (elle est dans la feuille « Plus ») : l'en-tête tient sur une ligne de 62 px de 320 px à 1440 px, sans
+retirer aucun contrôle.
+
+### 11.4 Mesures
+
+Palette de navigation pilotée dans Chromium (rendu réel des vues, aucune base) :
+
+| Contrôle | Résultat |
+|---|---|
+| Menu groupé 1440 px | 4 sections nommées (core seul dans le jeu de test), 6 liens, un `ul` par section |
+| Bouton « Nouveau » | présent hors maquette, ouvre le tiroir, 4 actions aux URLs réelles |
+| Barre mobile 390 / 320 px | 5 cellules égales (61 px à 320), libellés à 10,88 px, aucun tronqué, aucun débordement |
+| Feuille « Plus » | collée au bas, largeur = écran, focus dans le filtre, `aria-expanded` synchronisé |
+| Filtre de la feuille | « doc » ne laisse que Documents (1 groupe), « zzz » affiche l'état vide |
+| En-tête | 1440/1280/1024/900/760/390/320 px : une ligne, `scrollWidth` = largeur de la barre |
+| Thème | rendu vérifié en clair, sombre et arabe (`dir="rtl"`) |
+
+### 11.5 Garde-fous
+
+`tests/NavigationShellTest.php` — 11 cas : sections déclarées par le noyau, ordre et repli du service, menu latéral
+nommé, filtre appliqué une seule fois, barre quatre onglets + « Plus », feuille complète, bouton « Nouveau » hors
+maquette avec routes réelles, icônes uniques, sections déclarées par les modules, lisibilité des libellés, traductions
+FR/AR.

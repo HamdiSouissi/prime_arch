@@ -30,6 +30,7 @@ final class Module
                 'url' => url('/fiscal'),
                 'icon' => 'calendar',
                 'key' => 'fiscal-tn',
+                'section' => 'finance',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

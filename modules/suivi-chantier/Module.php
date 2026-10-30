@@ -31,6 +31,7 @@ final class Module
                 'url' => url('/chantier'),
                 'icon' => 'plan',
                 'key' => 'suivi-chantier',
+                'section' => 'production',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

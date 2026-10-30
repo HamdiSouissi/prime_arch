@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 /** @var string $content */
 use App\Core\Auth;
+use App\Core\HookManager;
 use App\Core\Translator;
 use App\Core\View;
 use App\Services\ViewContext;
@@ -48,9 +49,13 @@ $quickActions = $quickActions ?? ($isDesignPreview ? [
     ['label' => 'Nouveau devis', 'description' => 'Préparer une proposition d’honoraires', 'url' => url('/design/documents'), 'icon' => 'quote'],
     ['label' => 'Saisie du temps', 'description' => 'Démarrer le chronomètre de démo', 'url' => url('/design/time'), 'icon' => 'timer'],
 ] : []);
+// Le filtre `sidebar.items` n'est appliqué qu'ici : le menu latéral, la barre d'onglets et la
+// feuille « Plus » reçoivent la même liste, modules compris, sans doublon.
+$shellNavigation = HookManager::applyFilters('sidebar.items', $navigation);
+
 $commands = $commands ?? [];
 if ($commands === []) {
-    foreach ($navigation as $navigationItem) {
+    foreach ($shellNavigation as $navigationItem) {
         if (array_key_exists('available', $navigationItem) && !$navigationItem['available']) {
             continue;
         }
@@ -94,7 +99,7 @@ if ($isDesignPreview) {
 <?php endif; ?>
 <div class="app-shell" data-app-shell>
     <?php View::partial('partials/sidebar', [
-        'items' => $navigation,
+        'items' => $shellNavigation,
         'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home'),
         'showDesignNav' => $isDesignPreview,
         'showWorkspace' => $isDesignPreview || $isAuthenticated,
@@ -109,6 +114,7 @@ if ($isDesignPreview) {
             'workspace' => $workspace,
             'userProfile' => $userProfile,
             'profileUrl' => $profileUrl,
+            'hasQuickActions' => $quickActions !== [],
         ]) ?>
         <main class="app-content" id="main" tabindex="-1">
             <?= $content ?>
@@ -117,8 +123,15 @@ if ($isDesignPreview) {
     </div>
     <button class="mobile-menu-backdrop" type="button" data-mobile-menu-backdrop aria-label="<?= e(__('common.close_navigation')) ?>" aria-hidden="true" tabindex="-1"></button>
 </div>
-<?php View::partial('partials/tabbar', ['items' => $navigation, 'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home')]) ?>
-<?php if ($isDesignPreview): ?>
+<?php View::partial('partials/tabbar', ['items' => $shellNavigation, 'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home')]) ?>
+<?php if ($isDesignPreview || $isAuthenticated): ?>
+    <?php View::partial('partials/mobile-menu', [
+        'items' => $shellNavigation,
+        'activeNav' => $activeNav ?? ($isDesignPreview ? 'dashboard' : 'home'),
+        'workspace' => $workspace,
+    ]) ?>
+<?php endif; ?>
+<?php if (($isDesignPreview || $isAuthenticated) && $quickActions !== []): ?>
     <?php View::partial('partials/quick-add', ['quickActions' => $quickActions]) ?>
 <?php endif; ?>
 <?php if ($isDesignPreview || $isAuthenticated): ?>

@@ -129,6 +129,13 @@
         background-color: var(--color-surface-solid);
     }
 
+    /* Les champs de recherche des dialogues n'ont ni bord ni fond : ils sont posés sur la surface
+       du dialogue. La règle d'entrée ci-dessus est plus spécifique (`:not()` deux fois), on la neutralise ici. */
+    .command-search input,
+    .mobile-menu .mobile-menu__search input {
+        background-color: transparent;
+    }
+
     input::placeholder,
     textarea::placeholder {
         color: var(--color-ink-tertiary);

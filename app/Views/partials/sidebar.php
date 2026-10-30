@@ -1,52 +1,43 @@
 <?php
 declare(strict_types=1);
 
-use App\Core\HookManager;
+use App\Services\NavigationSections;
 
-/** @var array<int,array{label:string,url:string,icon:string,key?:string,available?:bool}> $items */
-/** @var string $activeNav */
-/** @var array{name:string,location:string,plan:string} $workspace */
-
-// Les entrées du noyau sont connues avant le filtre : ce qui arrive ensuite provient des
-// modules installés. On peut donc séparer visuellement les deux familles sans changer le
-// contrat `sidebar.items` (un module n'a rien de nouveau à déclarer).
-$coreItems = is_array($items ?? null) ? $items : [];
-$coreKeys = [];
-foreach ($coreItems as $coreItem) {
-    $coreKeys[(string) ($coreItem['key'] ?? '')] = true;
-}
-
-$allItems = HookManager::applyFilters('sidebar.items', $coreItems);
-$coreNavigation = [];
-$moduleNavigation = [];
-foreach ($allItems as $navigationItem) {
-    $itemKey = (string) ($navigationItem['key'] ?? '');
-    if ($itemKey !== '' && isset($coreKeys[$itemKey])) {
-        $coreNavigation[] = $navigationItem;
-    } else {
-        $moduleNavigation[] = $navigationItem;
-    }
-}
+/**
+ * Menu latéral groupé par métier (lot 3).
+ *
+ * Les entrées arrivent **déjà filtrées** par `sidebar.items` (appliqué une seule fois dans le
+ * layout, pour que le menu, la barre d'onglets et la feuille mobile montrent exactement la même
+ * navigation). Chaque section est une liste nommée : les lecteurs d'écran annoncent
+ * « Production, liste de 3 éléments », et une section vide n'est jamais rendue.
+ *
+ * @var array<int,array{label:string,url:string,icon:string,key?:string,available?:bool,section?:string}> $items
+ * @var string $activeNav
+ * @var array{name:string,location:string,plan:string} $workspace
+ */
+$navigationItems = is_array($items ?? null) ? $items : [];
+$sections = NavigationSections::group($navigationItems);
 
 $brandUrl = !empty($showDesignNav)
     ? url('/design/dashboard')
     : (!empty($authenticated) ? url('/dashboard') : url('/'));
 
-/** Rendu d'une entrée de menu ; le même balisage sert aux deux listes. */
+/** Rendu d'une entrée de menu ; le même balisage sert à toutes les sections. */
 $renderItem = static function (array $item) use ($activeNav): void {
     $isCurrent = ($item['key'] ?? '') === ($activeNav ?? '');
     $isAvailable = !array_key_exists('available', $item) || (bool) $item['available'];
+    $label = (string) ($item['label'] ?? '');
     ?>
     <li>
         <?php if ($isAvailable): ?>
-            <a class="sidebar-link" href="<?= e($item['url']) ?>"<?= $isCurrent ? ' aria-current="page"' : '' ?> title="<?= e($item['label']) ?>">
+            <a class="sidebar-link" href="<?= e($item['url']) ?>"<?= $isCurrent ? ' aria-current="page"' : '' ?> title="<?= e($label) ?>">
                 <svg class="icon sidebar-icon" aria-hidden="true" focusable="false"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($item['icon'] ?? 'grid') ?>"></use></svg>
-                <span class="sidebar-link__label"><?= e($item['label']) ?></span>
+                <span class="sidebar-link__label"><?= e($label) ?></span>
             </a>
         <?php else: ?>
             <span class="sidebar-link is-disabled" aria-disabled="true" title="<?= e(__('common.not_available')) ?>">
                 <svg class="icon sidebar-icon" aria-hidden="true" focusable="false"><use href="<?= e(asset('img/icons.svg')) ?>#<?= e($item['icon'] ?? 'grid') ?>"></use></svg>
-                <span class="sidebar-link__label"><?= e($item['label']) ?></span>
+                <span class="sidebar-link__label"><?= e($label) ?></span>
             </span>
         <?php endif; ?>
     </li>
@@ -62,20 +53,22 @@ $renderItem = static function (array $item) use ($activeNav): void {
         </a>
     </div>
     <nav class="sidebar-nav" aria-label="<?= e(__('common.main_navigation')) ?>">
-        <p class="sidebar-section-label"><?= e(__('common.workspace')) ?></p>
-        <ul class="sidebar-list" role="list">
-            <?php foreach ($coreNavigation as $navigationItem): ?>
-                <?php $renderItem($navigationItem); ?>
-            <?php endforeach; ?>
-        </ul>
-        <?php if ($moduleNavigation !== []): ?>
-            <p class="sidebar-section-label sidebar-section-label--modules"><?= e(__('common.external_modules')) ?></p>
-            <ul class="sidebar-list sidebar-list--modules" role="list" aria-label="<?= e(__('common.external_modules')) ?>">
-                <?php foreach ($moduleNavigation as $navigationItem): ?>
+        <?php foreach ($sections as $section): ?>
+            <?php $labelId = 'sidebar-section-' . $section['key']; ?>
+            <p
+                class="sidebar-section-label<?= $section['modules'] ? ' sidebar-section-label--modules' : '' ?>"
+                id="<?= e($labelId) ?>"
+            ><?= e($section['label']) ?></p>
+            <ul
+                class="sidebar-list<?= $section['modules'] ? ' sidebar-list--modules' : '' ?>"
+                role="list"
+                aria-labelledby="<?= e($labelId) ?>"
+            >
+                <?php foreach ($section['items'] as $navigationItem): ?>
                     <?php $renderItem($navigationItem); ?>
                 <?php endforeach; ?>
             </ul>
-        <?php endif; ?>
+        <?php endforeach; ?>
     </nav>
     <?php if (!empty($showWorkspace)): ?>
         <div class="sidebar-footer">

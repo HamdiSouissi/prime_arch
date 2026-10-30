@@ -31,6 +31,7 @@ final class Module
                 'url' => url('/metre'),
                 'icon' => 'layers',
                 'key' => 'metre-quantitatif',
+                'section' => 'production',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

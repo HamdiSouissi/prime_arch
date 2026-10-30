@@ -146,6 +146,27 @@ Règles :
 
 Les extensions utilisent `HookManager` pour enregistrer des filtres (par exemple `sidebar.items`) et des actions/événements. Les événements émis par le noyau comprennent : `module.installed`, `module.activated`, `module.deactivated`, `module.booting` et `module.booted`. Les callbacks de hook sont du code PHP du module et s’exécutent avec les droits du processus PHP.
 
+### Entrée de menu et sections
+
+Une entrée ajoutée par `sidebar.items` est un tableau :
+
+```php
+$entry = [
+    'label' => __('mon-module.title'),
+    'url' => url('/mon-module'),
+    'icon' => 'chart',              // nom du sprite public/assets/img/icons.svg
+    'key' => 'mon-module',          // identifiant stable, sert à `aria-current`
+    'section' => 'production',      // facultatif : pilotage, production, finance, conformite, administration
+];
+```
+
+- **Section facultative** : sans `section` (ou avec une valeur inconnue), l'entrée rejoint « Modules externes ».
+  Aucun module existant ne casse, et le séparateur historique est conservé.
+- **Icône unique** : le menu de 761 à 1 100 px n'affiche que des icônes ; deux modules qui partagent la même icône
+  deviennent indiscernables. Une icône par module, choisie dans le sprite.
+- **Une seule déclaration** : `sidebar.items` n'est appliqué qu'une fois par page ; le menu latéral, la barre
+  d'onglets mobile et la feuille « Plus » en dérivent. Ajouter l'entrée dans `boot()` suffit.
+
 ## Migrations et dépendances
 
 Les fichiers `migrations/*.sql` sont appliqués par ordre alphabétique lors de la première activation, avant le hook `install()`. Le `Migrator` suit chaque fichier dans la table centrale `migrations`, en utilisant son chemin relatif à la racine de l’application. Les migrations SQL ne sont pas annulées lorsqu’un module est désactivé; elles ne doivent pas supprimer les données à la désactivation. Les fichiers de migration ne doivent pas utiliser `DELIMITER` ni des procédures stockées.

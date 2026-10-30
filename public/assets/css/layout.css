@@ -127,7 +127,7 @@
 }
 
 .sidebar-section-label {
-    margin-block-start: 0;
+    margin-block-start: var(--space-4);
     margin-inline: var(--space-3);
     margin-block-end: var(--space-2);
     color: var(--color-ink-tertiary);
@@ -147,6 +147,11 @@
 
 .sidebar-list--modules {
     padding-block-start: 0;
+}
+
+/* La première section n'a pas besoin d'air au-dessus d'elle. */
+.sidebar-nav > .sidebar-section-label:first-child {
+    margin-block-start: 0;
 }
 
 .sidebar-list {
@@ -297,20 +302,25 @@
     backdrop-filter: blur(24px) saturate(165%);
 }
 
-/* Le contexte (titre) se comprime ; les actions restent toujours entières et visibles. */
+/* Le contexte (titre) se comprime ; les actions restent toujours entières et visibles.
+   `overflow: hidden` : le titre tronqué ne doit jamais passer sous la recherche. */
 .topbar__context {
     display: grid;
     flex: 1 1 auto;
     gap: 1px;
     min-inline-size: 0;
+    overflow: hidden;
 }
 
 .topbar__eyebrow {
+    overflow: hidden;
     color: var(--color-ink-tertiary);
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.08em;
+    text-overflow: ellipsis;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .topbar__title {
@@ -324,7 +334,9 @@
 
 .topbar__actions {
     display: flex;
-    flex: 0 0 auto;
+    /* `0 1 auto` : avec le bouton « Nouveau », les actions doivent pouvoir se resserrer
+       légèrement au lieu de déborder de la barre (c'est la recherche qui cède la place). */
+    flex: 0 1 auto;
     flex-wrap: nowrap;
     align-items: center;
     gap: var(--space-2);
@@ -366,9 +378,11 @@
 
 .topbar-search {
     display: flex;
+    flex: 0 1 auto;
     align-items: center;
     gap: var(--space-3);
     inline-size: clamp(12rem, 27vw, 22rem);
+    min-inline-size: 8rem;
     min-block-size: 2.875rem;
     padding-block: 0;
     padding-inline: var(--space-3);
@@ -482,6 +496,11 @@ a.topbar-avatar:focus-visible {
 .mobile-tabbar {
     display: none;
 }
+
+/* La feuille « Plus » (navigation mobile) est stylée dans components.css, à côté des
+   dialogues : sa largeur doit l'emporter sur la règle `dialog` de la même couche. */
+
+
 
 /* Entre 1101 et 1240 px la barre latérale est encore déployée : la recherche
    se réduit pour laisser la place au sélecteur de langue et à l'horloge. */
@@ -784,14 +803,22 @@ a.topbar-avatar:focus-visible {
         min-inline-size: 0;
         min-block-size: 2.875rem;
         max-inline-size: 100%;
+        /* Un `<button>` ne s'étire pas de lui-même : « Plus » doit occuper sa colonne
+           comme les autres onglets. */
+        inline-size: 100%;
         padding-block: 0.2rem;
         padding-inline: 1px;
+        border: 0;
         border-radius: var(--radius-sm);
         color: var(--color-ink-tertiary);
-        font-size: 0.59rem;
+        font-family: inherit;
+        /* Minimum lisible : 0,68 rem (≈ 11 px) au lieu de 0,59 rem, y compris en arabe. */
+        font-size: 0.68rem;
         font-weight: 600;
         line-height: 1.1;
         text-align: center;
+        background: transparent;
+        cursor: pointer;
     }
 
     /* Libellés courts (français comme arabe) : jamais d'élargissement de la barre. */
@@ -826,13 +853,16 @@ a.topbar-avatar:focus-visible {
         padding-inline: var(--space-2);
     }
 
-    /* Filet de sécurité : si la place manque (320 px), les actions passent à la
-       ligne au lieu d'être rognées ou repoussées hors de l'écran. */
+    /* L'horloge passe dans la feuille « Plus » : l'en-tête tient sur une seule ligne même
+       avec la recherche, la langue, « Nouveau », la déconnexion et les initiales. */
+    .topbar-info {
+        display: none;
+    }
+
     .topbar__actions {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: flex-end;
         gap: 0.2rem;
-        row-gap: 0.2rem;
     }
 
     .topbar__actions .button--icon,
@@ -876,8 +906,11 @@ a.topbar-avatar:focus-visible {
         padding-inline: var(--space-3);
     }
 
+    /* Les libellés restent lisibles (0,68 rem) : c'est la marge intérieure qui se réduit,
+       jamais la taille du texte (elle tombait à 0,55 rem, soit 8,8 px, en arabe aussi). */
     .mobile-tabbar__link {
-        font-size: 0.55rem;
+        padding-inline: 0;
+        letter-spacing: -0.01em;
     }
 }
 

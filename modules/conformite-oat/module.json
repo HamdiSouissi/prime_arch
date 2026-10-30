@@ -1,7 +1,7 @@
 {
     "slug": "conformite-oat",
     "name": "Conformité OAT et assurances",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Dossier professionnel du cabinet : inscription à l’OAT, carte professionnelle, responsabilité civile, formation continue et bureaux d’études partenaires, avec alertes d’échéance et attestation d’assurance par projet.",
     "author": "Prime Arch",
     "namespace": "Modules\\ConformiteOat",

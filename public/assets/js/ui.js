@@ -35,6 +35,8 @@ function openDialog(dialog) {
     requestAnimationFrame(() => {
         const focusable = dialog.querySelector("input:not([type=hidden]), button, a[href], [tabindex]:not([tabindex='-1'])");
         focusable?.focus();
+        // Les composants qui ont besoin de préparer leur contenu écoutent cet événement.
+        dialog.dispatchEvent(new CustomEvent("dialog:opened"));
     });
 }
 
@@ -473,6 +475,68 @@ function initCommandPalette() {
     render();
 }
 
+/**
+ * Feuille « Plus » de la navigation mobile (lot 3) : filtre instantané et état du déclencheur.
+ * Elle contient toute la navigation du cabinet, modules compris.
+ */
+function initMobileNavigation() {
+    const dialog = document.querySelector("[data-mobile-menu]");
+    if (!dialog) return;
+    const search = dialog.querySelector("[data-mobile-menu-search]");
+    const items = Array.from(dialog.querySelectorAll("[data-mobile-menu-item]"));
+    const groups = Array.from(dialog.querySelectorAll("[data-mobile-menu-group]"));
+    const empty = dialog.querySelector("[data-mobile-menu-empty]");
+    const triggers = Array.from(document.querySelectorAll(`[aria-controls="${dialog.id}"]`));
+
+    const rowOf = (item) => item.closest("li") ?? item;
+
+    // Même normalisation que la palette : « reglages » trouve « Réglages ».
+    const filter = () => {
+        const query = normalizeSearch(search?.value.trim() ?? "");
+        let visible = 0;
+        items.forEach((item) => {
+            const matches = query === "" || normalizeSearch(item.textContent ?? "").includes(query);
+            rowOf(item).hidden = !matches;
+            if (matches) visible++;
+        });
+        groups.forEach((group) => {
+            group.hidden = Array.from(group.querySelectorAll("[data-mobile-menu-item]"))
+                .every((item) => rowOf(item).hidden);
+        });
+        if (empty) empty.hidden = visible > 0;
+    };
+
+    const syncTriggers = (open) => {
+        triggers.forEach((trigger) => trigger.setAttribute("aria-expanded", String(open)));
+    };
+
+    dialog.addEventListener("dialog:opened", () => {
+        syncTriggers(true);
+        if (search) search.value = "";
+        filter();
+        // Le champ de filtre est la première chose utile : le focus y va directement.
+        window.setTimeout(() => search?.focus(), 0);
+    });
+
+    dialog.addEventListener("close", () => {
+        syncTriggers(false);
+        if (search) search.value = "";
+        filter();
+    });
+
+    search?.addEventListener("input", filter);
+
+    // `type="search"` consomme la première touche Échap pour vider le champ : on ferme la
+    // feuille explicitement, sinon elle resterait ouverte après l'effacement.
+    dialog.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        closeDialog(dialog);
+    });
+
+    filter();
+}
+
 function initShortcutHints() {
     // Le raccourci réel fonctionne avec ⌘ ou Ctrl : l'affichage suit la plateforme.
     const isApple = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgentData?.platform ?? navigator.platform ?? "");
@@ -482,12 +546,15 @@ function initShortcutHints() {
 }
 
 function initLocalClock() {
-    const clock = document.querySelector("[data-local-clock]");
-    const dateElement = clock?.querySelector("[data-clock-date]");
-    const timeElement = clock?.querySelector("[data-clock-time]");
-    if (!(clock instanceof HTMLTimeElement) || !dateElement || !timeElement) return;
+    // Plusieurs horloges peuvent coexister : celle de l'en-tête et celle de la feuille
+    // « Plus » (l'heure y reste accessible quand l'en-tête mobile la masque).
+    const clocks = Array.from(document.querySelectorAll("[data-local-clock]"))
+        .filter((clock) => clock instanceof HTMLTimeElement
+            && clock.querySelector("[data-clock-time]")
+            && clock.querySelector("[data-clock-date]"));
+    if (clocks.length === 0) return;
 
-    const timezone = clock.dataset.timezone || "Africa/Tunis";
+    const timezone = clocks[0].dataset.timezone || "Africa/Tunis";
     const locale = document.documentElement.lang === "ar" ? "ar-TN" : "fr-TN";
     try {
         const dateFormatter = new Intl.DateTimeFormat(locale, {
@@ -506,10 +573,14 @@ function initLocalClock() {
             const now = new Date();
             const date = dateFormatter.format(now);
             const time = timeFormatter.format(now);
-            dateElement.textContent = date;
-            timeElement.textContent = time;
-            clock.dateTime = now.toISOString();
-            clock.setAttribute("aria-label", `${clock.dataset.clockLabel ?? "Local time"} · ${date} ${time}`);
+            clocks.forEach((clock) => {
+                const dateElement = clock.querySelector("[data-clock-date]");
+                const timeElement = clock.querySelector("[data-clock-time]");
+                if (dateElement) dateElement.textContent = date;
+                if (timeElement) timeElement.textContent = time;
+                clock.dateTime = now.toISOString();
+                clock.setAttribute("aria-label", `${clock.dataset.clockLabel ?? "Local time"} · ${date} ${time}`);
+            });
         };
         update();
         window.setInterval(update, 60_000);
@@ -1120,6 +1191,7 @@ export function initUI() {
     });
 
     initCommandPalette();
+    initMobileNavigation();
     initShortcutHints();
     initLocalClock();
     initTabKeyboard();

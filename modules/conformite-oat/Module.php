@@ -32,6 +32,7 @@ final class Module
                 'url' => url('/conformite'),
                 'icon' => 'check-circle',
                 'key' => 'conformite-oat',
+                'section' => 'conformite',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

@@ -31,6 +31,7 @@ final class Module
                 'url' => url('/ged'),
                 'icon' => 'folder',
                 'key' => 'ged-versions',
+                'section' => 'production',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

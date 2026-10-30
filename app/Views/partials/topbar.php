@@ -51,6 +51,13 @@ $profileLabel = $profileName !== ''
                 <span class="u-desktop-only"><?= e(__('common.new')) ?></span>
             </button>
         <?php elseif (!empty($showAppActions)): ?>
+            <?php /* « Nouveau » n'est plus réservé aux maquettes : mêmes destinations réelles. */ ?>
+            <?php if (!empty($hasQuickActions)): ?>
+                <button class="button button--primary topbar__new" type="button" data-modal-open="#quick-add-dialog" aria-haspopup="dialog" aria-controls="quick-add-dialog" aria-label="<?= e(__('common.new')) ?>" title="<?= e(__('common.new')) ?>">
+                    <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#plus"></use></svg>
+                    <span class="u-desktop-only"><?= e(__('common.new')) ?></span>
+                </button>
+            <?php endif; ?>
             <form class="topbar-logout" method="post" action="<?= e(url('/logout')) ?>">
                 <?= csrf_field() ?>
                 <button class="button button--secondary" type="submit" aria-label="<?= e(__('auth.logout')) ?>" title="<?= e(__('auth.logout')) ?>">

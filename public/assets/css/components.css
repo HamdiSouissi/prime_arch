@@ -787,6 +787,192 @@ dialog[open] {
 .command-item__title { font-size: var(--font-size-footnote); font-weight: 700; }
 .command-item__meta { color: var(--color-ink-secondary); font-size: var(--font-size-caption); }
 
+/* Feuille « Plus » de la navigation mobile (lot 3) : toute la navigation, groupée par métier.
+   Ces règles vivent dans la couche « components », après `dialog`, pour que la largeur de la
+   feuille (plein écran) l'emporte sur la largeur maximale générique des dialogues, et pour
+   neutraliser l'animation d'apparition : la feuille doit rester collée au bas de l'écran. */
+.mobile-menu {
+    animation: none;
+    position: fixed;
+    inset-block: auto 0;
+    inset-inline: 0;
+    inline-size: min(34rem, 100vw);
+    max-inline-size: 100vw;
+    max-block-size: min(88vh, 52rem);
+    margin-block: 0;
+    margin-inline: auto;
+    /* Aucun débordement horizontal, même avec une longue adresse ou un mot arabe. */
+    overflow-x: hidden;
+    padding-block: 0;
+    padding-inline: 0;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.mobile-menu[open] {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    animation: none;
+    transform: none;
+}
+
+.mobile-menu__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-4) var(--space-3);
+    padding-inline: var(--space-4);
+}
+
+.mobile-menu__title {
+    margin: 0;
+    font-size: var(--font-size-title-3);
+    letter-spacing: -0.02em;
+}
+
+.mobile-menu__search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline: var(--space-4);
+    margin-block-end: var(--space-3);
+    padding-block: 0 var(--space-1);
+    border-block-end: 1px solid var(--color-border);
+    color: var(--color-ink-tertiary);
+}
+
+.mobile-menu__search input {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    min-block-size: 2.5rem;
+    padding-block: 0;
+    padding-inline: 0;
+    border: 0;
+    border-radius: 0;
+    appearance: none;
+    background: transparent;
+    box-shadow: none;
+    font-size: var(--font-size-subhead);
+}
+
+.mobile-menu__search input:focus {
+    box-shadow: none;
+}
+
+.mobile-menu__body {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+    min-block-size: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: var(--space-1) var(--space-5);
+    padding-inline: var(--space-4);
+}
+
+.mobile-menu__label {
+    margin-block: 0 var(--space-2);
+    color: var(--color-ink-tertiary);
+    font-size: 0.68rem;
+    font-weight: 750;
+    letter-spacing: 0.105em;
+    text-transform: uppercase;
+}
+
+.mobile-menu__list {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mobile-menu__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: 3rem;
+    padding-block: var(--space-1);
+    padding-inline: var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--color-ink);
+    font-size: var(--font-size-subhead);
+    font-weight: 600;
+}
+
+.mobile-menu__link:hover,
+.mobile-menu__link:focus-visible {
+    border-color: var(--color-border);
+    background: var(--color-primary-tint);
+    text-decoration: none;
+}
+
+.mobile-menu__link[aria-current="page"] {
+    color: var(--color-primary-strong);
+    background: var(--color-primary-tint);
+}
+
+.mobile-menu__icon {
+    display: grid;
+    flex: 0 0 2rem;
+    place-items: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: 0.65rem;
+    color: var(--color-primary-strong);
+    background: var(--color-primary-tint);
+}
+
+.mobile-menu__link-label {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.mobile-menu__chevron {
+    flex: 0 0 auto;
+    color: var(--color-ink-tertiary);
+}
+
+.mobile-menu__empty {
+    margin: 0;
+    padding-block: var(--space-5);
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-footnote);
+    text-align: center;
+}
+
+.mobile-menu__footer {
+    display: grid;
+    gap: 2px;
+    padding-block: var(--space-3) calc(var(--space-4) + env(safe-area-inset-bottom));
+    padding-inline: var(--space-4);
+    border-block-start: 1px solid var(--color-border);
+}
+
+.mobile-menu__workspace {
+    font-size: var(--font-size-footnote);
+    font-weight: 700;
+}
+
+.mobile-menu__workspace-meta {
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-caption);
+}
+
+.mobile-menu__clock {
+    margin-block-start: var(--space-1);
+    color: var(--color-ink-secondary);
+    font-size: var(--font-size-caption);
+    font-variant-numeric: tabular-nums;
+    /* Date et heure en chiffres latins : l'ordre reste lisible en arabe (RTL). */
+    unicode-bidi: isolate;
+    text-align: end;
+}
+
 /* Toasts */
 .toast-region {
     position: fixed;

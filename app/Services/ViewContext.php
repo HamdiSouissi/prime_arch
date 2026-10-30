@@ -38,14 +38,58 @@ final class ViewContext
                     : (Auth::can('projects.configure')
                         ? url('/settings/project-phases')
                         : (Auth::can('users.manage') ? url('/settings/modules') : url('/settings/custom-fields')))));
+        // Chaque entrée du noyau déclare sa section : le menu se lit par métier et non plus
+        // comme une liste unique (lot 3). Une extension fait de même, sinon elle rejoint
+        // « Modules externes ».
         $items = [
-            ['label' => __('nav.dashboard'), 'short' => __('nav.home'), 'url' => url('/dashboard'), 'icon' => 'grid', 'key' => 'dashboard', 'available' => true],
-            ['label' => __('nav.clients'), 'short' => __('nav.clients'), 'url' => url('/clients'), 'icon' => 'people', 'key' => 'clients', 'available' => $clientsAvailable],
-            ['label' => __('nav.projects'), 'short' => __('nav.projects'), 'url' => url('/projects'), 'icon' => 'briefcase', 'key' => 'projects', 'available' => $projectsAvailable],
-            ['label' => __('nav.documents'), 'short' => __('nav.documents'), 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => $documentsAvailable],
-            ['label' => __('nav.time'), 'short' => __('nav.time'), 'url' => url('/time'), 'icon' => 'clock', 'key' => 'time', 'available' => $timeAvailable],
-            ['label' => __('nav.settings'), 'short' => __('nav.settings'), 'url' => $settingsUrl, 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable],
+            ['label' => __('nav.dashboard'), 'short' => __('nav.home'), 'url' => url('/dashboard'), 'icon' => 'grid', 'key' => 'dashboard', 'available' => true, 'section' => NavigationSections::PILOTAGE],
+            ['label' => __('nav.clients'), 'short' => __('nav.clients'), 'url' => url('/clients'), 'icon' => 'people', 'key' => 'clients', 'available' => $clientsAvailable, 'section' => NavigationSections::PRODUCTION],
+            ['label' => __('nav.projects'), 'short' => __('nav.projects'), 'url' => url('/projects'), 'icon' => 'briefcase', 'key' => 'projects', 'available' => $projectsAvailable, 'section' => NavigationSections::PRODUCTION],
+            ['label' => __('nav.time'), 'short' => __('nav.time'), 'url' => url('/time'), 'icon' => 'clock', 'key' => 'time', 'available' => $timeAvailable, 'section' => NavigationSections::PRODUCTION],
+            ['label' => __('nav.documents'), 'short' => __('nav.documents_short'), 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => $documentsAvailable, 'section' => NavigationSections::FINANCE],
+            ['label' => __('nav.settings'), 'short' => __('nav.settings'), 'url' => $settingsUrl, 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable, 'section' => NavigationSections::ADMINISTRATION],
         ];
+
+        // Actions rapides réelles : les mêmes destinations que les écrans de création, jamais
+        // des liens morts. Le bouton « Nouveau » n'est donc plus réservé au mode maquette.
+        $quickActions = [];
+        if ($clientsAvailable && Auth::can('clients.manage')) {
+            $quickActions[] = [
+                'label' => __('quick.client'),
+                'description' => __('quick.client_help'),
+                'url' => url('/clients/new'),
+                'icon' => 'people',
+                'key' => 'client',
+            ];
+        }
+        if ($projectsAvailable && Auth::can('projects.manage')) {
+            $quickActions[] = [
+                'label' => __('quick.project'),
+                'description' => __('quick.project_help'),
+                'url' => url('/projects/new'),
+                'icon' => 'briefcase',
+                'key' => 'project',
+            ];
+        }
+        if ($documentsAvailable && (Auth::can('documents.create') || Auth::can('documents.manage'))) {
+            $quickActions[] = [
+                'label' => __('quick.quote'),
+                'description' => __('quick.quote_help'),
+                'url' => url('/documents/new'),
+                'icon' => 'quote',
+                'key' => 'quote',
+            ];
+        }
+        if ($timeAvailable) {
+            $quickActions[] = [
+                'label' => __('quick.time'),
+                'description' => __('quick.time_help'),
+                'url' => url('/time'),
+                'icon' => 'timer',
+                'key' => 'time',
+            ];
+        }
+
         $commands = [];
         foreach ($items as $item) {
             if ($item['available']) {
@@ -84,7 +128,7 @@ final class ViewContext
             'commands' => $commands,
             // Recherche globale de la palette (GET JSON, filtrée par les droits).
             'searchEndpoint' => url('/api/recherche'),
-            'quickActions' => [],
+            'quickActions' => $quickActions,
         ];
     }
 

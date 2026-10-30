@@ -31,6 +31,7 @@ final class Module
                 'url' => url('/relances'),
                 'icon' => 'wallet',
                 'key' => 'relances-factures',
+                'section' => 'finance',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

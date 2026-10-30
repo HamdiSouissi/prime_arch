@@ -34,6 +34,7 @@ final class Module
                 'url' => url('/portail'),
                 'icon' => 'globe',
                 'key' => 'portail-client',
+                'section' => 'conformite',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

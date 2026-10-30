@@ -166,9 +166,12 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
 
 ### Mise en page responsive (en-tête, barre d’onglets, contenus)
 
-- **En-tête toujours complet** : `.topbar__actions` ne se comprime jamais (`flex: 0 0 auto` pour chaque action) et le
-  contexte (`.topbar__context`) se réduit à sa place. Le titre courant est repris par `.page-header`, aussi l’en-tête
-  ne conserve-t-il que les commandes sur mobile.
+- **En-tête toujours complet** : les actions ne sont jamais retirées ; c’est la recherche qui cède de la place
+  (`flex: 0 1 auto`, minimum `8rem`) et le contexte qui se tronque avec une ellipse (`.topbar__context` en
+  `overflow: hidden`, jamais de texte sous la recherche). Le titre courant est repris par `.page-header`, aussi
+  l’en-tête ne conserve-t-il que les commandes sur mobile. Le bouton **« Nouveau »** est présent hors mode maquette,
+  avec quatre actions réelles (client, projet, devis, temps) ; sous 430 px l’horloge de l’en-tête s’efface et reste
+  consultable dans la feuille « Plus ».
 - **Réduction avant masquage** : sous 1100 px la recherche passe en icône (libellé masqué, `aria-label` conservé) ;
   sous 760 px l’horloge n’affiche plus que l’heure ; sous 430 px les boutons, le sélecteur de langue et la bulle
   d’initiales se réduisent. Aucune action de l’en-tête n’est retirée de l’interface, et le sélecteur de langue reste
@@ -188,9 +191,19 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
   (`profileUrl`, calculé par `ViewContext`) ou, à défaut, vers le tableau de bord. `aria-label` explicite et focus natif.
 - **Barre d’onglets mobile** : `.mobile-tabbar` est ancrée (`position: fixed`, `inset-block-end: 0`), sur une grille
   `grid-auto-flow: column` + `grid-auto-columns: minmax(0, 1fr)` : une colonne par entrée, quel que soit le nombre
-  d’entrées, avec `env(safe-area-inset-*)`. Le layout fournit la même navigation partout, y compris sur les pages 404
-  qui n’en déclarent pas. Ordre des plans : contenu `app-content` < `.page-header` collant (12) < `.topbar` (15) <
-  `.mobile-tabbar` (35) < voile du menu (40) < tiroir latéral (45).
+  d’entrées, avec `env(safe-area-inset-*)`. Elle montre **quatre destinations quotidiennes** (Accueil, Clients,
+  Projets, Docs) puis **« Plus »**, qui ouvre la feuille de navigation. Les libellés sont à `0,68 rem` minimum, jamais
+  réduits pour tenir. Le layout fournit la même navigation partout, y compris sur les pages 404 qui n’en déclarent pas.
+  Ordre des plans : contenu `app-content` < `.page-header` collant (12) < `.topbar` (15) < `.mobile-tabbar` (35) <
+  voile du menu (40) < tiroir latéral (45) < dialogues (couche supérieure).
+- **Menu latéral groupé** : cinq sections — Pilotage, Production, Finance, Conformité, Administration — puis
+  « Modules externes » pour ce qui n’est pas classé. Chaque section est un `ul` nommé par son titre
+  (`aria-labelledby`) ; une section vide n’est pas rendue. Le contrat `sidebar.items` accepte une clé `section`
+  facultative (voir `docs/MODULES.md`) ; le filtre n’est appliqué **qu’une fois**, dans le layout, pour que le menu,
+  la barre d’onglets et la feuille « Plus » montrent exactement la même navigation.
+- **Feuille « Plus »** (`partials/mobile-menu.php`) : toute la navigation, les mêmes sections, un champ de filtre
+  (même normalisation d’accents que la palette), un état vide, et l’horloge du cabinet en pied — l’en-tête mobile la
+  masque pour rester sur une ligne.
 - **Aucun débordement horizontal** : `html` et `body` portent `overflow-x: clip` ; `.app-content` et ses blocs sont en
   `min-inline-size: 0` sous 760 px ; les grilles et formulaires repassent en une colonne. Les tableaux larges
   (`.data-table`, `.audit-table`, `.document-lines`) gardent une largeur minimale mais défilent **dans** `.table-wrap` :

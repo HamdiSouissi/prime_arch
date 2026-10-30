@@ -1,7 +1,7 @@
 {
     "slug": "honoraires-bareme",
     "name": "Honoraires et barèmes",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Barèmes d’honoraires saisis par le cabinet, décompte par projet et par phase, génération du devis d’honoraires.",
     "author": "Prime Arch",
     "namespace": "Modules\\HonorairesBareme",

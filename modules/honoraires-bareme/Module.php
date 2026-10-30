@@ -32,6 +32,7 @@ final class Module
                 'url' => url('/honoraires'),
                 'icon' => 'currency',
                 'key' => 'honoraires-bareme',
+                'section' => 'finance',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

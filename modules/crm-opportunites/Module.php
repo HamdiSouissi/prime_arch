@@ -29,8 +29,9 @@ final class Module
             $entry = [
                 'label' => __('crm.title'),
                 'url' => url('/crm'),
-                'icon' => 'people',
+                'icon' => 'chart',
                 'key' => 'crm-opportunites',
+                'section' => 'conformite',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

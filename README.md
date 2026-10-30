@@ -66,6 +66,7 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 - Format, limites d’archive et cycle de vie dans `docs/MODULES.md`.
 - Passerelles contextuelles : les fiches projet, client et document exposent `project.detail.sections`, `client.detail.sections` et `document.detail.actions` ; chaque module s’y annonce en un clic (voir `docs/MODULES.md`).
 - Recherche globale : la palette (`⌘K` / `Ctrl K`) interroge `GET /api/recherche` — clients, projets et documents filtrés par les droits, huit résultats par catégorie, cinq fiches récentes, pilotage complet au clavier. Les modules ajoutent leur section par le filtre `search.results` (voir `docs/MODULES.md`).
+- Coquille de navigation : menu groupé par métier (Pilotage, Production, Finance, Conformité, Administration, puis Modules externes), barre mobile à quatre destinations + « Plus » (feuille filtrable), bouton « Nouveau » réel (client, projet, devis, temps) et icônes de modules uniques.
 
 ### Phase 6 — Finition et exploitation (en cours de validation)
 

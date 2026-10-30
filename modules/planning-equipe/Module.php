@@ -29,8 +29,9 @@ final class Module
             $entry = [
                 'label' => __('planning.title'),
                 'url' => url('/planning'),
-                'icon' => 'calendar',
+                'icon' => 'timer',
                 'key' => 'planning-equipe',
+                'section' => 'pilotage',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {

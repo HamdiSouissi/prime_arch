@@ -29,6 +29,7 @@ final class Module
                 'url' => url('/comptabilite'),
                 'icon' => 'receipt',
                 'key' => 'comptabilite-export',
+                'section' => 'finance',
             ];
             foreach ($items as $index => $existing) {
                 if (($existing['key'] ?? '') === 'settings') {
