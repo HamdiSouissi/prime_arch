@@ -68,7 +68,7 @@ return [
     // Contexte architecture (à compléter avec les règles réglementaires en vigueur).
     'architecture' => [
         'professional_body' => 'Ordre des Architectes de Tunisie (OAT)',
-        // Référentiel initial des phases ; son édition sera livrée dans la phase Clients et projets.
+        // Ordre et libellés initiaux ; les phases sont ensuite gérées depuis les réglages du cabinet.
         'phases' => [
             'esquisse'        => 'Esquisse',
             'aps'             => 'Avant-projet sommaire (APS)',

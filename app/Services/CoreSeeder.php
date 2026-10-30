@@ -38,6 +38,7 @@ final class CoreSeeder
                 $delegationIds,
                 $delegationGovernorateIsos
             );
+            $projectPhaseCount = $this->seedProjectPhases((array) config('tunisia.architecture.phases', []));
             $this->pdo->commit();
         } catch (\Throwable $error) {
             if ($this->pdo->inTransaction()) {
@@ -51,6 +52,7 @@ final class CoreSeeder
             'governorates' => count($governorateIds),
             'delegations' => count($delegationIds),
             'postal_codes' => $postalCodeCount,
+            'project_phases' => $projectPhaseCount,
         ];
     }
 
@@ -156,6 +158,36 @@ final class CoreSeeder
             $ids[$code] = (int) $id;
         }
         return $ids;
+    }
+
+    /** @param array<string,string> $items */
+    private function seedProjectPhases(array $items): int
+    {
+        $find = $this->pdo->prepare('SELECT id FROM project_phases WHERE phase_key = :phase_key LIMIT 1');
+        $insert = $this->pdo->prepare(
+            'INSERT INTO project_phases (phase_key, name, sort_order, is_active, is_system)
+             VALUES (:phase_key, :name, :sort_order, 1, 1)'
+        );
+        $count = 0;
+        $position = 10;
+        foreach ($items as $key => $name) {
+            if (!preg_match('/^[a-z][a-z0-9_]{0,79}$/', (string) $key)
+                || !is_string($name) || trim($name) === '' || mb_strlen($name, 'UTF-8') > 150
+            ) {
+                throw new RuntimeException('Phase de projet invalide dans la configuration.');
+            }
+            $find->execute(['phase_key' => $key]);
+            if ($find->fetchColumn() === false) {
+                $insert->execute([
+                    'phase_key' => $key,
+                    'name' => trim($name),
+                    'sort_order' => $position,
+                ]);
+                $count++;
+            }
+            $position += 10;
+        }
+        return $count;
     }
 
     /** @param array<int,array{governorate_iso:string,delegation_code:?string,source_delegation:string,code:string,locality_latin:string,locality_ar:string}> $items

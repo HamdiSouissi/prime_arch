@@ -283,6 +283,9 @@ function initGeographySelects() {
     const postalOptions = form?.querySelector("[data-postal-options]");
     if (!form || !governorate || !delegation) return;
 
+    const chooseDelegation = document.documentElement.lang === "ar"
+        ? "اختر معتمدية…"
+        : "Choisir une délégation…";
     const setPlaceholder = (select, label) => {
         select.replaceChildren(new Option(label, ""));
     };
@@ -316,7 +319,7 @@ function initGeographySelects() {
         }
     };
     const loadDelegations = async (governorateId, selectedId = "") => {
-        setPlaceholder(delegation, "Choisir une délégation");
+        setPlaceholder(delegation, chooseDelegation);
         delegation.disabled = !governorateId;
         if (!governorateId) {
             if (postalInput) postalInput.value = "";
@@ -491,6 +494,10 @@ export function initUI() {
     document.addEventListener("submit", (event) => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) return;
+        if (form.dataset.confirmMessage && !window.confirm(form.dataset.confirmMessage)) {
+            event.preventDefault();
+            return;
+        }
         if (form.matches("[data-custom-field-form]")) {
             event.preventDefault();
             if (addCustomField(form)) closeDialog(form.closest("dialog"));

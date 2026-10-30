@@ -3,63 +3,57 @@ declare(strict_types=1);
 
 use App\Core\View;
 
-$clients = [
-    ['name' => 'Hichem Ben Salem', 'initials' => 'HB', 'company' => 'Particulier · Sidi Bou Saïd', 'email' => 'hichem.bensalem@email.tn', 'phone' => '+216 20 123 456', 'projects' => '2 projets', 'status' => 'Actif', 'tone' => 'success', 'last' => 'Aujourd’hui'],
-    ['name' => 'Société El Amana', 'initials' => 'EA', 'company' => 'Promoteur · Sfax', 'email' => 'contact@elamana.tn', 'phone' => '+216 74 221 908', 'projects' => '4 projets', 'status' => 'Actif', 'tone' => 'success', 'last' => 'Hier'],
-    ['name' => 'Dr. Hatem Gharbi', 'initials' => 'HG', 'company' => 'Profession libérale · Sousse', 'email' => 'h.gharbi@cabinet.tn', 'phone' => '+216 98 456 123', 'projects' => '1 projet', 'status' => 'En attente', 'tone' => 'warning', 'last' => '28 oct. 2026'],
-    ['name' => 'Nadia Khelifi', 'initials' => 'NK', 'company' => 'Particulier · La Marsa', 'email' => 'nadia.khelifi@email.tn', 'phone' => '+216 22 654 321', 'projects' => '1 projet', 'status' => 'Actif', 'tone' => 'success', 'last' => '24 oct. 2026'],
-    ['name' => 'Groupe Cap Bon', 'initials' => 'CB', 'company' => 'Promoteur · Nabeul', 'email' => 'projets@capbon.tn', 'phone' => '+216 72 300 614', 'projects' => '3 projets', 'status' => 'À relancer', 'tone' => 'info', 'last' => '20 oct. 2026'],
-];
+$clients = is_array($clients ?? null) ? $clients : [];
+$filters = is_array($filters ?? null) ? $filters : ['q' => '', 'status' => '', 'type' => ''];
+$page = max(1, (int) ($page ?? 1));
+$pageCount = max(1, (int) ($pageCount ?? 1));
 ?>
 <?php View::partial('partials/page-header', [
-    'pageTitle' => 'Clients',
-    'eyebrow' => 'Relations & contacts',
-    'subtitle' => 'Retrouvez les coordonnées, projets et échanges de vos clients.',
-    'primaryAction' => ['label' => 'Ajouter un client', 'icon' => 'plus', 'dialog' => '#quick-add-dialog'],
+    'pageTitle' => __('clients.title'),
+    'eyebrow' => __('clients.directory'),
+    'subtitle' => __('clients.intro'),
+    'primaryAction' => !empty($canManage) ? ['label' => __('clients.create'), 'icon' => 'plus', 'url' => url('/clients/new')] : null,
 ]) ?>
 
-<section class="card stack-md" aria-label="Répertoire des clients">
-    <div class="filter-row">
+<section class="card stack-md" aria-label="<?= e(__('clients.title')) ?>">
+    <form class="filter-row" method="get" action="<?= e(url('/clients')) ?>">
         <div class="input-with-icon">
             <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg>
-            <input type="search" name="client-search" placeholder="Rechercher un nom, un email…" aria-label="Rechercher un client" data-table-search="#clients-table">
+            <input class="field__control" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="<?= e(__('clients.search_placeholder')) ?>" aria-label="<?= e(__('common.search')) ?>">
         </div>
-        <div class="field">
-            <label class="u-sr-only" for="client-type">Type de client</label>
-            <select id="client-type" aria-label="Filtrer par type" data-filter-select="#clients-table">
-                <option value="">Tous les types</option>
-                <option value="particulier">Particulier</option>
-                <option value="promoteur">Promoteur</option>
-                <option value="profession">Profession libérale</option>
-            </select>
-        </div>
-        <button class="button button--secondary" type="button" data-toast-message="Les filtres avancés sont prêts pour la connexion au module Clients.">
-            <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#filter"></use></svg> Filtres
-        </button>
-    </div>
+        <div class="field"><label class="u-sr-only" for="client-filter-type"><?= e(__('clients.type')) ?></label><select class="field__control" id="client-filter-type" name="type"><option value=""><?= e(__('clients.all_types')) ?></option><?php foreach (['individual', 'company', 'organization'] as $type): ?><option value="<?= e($type) ?>" <?= $filters['type'] === $type ? 'selected' : '' ?>><?= e(__('clients.type.' . $type)) ?></option><?php endforeach; ?></select></div>
+        <div class="field"><label class="u-sr-only" for="client-filter-status"><?= e(__('clients.status')) ?></label><select class="field__control" id="client-filter-status" name="status"><option value=""><?= e(__('clients.all_statuses')) ?></option><?php foreach (['prospect', 'active', 'archived'] as $status): ?><option value="<?= e($status) ?>" <?= $filters['status'] === $status ? 'selected' : '' ?>><?= e(__('clients.status.' . $status)) ?></option><?php endforeach; ?></select></div>
+        <button class="button button--secondary" type="submit"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#filter"></use></svg><?= e(__('common.filter')) ?></button>
+        <?php if ($filters['q'] !== '' || $filters['status'] !== '' || $filters['type'] !== ''): ?><a class="button button--ghost" href="<?= e(url('/clients')) ?>"><?= e(__('common.clear')) ?></a><?php endif; ?>
+    </form>
 
-    <div class="table-wrap">
-        <table class="data-table" id="clients-table">
-            <thead><tr><th scope="col">Client</th><th scope="col">Coordonnées</th><th scope="col">Projets</th><th scope="col">Statut</th><th scope="col">Dernier contact</th><th scope="col"><span class="u-sr-only">Actions</span></th></tr></thead>
-            <tbody>
+    <?php if ($clients === []): ?>
+        <?php View::partial('partials/empty-state', [
+            'title' => $filters['q'] !== '' || $filters['status'] !== '' || $filters['type'] !== '' ? __('clients.no_results') : __('clients.no_clients'),
+            'description' => $filters['q'] !== '' || $filters['status'] !== '' || $filters['type'] !== '' ? __('clients.no_results_help') : __('clients.no_clients_help'),
+            'actionLabel' => !empty($canManage) && $filters['q'] === '' && $filters['status'] === '' && $filters['type'] === '' ? __('clients.create') : null,
+            'actionUrl' => !empty($canManage) && $filters['q'] === '' && $filters['status'] === '' && $filters['type'] === '' ? url('/clients/new') : null,
+        ]) ?>
+    <?php else: ?>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th scope="col"><?= e(__('clients.client')) ?></th><th scope="col"><?= e(__('clients.type')) ?></th><th scope="col"><?= e(__('clients.contact_details')) ?></th><th scope="col"><?= e(__('clients.projects')) ?></th><th scope="col"><?= e(__('clients.status')) ?></th><th scope="col"><?= e(__('common.updated')) ?></th><th scope="col"><span class="u-sr-only"><?= e(__('common.actions')) ?></span></th></tr></thead>
+                <tbody>
                 <?php foreach ($clients as $client): ?>
-                    <?php $filterType = str_contains(strtolower($client['company']), 'particulier') ? 'particulier' : (str_contains(strtolower($client['company']), 'promoteur') ? 'promoteur' : 'profession'); ?>
-                    <tr data-filter-row data-filter-value="<?= e($filterType) ?>">
-                        <td>
-                            <a class="table-primary" href="<?= e(url('/design/clients/CL-2025-031')) ?>">
-                                <span class="avatar avatar--small" aria-hidden="true"><?= e($client['initials']) ?></span>
-                                <span class="table-primary__text"><span class="table-primary__name"><?= e($client['name']) ?></span><span class="table-primary__meta"><?= e($client['company']) ?></span></span>
-                            </a>
-                        </td>
-                        <td><span class="table-primary__text"><a href="mailto:<?= e($client['email']) ?>"><?= e($client['email']) ?></a><a class="table-primary__meta" href="tel:<?= e(str_replace(' ', '', $client['phone'])) ?>"><?= e($client['phone']) ?></a></span></td>
-                        <td><?= e($client['projects']) ?></td>
-                        <td><span class="badge badge--<?= e($client['tone']) ?>"><?= e($client['status']) ?></span></td>
-                        <td><?= e($client['last']) ?></td>
-                        <td><a class="button button--icon button--ghost" href="<?= e(url('/design/clients/CL-2025-031')) ?>" aria-label="Ouvrir la fiche de <?= e($client['name']) ?>"><svg class="icon icon--small icon--directional"><use href="<?= e(asset('img/icons.svg')) ?>#arrow-up-right"></use></svg></a></td>
+                    <?php $initials = mb_strtoupper(mb_substr((string) $client['display_name'], 0, 1, 'UTF-8'), 'UTF-8'); ?>
+                    <tr>
+                        <td><a class="table-primary" href="<?= e(url('/clients/' . (int) $client['id'])) ?>"><span class="avatar avatar--small" aria-hidden="true"><?= e($initials) ?></span><span class="table-primary__text"><strong class="table-primary__name"><?= e($client['display_name']) ?></strong><span class="table-primary__meta"><?= e($client['reference'] ?? '') ?><?= !empty($client['legal_name']) ? ' · ' . e($client['legal_name']) : '' ?></span></span></a></td>
+                        <td><?= e(__('clients.type.' . $client['client_type'])) ?></td>
+                        <td><span class="table-primary__text"><?php if (!empty($client['email'])): ?><a href="<?= e('mailto:' . $client['email']) ?>"><?= e($client['email']) ?></a><?php endif; ?><?php if (!empty($client['phone'])): ?><a class="table-primary__meta" href="<?= e('tel:' . preg_replace('/\s+/', '', (string) $client['phone'])) ?>"><?= e($client['phone']) ?></a><?php endif; ?><?php if (empty($client['email']) && empty($client['phone'])): ?>—<?php endif; ?></span></td>
+                        <td><?= !empty($canViewProjects) ? e((string) $client['project_count']) : '—' ?></td>
+                        <td><span class="badge badge--<?= e(match ($client['status']) { 'active' => 'success', 'archived' => 'neutral', default => 'info' }) ?>"><?= e(__('clients.status.' . $client['status'])) ?></span></td>
+                        <td><?= e(date('d/m/Y', strtotime((string) $client['updated_at']))) ?></td>
+                        <td><a class="button button--icon button--ghost" href="<?= e(url('/clients/' . (int) $client['id'])) ?>" aria-label="<?= e(__('clients.open_record', ['name' => $client['display_name']])) ?>"><svg class="icon icon--small icon--directional" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#arrow-up-right"></use></svg></a></td>
                     </tr>
                 <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <div class="table-footer"><span>Affichage de 5 clients sur 28</span><div class="cluster"><button class="button button--small button--secondary" type="button" disabled>Précédent</button><button class="button button--small button--secondary" type="button" data-toast-message="Page 2 de la liste de démonstration.">Suivant</button></div></div>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer"><span><?= e(__('common.results', ['count' => (string) ($total ?? 0)])) ?></span><?php if ($pageCount > 1): ?><div class="cluster"><a class="button button--small button--secondary<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= e(url('/clients?' . http_build_query($filters + ['page' => max(1, $page - 1)]))) ?>" <?= $page <= 1 ? 'aria-disabled="true"' : '' ?>><?= e(__('common.previous')) ?></a><span class="muted"><?= e(__('common.page', ['current' => (string) $page, 'total' => (string) $pageCount])) ?></span><a class="button button--small button--secondary<?= $page >= $pageCount ? ' is-disabled' : '' ?>" href="<?= e(url('/clients?' . http_build_query($filters + ['page' => min($pageCount, $page + 1)]))) ?>" <?= $page >= $pageCount ? 'aria-disabled="true"' : '' ?>><?= e(__('common.next')) ?></a></div><?php endif; ?></div>
+    <?php endif; ?>
 </section>

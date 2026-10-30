@@ -2,11 +2,15 @@
 declare(strict_types=1);
 
 use App\Controllers\AuthController;
+use App\Controllers\ClientController;
+use App\Controllers\CustomFieldController;
 use App\Controllers\DashboardController;
 use App\Controllers\DesignController;
 use App\Controllers\GeographyController;
 use App\Controllers\HomeController;
 use App\Controllers\MediaController;
+use App\Controllers\ProjectController;
+use App\Controllers\ProjectPhaseController;
 use App\Controllers\SettingsController;
 use App\Controllers\UserController;
 use App\Core\Router;
@@ -26,6 +30,32 @@ return function (Router $router): void {
     $router->post('/login', [AuthController::class, 'login'], [CsrfMiddleware::class]);
     $router->post('/logout', [AuthController::class, 'logout'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/dashboard', [DashboardController::class, 'index'], [AuthMiddleware::class]);
+
+    $router->get('/clients', [ClientController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/clients/new', [ClientController::class, 'createForm'], [AuthMiddleware::class]);
+    $router->post('/clients', [ClientController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/clients/{id}/edit', [ClientController::class, 'edit'], [AuthMiddleware::class]);
+    $router->post('/clients/{id}', [ClientController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/clients/{id}/contacts', [ClientController::class, 'createContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/clients/{id}/contacts/{contactId}', [ClientController::class, 'updateContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/clients/{id}/contacts/{contactId}/delete', [ClientController::class, 'deleteContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/clients/{id}', [ClientController::class, 'show'], [AuthMiddleware::class]);
+
+    $router->get('/projects', [ProjectController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/projects/new', [ProjectController::class, 'createForm'], [AuthMiddleware::class]);
+    $router->post('/projects', [ProjectController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/projects/{id}/edit', [ProjectController::class, 'edit'], [AuthMiddleware::class]);
+    $router->post('/projects/{id}', [ProjectController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/phases/{assignmentId}', [ProjectController::class, 'updatePhase'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
+
+    $router->get('/settings/project-phases', [ProjectPhaseController::class, 'index'], [AuthMiddleware::class]);
+    $router->post('/settings/project-phases', [ProjectPhaseController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/project-phases/{id}', [ProjectPhaseController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/settings/custom-fields', [CustomFieldController::class, 'index'], [AuthMiddleware::class]);
+    $router->post('/settings/custom-fields', [CustomFieldController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/custom-fields/{id}', [CustomFieldController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/custom-fields/{id}/toggle', [CustomFieldController::class, 'toggle'], [AuthMiddleware::class, CsrfMiddleware::class]);
 
     $router->get('/settings', [SettingsController::class, 'edit'], [AuthMiddleware::class]);
     $router->post('/settings', [SettingsController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);

@@ -1,43 +1,55 @@
 <?php
 declare(strict_types=1);
 
+use App\Core\Auth;
 use App\Core\View;
 
-$projects = [
-    ['name' => 'Villa contemporaine', 'client' => 'Hichem Ben Salem', 'ref' => 'PA-2025-014', 'city' => 'Sidi Bou Saïd', 'type' => 'Résidentiel', 'phase' => 'APD', 'value' => 76, 'status' => 'En cours', 'tone' => 'info', 'budget' => '42 500,000 DT'],
-    ['name' => 'Résidence Les Jasmins', 'client' => 'Société El Amana', 'ref' => 'PA-2025-021', 'city' => 'Sfax', 'type' => 'Logement collectif', 'phase' => 'APS', 'value' => 54, 'status' => 'En cours', 'tone' => 'info', 'budget' => '86 000,000 DT'],
-    ['name' => 'Clinique Al Yasmine', 'client' => 'Dr. Hatem Gharbi', 'ref' => 'PA-2025-008', 'city' => 'Sousse', 'type' => 'Santé', 'phase' => 'DCE', 'value' => 32, 'status' => 'À valider', 'tone' => 'warning', 'budget' => '58 750,000 DT'],
-    ['name' => 'Maison de vacances', 'client' => 'Nadia Khelifi', 'ref' => 'PA-2024-032', 'city' => 'Gammarth', 'type' => 'Résidentiel', 'phase' => 'Chantier', 'value' => 88, 'status' => 'En cours', 'tone' => 'success', 'budget' => '31 200,000 DT'],
-    ['name' => 'Bureaux Cap Bon', 'client' => 'Groupe Cap Bon', 'ref' => 'PA-2025-003', 'city' => 'Nabeul', 'type' => 'Tertiaire', 'phase' => 'Permis', 'value' => 41, 'status' => 'En cours', 'tone' => 'info', 'budget' => '64 800,000 DT'],
-    ['name' => 'Maison de ville', 'client' => 'Sana Gharbi', 'ref' => 'PA-2024-026', 'city' => 'La Marsa', 'type' => 'Résidentiel', 'phase' => 'Réception', 'value' => 100, 'status' => 'Terminé', 'tone' => 'success', 'budget' => '28 400,000 DT'],
-];
+$projects = is_array($projects ?? null) ? $projects : [];
+$filters = is_array($filters ?? null) ? $filters : ['q' => '', 'status' => '', 'client_id' => ''];
+$clients = is_array($clients ?? null) ? $clients : [];
+$page = max(1, (int) ($page ?? 1));
+$pageCount = max(1, (int) ($pageCount ?? 1));
 ?>
 <?php View::partial('partials/page-header', [
-    'pageTitle' => 'Projets',
-    'eyebrow' => 'Portefeuille de l’agence',
-    'subtitle' => 'Suivez les phases, échéances et budgets de vos projets architecturaux.',
-    'primaryAction' => ['label' => 'Nouveau projet', 'icon' => 'plus', 'dialog' => '#quick-add-dialog'],
+    'pageTitle' => __('projects.title'),
+    'eyebrow' => __('projects.portfolio'),
+    'subtitle' => __('projects.intro'),
+    'secondaryAction' => !empty($canConfigure) ? ['label' => __('project_phases.manage'), 'icon' => 'settings', 'url' => url('/settings/project-phases')] : null,
+    'primaryAction' => !empty($canManage) ? ['label' => __('projects.create'), 'icon' => 'plus', 'url' => url('/projects/new')] : null,
 ]) ?>
 
-<section class="card stack-md">
-    <div class="filter-row">
-        <div class="input-with-icon"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg><input type="search" placeholder="Nom, client ou référence…" aria-label="Rechercher un projet" data-card-search="#project-cards"></div>
-        <div class="field"><label class="u-sr-only" for="project-status">Statut du projet</label><select id="project-status" aria-label="Filtrer les projets" data-filter-select="#project-cards"><option value="">Tous les statuts</option><option>En cours</option><option>À valider</option><option>Terminé</option></select></div>
-        <div class="view-toggle" data-view-toggle="#project-cards" role="group" aria-label="Mode d'affichage">
-            <button class="view-toggle__button" type="button" data-view-mode="grid" aria-pressed="true" aria-label="Afficher en grille"><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#grid-view"></use></svg></button>
-            <button class="view-toggle__button" type="button" data-view-mode="list" aria-pressed="false" aria-label="Afficher en liste"><svg class="icon icon--small"><use href="<?= e(asset('img/icons.svg')) ?>#list"></use></svg></button>
-        </div>
-    </div>
-    <div class="project-cards" id="project-cards">
-        <?php foreach ($projects as $project): ?>
-            <a class="project-card" href="<?= e(url('/design/projects/PA-2025-014')) ?>" data-project-card data-filter-value="<?= e($project['status']) ?>">
-                <div class="project-card__top"><span class="project-card__symbol"><svg class="icon icon--large"><use href="<?= e(asset('img/icons.svg')) ?>#building"></use></svg></span><span class="badge badge--<?= e($project['tone']) ?>"><?= e($project['status']) ?></span></div>
-                <div><h2 class="project-card__title"><?= e($project['name']) ?></h2><p class="project-card__client"><?= e($project['client']) ?></p></div>
-                <div class="project-card__details"><span><?= e($project['ref']) ?></span><span><?= e($project['city']) ?></span></div>
-                <?php View::partial('partials/progress', ['value' => $project['value'], 'label' => 'Phase ' . $project['phase'], 'tone' => $project['value'] >= 85 ? 'mint' : ($project['value'] < 40 ? 'coral' : '')]) ?>
-                <div class="project-card__details"><span><?= e($project['type']) ?></span><strong class="number"><?= e($project['budget']) ?></strong></div>
-            </a>
-        <?php endforeach; ?>
-    </div>
-    <div class="cluster cluster--between"><span class="muted text-footnote">6 projets affichés sur 12 actifs</span><button class="button button--small button--secondary" type="button" data-toast-message="Tous les projets de démonstration sont déjà affichés.">Charger plus</button></div>
+<section class="card stack-md" aria-label="<?= e(__('projects.title')) ?>">
+    <form class="filter-row" method="get" action="<?= e(url('/projects')) ?>">
+        <div class="input-with-icon"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg><input class="field__control" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="<?= e(__('projects.search_placeholder')) ?>" aria-label="<?= e(__('common.search')) ?>"></div>
+        <div class="field"><label class="u-sr-only" for="project-filter-status"><?= e(__('projects.status.label')) ?></label><select class="field__control" id="project-filter-status" name="status"><option value=""><?= e(__('projects.all_statuses')) ?></option><?php foreach (['planning', 'active', 'on_hold', 'completed', 'cancelled'] as $status): ?><option value="<?= e($status) ?>" <?= $filters['status'] === $status ? 'selected' : '' ?>><?= e(__('projects.status.' . $status)) ?></option><?php endforeach; ?></select></div>
+        <?php if ($clients !== []): ?><div class="field"><label class="u-sr-only" for="project-filter-client"><?= e(__('clients.client')) ?></label><select class="field__control" id="project-filter-client" name="client_id"><option value=""><?= e(__('projects.all_clients')) ?></option><?php foreach ($clients as $client): ?><option value="<?= e((string) $client['id']) ?>" <?= $filters['client_id'] === (string) $client['id'] ? 'selected' : '' ?>><?= e($client['display_name']) ?><?= $client['reference'] !== '' ? ' · ' . e($client['reference']) : '' ?></option><?php endforeach; ?></select></div><?php endif; ?>
+        <button class="button button--secondary" type="submit"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#filter"></use></svg><?= e(__('common.filter')) ?></button>
+        <?php if ($filters['q'] !== '' || $filters['status'] !== '' || $filters['client_id'] !== ''): ?><a class="button button--ghost" href="<?= e(url('/projects')) ?>"><?= e(__('common.clear')) ?></a><?php endif; ?>
+    </form>
+
+    <?php if ($projects === []): ?>
+        <?php View::partial('partials/empty-state', [
+            'title' => $filters['q'] !== '' || $filters['status'] !== '' || $filters['client_id'] !== '' ? __('projects.no_results') : __('projects.no_projects'),
+            'description' => $filters['q'] !== '' || $filters['status'] !== '' || $filters['client_id'] !== '' ? __('projects.no_results_help') : __('projects.no_projects_help'),
+            'actionLabel' => !empty($canManage) && $filters['q'] === '' && $filters['status'] === '' && $filters['client_id'] === '' ? __('projects.create') : null,
+            'actionUrl' => !empty($canManage) && $filters['q'] === '' && $filters['status'] === '' && $filters['client_id'] === '' ? url('/projects/new') : null,
+        ]) ?>
+    <?php else: ?>
+        <div class="table-wrap"><table class="data-table">
+            <thead><tr><th scope="col"><?= e(__('projects.name')) ?></th><th scope="col"><?= e(__('clients.client')) ?></th><th scope="col"><?= e(__('projects.location')) ?></th><th scope="col"><?= e(__('project_phases.current')) ?></th><th scope="col"><?= e(__('projects.dates')) ?></th><th scope="col"><?= e(__('projects.status.label')) ?></th></tr></thead>
+            <tbody>
+                <?php foreach ($projects as $project): ?>
+                    <tr>
+                        <td><a class="table-primary" href="<?= e(url('/projects/' . (int) $project['id'])) ?>"><span class="table-primary__text"><strong class="table-primary__name"><?= e($project['name']) ?></strong><span class="table-primary__meta"><?= e($project['reference'] ?? '') ?><?= !empty($project['project_type']) ? ' · ' . e($project['project_type']) : '' ?></span></span></a></td>
+                        <td><?php if (Auth::can('clients.view')): ?><a href="<?= e(url('/clients/' . (int) $project['client_id'])) ?>"><?= e($project['client_name']) ?></a><?php else: ?><?= e($project['client_name']) ?><?php endif; ?></td>
+                        <td><?= e(implode(', ', array_filter([(string) ($project['city'] ?? ''), (string) ($project['postal_code'] ?? '')]))) ?: '—' ?></td>
+                        <td><?= e($project['current_phase'] !== '' ? $project['current_phase'] : '—') ?></td>
+                        <td><?php if ($project['start_date'] !== null && $project['start_date'] !== ''): ?><?= e(date('d/m/Y', strtotime((string) $project['start_date']))) ?><?php else: ?><?= e(__('projects.not_scheduled')) ?><?php endif; ?></td>
+                        <td><span class="badge badge--<?= e(match ($project['status']) { 'active' => 'info', 'completed' => 'success', 'on_hold' => 'warning', 'cancelled' => 'neutral', default => 'neutral' }) ?>"><?= e(__('projects.status.' . $project['status'])) ?></span></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table></div>
+        <div class="table-footer"><span><?= e(__('common.results', ['count' => (string) ($total ?? 0)])) ?></span><?php if ($pageCount > 1): ?><div class="cluster"><a class="button button--small button--secondary<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= e(url('/projects?' . http_build_query($filters + ['page' => max(1, $page - 1)]))) ?>" <?= $page <= 1 ? 'aria-disabled="true"' : '' ?>><?= e(__('common.previous')) ?></a><span class="muted"><?= e(__('common.page', ['current' => (string) $page, 'total' => (string) $pageCount])) ?></span><a class="button button--small button--secondary<?= $page >= $pageCount ? ' is-disabled' : '' ?>" href="<?= e(url('/projects?' . http_build_query($filters + ['page' => min($pageCount, $page + 1)]))) ?>" <?= $page >= $pageCount ? 'aria-disabled="true"' : '' ?>><?= e(__('common.next')) ?></a></div><?php endif; ?></div>
+    <?php endif; ?>
 </section>

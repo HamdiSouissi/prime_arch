@@ -13,7 +13,7 @@
 1. `public/index.php` charge l'autoload Composer et lance `App\Core\Application`.
 2. `Application::boot()` : lit `.env` (`Env`), charge `config/*.php` (`Config`), fuseau `Africa/Tunis`,
    démarre la session, fixe la langue (`Translator`).
-3. `config/routes.php` enregistre les routes du cœur dans le `Router` : connexion, déconnexion, tableau de bord, réglages, administration des utilisateurs et référentiel géographique.
+3. `config/routes.php` enregistre les routes du cœur dans le `Router` : connexion, déconnexion, tableau de bord, clients et contacts, projets et phases, champs personnalisés, réglages, administration des utilisateurs et référentiel géographique.
 4. `ModuleManager::boot()` charge les modules activés (leurs hooks et routes).
 5. `Router::dispatch()` exécute les middlewares d'authentification, de rôle et de CSRF avant le contrôleur, qui retourne une `Response`.
 6. Les vues (`app/Views`) sont rendues par `View::render()` dans `layouts/app` ou `layouts/auth`.
@@ -29,7 +29,7 @@
 
 ## Initialisation des données
 
-`php bin/migrate.php` applique les migrations versionnées. `php bin/seed.php` insère les rôles, les 24 gouvernorats, les 264 délégations et le jeu postal fourni, de façon répétable. Les données postales sont des suggestions communautaires anciennes et non officielles ; les cas sans rapprochement sûr restent rattachés au seul gouvernorat (voir `docs/DATA-SOURCES.md`).
+`php bin/migrate.php` applique les migrations versionnées. `php bin/seed.php` insère les rôles, les 24 gouvernorats, les 264 délégations, le jeu postal fourni et les phases de projet initiales définies dans `config/tunisia.php`, de façon répétable. Les données postales sont des suggestions communautaires anciennes et non officielles ; les cas sans rapprochement sûr restent rattachés au seul gouvernorat (voir `docs/DATA-SOURCES.md`). Les repositories utilisent PDO et des requêtes préparées ; les valeurs de champs personnalisés des clients et projets sont stockées dans des colonnes JSON et validées à partir des définitions actives.
 
 ## Dossiers
 

@@ -15,14 +15,21 @@ final class ViewContext
     {
         $user = Auth::user() ?? [];
         $settings = (new CabinetSettings())->get();
-        $settingsAvailable = Auth::can('settings.view');
+        $clientsAvailable = Auth::can('clients.view');
+        $projectsAvailable = Auth::can('projects.view');
+        $settingsAvailable = Auth::can('settings.view')
+            || Auth::can('clients.manage')
+            || Auth::can('projects.configure');
+        $settingsUrl = Auth::can('settings.view')
+            ? url('/settings')
+            : (Auth::can('projects.configure') ? url('/settings/project-phases') : url('/settings/custom-fields'));
         $items = [
-            ['label' => 'Tableau de bord', 'short' => 'Accueil', 'url' => url('/dashboard'), 'icon' => 'grid', 'key' => 'dashboard', 'available' => true],
-            ['label' => 'Clients', 'short' => 'Clients', 'url' => url('/clients'), 'icon' => 'people', 'key' => 'clients', 'available' => false],
-            ['label' => 'Projets', 'short' => 'Projets', 'url' => url('/projects'), 'icon' => 'briefcase', 'key' => 'projects', 'available' => false],
-            ['label' => 'Documents', 'short' => 'Docs', 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => false],
-            ['label' => 'Temps', 'short' => 'Temps', 'url' => url('/time'), 'icon' => 'clock', 'key' => 'time', 'available' => false],
-            ['label' => 'Réglages', 'short' => 'Réglages', 'url' => url('/settings'), 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable],
+            ['label' => __('nav.dashboard'), 'short' => __('nav.home'), 'url' => url('/dashboard'), 'icon' => 'grid', 'key' => 'dashboard', 'available' => true],
+            ['label' => __('nav.clients'), 'short' => __('nav.clients'), 'url' => url('/clients'), 'icon' => 'people', 'key' => 'clients', 'available' => $clientsAvailable],
+            ['label' => __('nav.projects'), 'short' => __('nav.projects'), 'url' => url('/projects'), 'icon' => 'briefcase', 'key' => 'projects', 'available' => $projectsAvailable],
+            ['label' => __('nav.documents'), 'short' => __('nav.documents'), 'url' => url('/documents'), 'icon' => 'file-text', 'key' => 'documents', 'available' => false],
+            ['label' => __('nav.time'), 'short' => __('nav.time'), 'url' => url('/time'), 'icon' => 'clock', 'key' => 'time', 'available' => false],
+            ['label' => __('nav.settings'), 'short' => __('nav.settings'), 'url' => $settingsUrl, 'icon' => 'settings', 'key' => 'settings', 'available' => $settingsAvailable],
         ];
         $commands = [];
         foreach ($items as $item) {
