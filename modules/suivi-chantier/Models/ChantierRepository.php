@@ -31,8 +31,14 @@ final class ChantierRepository
         $conditions = ["p.status <> 'cancelled'"];
         $parameters = [];
         if ($filters['q'] !== '') {
-            $conditions[] = '(p.name LIKE :search OR p.reference LIKE :search OR c.display_name LIKE :search)';
-            $parameters['search'] = '%' . $filters['q'] . '%';
+            // Marqueurs distincts : PDO tourne sans émulation, un marqueur ne peut pas
+            // être réutilisé plusieurs fois dans la même requête préparée.
+            $conditions[] = '(p.name LIKE :search_project OR p.reference LIKE :search_reference
+                              OR c.display_name LIKE :search_client)';
+            $term = '%' . $filters['q'] . '%';
+            $parameters['search_project'] = $term;
+            $parameters['search_reference'] = $term;
+            $parameters['search_client'] = $term;
         }
         if ($filters['only_open']) {
             $conditions[] = "EXISTS (SELECT 1 FROM chantier_reserves r WHERE r.project_id = p.id AND r.status = 'open')";

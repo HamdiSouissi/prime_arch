@@ -338,10 +338,17 @@ final class DossierRepository
         $parameters = [];
 
         if ($filters['q'] !== '') {
-            $conditions[] = '(d.reference LIKE :search OR d.commune LIKE :search
-                              OR p.name LIKE :search OR c.display_name LIKE :search
-                              OR d.deposit_number LIKE :search)';
-            $parameters['search'] = '%' . $filters['q'] . '%';
+            // Un paramètre nommé par colonne : PDO est configuré sans émulation, donc un
+            // même marqueur ne peut pas être réutilisé dans une requête préparée native.
+            $conditions[] = '(d.reference LIKE :search_reference OR d.commune LIKE :search_commune
+                              OR p.name LIKE :search_project OR c.display_name LIKE :search_client
+                              OR d.deposit_number LIKE :search_deposit)';
+            $term = '%' . $filters['q'] . '%';
+            $parameters['search_reference'] = $term;
+            $parameters['search_commune'] = $term;
+            $parameters['search_project'] = $term;
+            $parameters['search_client'] = $term;
+            $parameters['search_deposit'] = $term;
         }
         if ($filters['status'] !== '') {
             $conditions[] = 'd.status = :status';

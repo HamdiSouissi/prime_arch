@@ -225,6 +225,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `permis-batir` | 1.0.0 | `permis_batir_dossiers`, `permis_batir_pieces`, `permis_batir_evenements` | `projects.view` / `projects.manage` | Liste + export CSV, création, fiche (checklist de pièces, historique horodaté), édition |
 | `suivi-chantier` | 1.0.0 | `chantier_visites`, `chantier_reserves`, `chantier_receptions` | `projects.view` / `projects.manage` | Liste des chantiers, fiche chantier (journal, réserves, réceptions), PV de réception imprimable |
 | `relances-factures` | 1.0.0 | `relances_regles`, `relances_modeles`, `relances_evenements`, `relances_exclusions` | `documents.view` / `documents.manage` | Balance âgée, file de relances, courrier à copier-coller, historique, règles et modèles FR/AR |
+| `metre-quantitatif` | 1.0.0 | `metre_lots`, `metre_postes`, `metre_bibliotheque_prix` | `projects.view` / `projects.manage` | Liste des projets métrés, fiche de métré (lots, postes, marges), édition d’un poste, DQE imprimable, export CSV, bibliothèque de prix |
 
 ### Points de vigilance (à valider par le cabinet)
 
@@ -240,6 +241,13 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 - **Aucune donnée financière** n’est créée par ces trois modules : ils ne modifient ni les
   documents, ni les coûts, ni la numérotation du noyau. `relances-factures` lit seulement
   `documents`, `document_payments` et `clients`.
+- **Prix et marges du DQE** : `metre-quantitatif` n’embarque **aucun barème**, aucun prix de
+  référence et aucune marge par défaut. Les prix unitaires, les quantités et les marges sont
+  saisis par le cabinet ; les montants sont hors taxes et calculés en millimes entiers, arrondis
+  au millime. Le DQE imprimé est un **document d’étude** : il ne vaut ni marché ni devis signé,
+  et sa forme doit être validée par le cabinet avant remise au maître d’ouvrage.
+- **Aucune donnée financière du noyau n’est modifiée** : `metre-quantitatif` lit `projects` et
+  `clients` et n’écrit que dans ses tables `metre_*`.
 
 ### Installation
 
@@ -247,6 +255,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 cd modules && zip -r permis-batir-1.0.0.zip permis-batir
 cd modules && zip -r suivi-chantier-1.0.0.zip suivi-chantier
 cd modules && zip -r relances-factures-1.0.0.zip relances-factures
+cd modules && zip -r metre-quantitatif-1.0.0.zip metre-quantitatif
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -256,5 +265,5 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 ### Préfixes de tables
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
-`chantier_*` et `relances_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
+`chantier_*`, `relances_*` et `metre_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.
