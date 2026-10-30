@@ -151,3 +151,21 @@ figure en « Points de vigilance » de `docs/MODULE-PROPOSALS.md`.
    la révocation immédiate.
 5. Contrôler les exports CSV (comptabilité, fiscal, CRM, GED) à l’ouverture dans un tableur.
 6. Vérifier les écrans en arabe : direction, montants, dates, impression.
+
+---
+
+## 7. Vague 4 — livraisons en cours
+
+Les compteurs du §1 (douze modules, 31 tables, 106 routes, 1 590 clés par langue) décrivent les
+vagues 1 à 3 au commit `dccb3d4`. Les modules de la vague 4 s’y ajoutent **un par un**, avec le
+même dossier de contrôle.
+
+| Module | Version | Tables | Routes | Clés FR / AR | Livré le |
+|---|---|---|---|---|---|
+| `registre-courrier` | 1.0.0 | 3 | 12 | 132 / 132 | 30/10/2026 |
+
+> Les empreintes du §2 valent pour les archives des vagues 1 à 3 ; chaque module de la vague 4 est
+> empaqueté au moment de sa livraison et contrôlé séparément (`unzip -t`).
+
+Le détail des écrans, des garde-fous et des vérifications figure dans
+`docs/MODULE-PROPOSALS-VAGUE-4.md` (§7, journal des livraisons).

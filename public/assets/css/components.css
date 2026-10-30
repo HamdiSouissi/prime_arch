@@ -121,7 +121,10 @@ button.button:hover {
 }
 
 .button--primary,
-.btn-primary {
+.btn-primary,
+/* `button.button` (0,1,1) l'emporte sur `.button--primary` (0,1,0) : sans ce sélecteur, un
+   `<button class="button button--primary">` gardait l'apparence neutre de base. */
+button.button--primary {
     border-color: rgba(47, 107, 255, 0.25);
     color: #FFFFFF;
     background: var(--gradient-primary);
@@ -129,33 +132,38 @@ button.button:hover {
 }
 
 .button--primary:hover,
-.btn-primary:hover {
+.btn-primary:hover,
+button.button--primary:hover {
     filter: saturate(1.08) brightness(1.035);
     box-shadow: 0 8px 20px rgba(47, 107, 255, 0.24);
 }
 
 .button--secondary,
-.btn-secondary {
+.btn-secondary,
+button.button--secondary {
     border-color: var(--color-border);
     color: var(--color-ink);
     background: rgba(255, 255, 255, 0.78);
 }
 
-.button--tinted {
+.button--tinted,
+button.button--tinted {
     border-color: rgba(47, 107, 255, 0.13);
     color: var(--color-primary-strong);
     background: var(--color-primary-tint);
 }
 
 .button--ghost,
-.btn-ghost {
+.btn-ghost,
+button.button--ghost {
     border-color: transparent;
     color: var(--color-ink-secondary);
     background: transparent;
     box-shadow: none;
 }
 
-.button--danger {
+.button--danger,
+button.button--danger {
     border-color: rgba(180, 35, 74, 0.13);
     color: var(--color-error);
     background: var(--color-error-tint);

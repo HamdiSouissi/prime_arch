@@ -68,6 +68,7 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 - Recherche globale : la palette (`⌘K` / `Ctrl K`) interroge `GET /api/recherche` — clients, projets et documents filtrés par les droits, huit résultats par catégorie, cinq fiches récentes, pilotage complet au clavier. Les modules ajoutent leur section par le filtre `search.results` (voir `docs/MODULES.md`).
 - Tableau de bord réel : projets ouverts et retards, reste à encaisser, heures de la semaine, clients actifs, échéances sur 14 jours (retards inclus) et activité du journal d'audit, chaque bloc filtré par les droits. Les modules ajoutent leurs cartes par le filtre `dashboard.cards` (voir `docs/MODULES.md`).
 - Coquille de navigation : menu groupé par métier (Pilotage, Production, Finance, Conformité, Administration, puis Modules externes), barre mobile à quatre destinations + « Plus » (feuille filtrable), bouton « Nouveau » réel (client, projet, devis, temps) et icônes de modules uniques.
+- Registre du courrier (module `registre-courrier`) : courrier entrant et sortant, numérotation réglée par le cabinet (préfixes, séparateur, compteurs par année), échéances de traitement saisies, registre annuel imprimable et export CSV.
 - Règle des trois clics vérifiée en CI : `tests/NavigationDepthTest.php` reconstruit le graphe de navigation depuis le code (routes, vues, coquille, menus des modules) et échoue si une destination du noyau dépasse trois clics depuis le tableau de bord (voir `docs/CONVENTIONS.md`).
 
 ### Phase 6 — Finition et exploitation (en cours de validation)
@@ -108,10 +109,14 @@ fournis par le bloc `#app-i18n` (`app/Views/partials/i18n.php`).
 ```bash
 composer test                                   # suite complète
 vendor/bin/phpunit --filter NavigationDepthTest # le garde-fou des trois clics seul
+vendor/bin/phpunit --filter ModulesIntegrityTest # les modules installables
 ```
 
-`tests/NavigationDepthTest.php` est le seul test qui lit l'application comme un graphe : il vaut
-la peine de le lancer avant de livrer une nouvelle page, un nouveau lien ou un nouveau module.
+Deux tests lisent le code plutôt que des données : `tests/NavigationDepthTest.php` reconstruit le
+graphe de navigation et refuse une destination à plus de trois clics ; `tests/ModulesIntegrityTest.php`
+contrôle chaque dossier de `modules/` (manifeste, traductions FR/AR, vues rendues, préfixes de tables,
+aucune écriture dans les tables du cœur). Ils valent la peine d'être lancés avant de livrer une page,
+un lien ou un module.
 
 ## Documentation
 
@@ -123,7 +128,7 @@ la peine de le lancer avant de livrer une nouvelle page, un nouveau lien ou un n
 - `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
 - `docs/MODULES.md` — format, installation et sécurité des modules.
 - `docs/MODULE-PROPOSALS.md` — catalogue des douze modules livrés, garde-fous et prérequis noyau.
-- `docs/MODULE-PROPOSALS-VAGUE-4.md` — onze propositions de modules complémentaires (vague 4).
+- `docs/MODULE-PROPOSALS-VAGUE-4.md` — onze propositions de modules complémentaires (vague 4) et journal des livraisons.
 - `docs/AUDIT-UX-ET-NAVIGATION.md` — audit design et UI/UX, règle des 3 clics et suivi des six lots (tous livrés).
 - `docs/design/maquette-navigation.html` — maquette de navigation (menu groupé, contexte, mobile).
 - `docs/LIVRAISON.md` — dossier de livraison : inventaire, paquets, empreintes et vérifications.

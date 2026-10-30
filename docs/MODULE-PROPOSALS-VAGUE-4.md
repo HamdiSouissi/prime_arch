@@ -21,7 +21,7 @@ Effort indicatif : **S** ≈ 1–2 jours, **M** ≈ 3–5 jours, **L** ≈ 6–1
 
 | # | Module | Effort | Valeur principale | Tables | Droits réutilisés |
 |---|---|---|---|---|---|
-| 1 | `registre-courrier` | S | Traçabilité du courrier entrant/sortant, pièce manquante vite retrouvée | `courrier_registre` | `clients.view` / `clients.manage` |
+| 1 | `registre-courrier` — **livré** | S | Traçabilité du courrier entrant/sortant, pièce manquante vite retrouvée | `courrier_registre`, `courrier_reglages`, `courrier_compteurs` | `clients.view` / `clients.manage` |
 | 2 | `reunions-chantier` | S/M | Comptes rendus de réunion et actions suivies, PV imprimable | `reunions_seances`, `reunions_participants`, `reunions_points` | `projects.view` / `projects.manage` |
 | 3 | `appels-offres` | M | Ne plus rater une remise d’offre ni une caution | `ao_dossiers`, `ao_pieces`, `ao_evenements` | `projects.view` / `projects.manage` |
 | 4 | `pilotage-cabinet` | S/M | Marge réelle par projet, encours, délais — **aucune table** | — | `finance.*` ou `documents.view` / `settings.view` |
@@ -40,7 +40,7 @@ Aucune route publique nouvelle. Aucun de ces modules n’écrit dans `clients`, 
 
 ## 2. Détail des modules
 
-### 1. `registre-courrier` — Registre du courrier — **S**
+### 1. `registre-courrier` — Registre du courrier — **S** — ✅ livré (v1.0.0)
 
 - **Rôle :** registre chronologique du courrier entrant et sortant, avec numérotation continue,
   correspondant, objet, mode d’acheminement (dépôt, recommandé, e-mail, main propre), projet et
@@ -203,7 +203,8 @@ Aucune route publique nouvelle. Aucun de ces modules n’écrit dans `clients`, 
 
 ## 3. Ordre de livraison recommandé
 
-1. **`registre-courrier`** (S) — gain immédiat, risque quasi nul, aucune dépendance.
+1. ~~**`registre-courrier`** (S)~~ — **livré** : 12 routes, 3 tables, 132 clés FR/AR, 1 entrée de menu
+   et 2 passerelles (fiche projet, fiche client).
 2. **`reunions-chantier`** (S/M) — dans la continuité de `suivi-chantier`, très utilisé.
 3. **`appels-offres`** (M) — le plus fort impact commercial.
 4. **`pilotage-cabinet`** (S/M) — aucune table : rapide, et il donne de la valeur aux données déjà
@@ -251,11 +252,40 @@ représentent environ **une semaine de développement** et couvrent l’essentie
 ## 6. Décision attendue
 
 1. Le périmètre de la vague 4 est-il celui-ci, ou faut-il en retirer / ajouter ?
-2. Quel module démarre ? Ma recommandation : **`registre-courrier`** (S, zéro dépendance), puis
-   `reunions-chantier`, puis `appels-offres`.
+2. ~~Quel module démarre ?~~ **`registre-courrier` est livré** ; le suivant recommandé est
+   `reunions-chantier` (S/M), puis `appels-offres` (M).
 3. Faut-il traiter `notifications-mail` (dernier module du catalogue initial, toujours non livré)
    avant la vague 4 ? Cela suppose de trancher **P3** : SMTP maison, `mail()` de PHP ou dépendance
    Composer.
 
 Comme pour les vagues précédentes, je livrerai **un module à la fois**, avec contrôles, paquet ZIP,
 captures de rendu et commit poussé sur la branche de travail.
+
+---
+
+## 7. Journal des livraisons
+
+### 7.1 `registre-courrier` — 30/10/2026
+
+| Élément | Valeur |
+|---|---|
+| Version | 1.0.0 |
+| Routes | 12 (registre, export CSV, impression annuelle, réglages, compteurs, fiche, formulaire, changement de traitement) |
+| Tables | `courrier_registre`, `courrier_reglages`, `courrier_compteurs` |
+| Traductions | 132 clés FR et 132 clés AR, préfixe `courrier.` |
+| Menu | 1 entrée, section « Production », icône `mail` |
+| Passerelles | `project.detail.sections`, `client.detail.sections`, `search.results` |
+| Droits | `clients.view` (lecture) / `clients.manage` (écriture) — aucune permission nouvelle |
+
+Garde-fous tenus : aucun format de numérotation imposé (préfixes, séparateur et nombre de
+chiffres réglés par le cabinet), compteurs par sens et par année pour reprendre un registre
+existant sans réattribuer un numéro, aucune échéance légale calculée (l’échéance de traitement
+est saisie), aucun envoi de courriel, aucune écriture dans une table du noyau.
+
+Vérifications exécutées : analyse syntaxique des 314 fichiers PHP (0 erreur), rendu réel des
+sept écrans en FR et en AR sous php-wasm (aucune alerte), captures desktop, sombre, mobile et
+arabe, graphe de navigation toujours à trois clics (`tests/NavigationDepthTest.php`) et nouveau
+garde-fou `tests/ModulesIntegrityTest.php` (5 tests : manifestes, parité FR/AR, vues rendues,
+préfixes de tables, aucune écriture dans les tables du cœur).
+
+Lecture de la vague 4 : le module lit `clients`, `projects` et `users`, jamais en écriture.

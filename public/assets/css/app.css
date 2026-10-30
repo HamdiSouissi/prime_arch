@@ -10,6 +10,7 @@
 @import url("./print.css") layer(print);
 
 @layer utilities {
+    .u-nowrap { white-space: nowrap; }
     .u-sr-only {
         position: absolute;
         overflow: hidden;

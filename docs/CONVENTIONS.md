@@ -54,6 +54,20 @@ destinations et restent hors budget.
 
 Exécution : `composer test` ou `vendor/bin/phpunit --filter NavigationDepthTest`.
 
+## Modules
+
+- Un module vit dans son dossier : `module.json`, `Module.php`, `migrations/`, `views/`, `lang/`.
+- Il n’écrit **jamais** dans une table du cœur (`clients`, `projects`, `documents`, `time_entries`,
+  `users`, …) : il lit, et stocke ses données dans ses propres tables.
+- Ses tables partagent un préfixe unique, distinct de celui des autres modules.
+- Il déclare ses routes dans `routes()` (les chemins fixes avant `{id}`), son entrée de menu par
+  `sidebar.items` (clé `section` facultative) et ses traductions en FR **et** AR.
+- Chaque vue rendue par `View::renderModule()` doit exister ; chaque entrée de menu doit
+  correspondre à une route déclarée par ce module.
+
+Ces règles sont vérifiées par `tests/ModulesIntegrityTest.php` (manifestes, parité FR/AR, vues,
+tables du cœur, préfixes) et `tests/NavigationDepthTest.php` (menus, profondeur).
+
 ## Traductions
 
 - Clés `domaine.clé` dans `lang/fr.php` et `lang/ar.php` ; le français est la langue de repli.
