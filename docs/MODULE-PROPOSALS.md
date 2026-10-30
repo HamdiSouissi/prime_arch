@@ -224,6 +224,7 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 |---|---|---|---|---|
 | `permis-batir` | 1.0.0 | `permis_batir_dossiers`, `permis_batir_pieces`, `permis_batir_evenements` | `projects.view` / `projects.manage` | Liste + export CSV, création, fiche (checklist de pièces, historique horodaté), édition |
 | `suivi-chantier` | 1.0.0 | `chantier_visites`, `chantier_reserves`, `chantier_receptions` | `projects.view` / `projects.manage` | Liste des chantiers, fiche chantier (journal, réserves, réceptions), PV de réception imprimable |
+| `relances-factures` | 1.0.0 | `relances_regles`, `relances_modeles`, `relances_evenements`, `relances_exclusions` | `documents.view` / `documents.manage` | Balance âgée, file de relances, courrier à copier-coller, historique, règles et modèles FR/AR |
 
 ### Points de vigilance (à valider par le cabinet)
 
@@ -232,16 +233,28 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
   auprès de l’**OAT** et des services municipaux compétents.
 - **Réceptions et réserves** : le PV généré est un **document de travail** ; sa forme définitive
   doit être validée avec le maître d’ouvrage et, le cas échéant, le conseil juridique du cabinet.
-- **Aucune donnée financière** n’est créée par ces deux modules : ils ne modifient ni les
-  documents, ni les coûts, ni la numérotation du noyau.
+- **Relances** : le module ne calcule aucun intérêt de retard, n’applique aucun délai légal et
+  n’envoie aucun courrier (le noyau n’expose pas de service de messagerie). Les tonalités et les
+  modèles doivent être relus par le cabinet avant envoi ; un expert-comptable ou un conseil
+  juridique peut valider la formulation.
+- **Aucune donnée financière** n’est créée par ces trois modules : ils ne modifient ni les
+  documents, ni les coûts, ni la numérotation du noyau. `relances-factures` lit seulement
+  `documents`, `document_payments` et `clients`.
 
 ### Installation
 
 ```bash
 cd modules && zip -r permis-batir-1.0.0.zip permis-batir
 cd modules && zip -r suivi-chantier-1.0.0.zip suivi-chantier
+cd modules && zip -r relances-factures-1.0.0.zip relances-factures
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
 activer le module (les migrations sont appliquées à l’activation). Désactiver un module conserve
 ses tables et ses données ; la désinstallation complète n’est jamais silencieuse.
+
+### Préfixes de tables
+
+Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
+`chantier_*` et `relances_*`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
+chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.
