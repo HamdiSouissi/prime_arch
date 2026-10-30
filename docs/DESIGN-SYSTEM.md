@@ -118,7 +118,7 @@ Pour auditer une nouvelle paire de tokens, calculer pour chaque canal sRGB `c/12
 
 ## Ajouter le style d’un module
 
-Un module hérite automatiquement des tokens et composants parce que son écran s’insère sous `layouts/app`. Il ne doit pas redéfinir les couleurs globales, le reset, les polices ou les comportements RTL. Préfixer ses classes avec le slug et garder les styles dans `modules/<slug>/assets/`.
+Un module hérite automatiquement des tokens et composants parce que son écran s’insère sous `layouts/app`. Il ne doit pas redéfinir les couleurs globales, le reset, les polices ou les comportements RTL. Préfixer ses classes avec le slug et garder les styles dans `storage/modules/<slug>/assets/`; les charger via la route authentifiée `/module-assets/<slug>?file=css/module.css`.
 
 ```css
 @layer components {

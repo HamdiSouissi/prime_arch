@@ -2,12 +2,11 @@
 declare(strict_types=1);
 
 /**
- * Modules activés (slugs). Sera remplacé par la table `modules` (activation depuis les réglages).
- * Le module "_example-module" est désactivé par défaut.
+ * Réglages historiques conservés pour compatibilité de configuration.
+ * Depuis l'administration des modules, la table `modules` est la seule source d'état;
+ * la liste `enabled` n'est plus utilisée par ModuleManager.
  */
 return [
-    'enabled' => [
-        // 'example-module',
-    ],
     'directory' => 'modules',
+    'enabled' => [],
 ];

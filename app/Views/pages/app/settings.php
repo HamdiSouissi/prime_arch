@@ -162,3 +162,16 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
         <?php endif; ?>
     </fieldset>
 </form>
+
+<?php if (!empty($canManageModules)): ?>
+    <section class="card settings-panel margin-block-start-6" aria-labelledby="settings-modules-title">
+        <div class="card-header">
+            <div>
+                <h2 class="card-header__title" id="settings-modules-title">Modules et extensions</h2>
+                <p class="section-heading__note">Installez des extensions vérifiées et gérez leurs dépendances.</p>
+            </div>
+            <a class="button button--secondary button--small" href="<?= e(url('/settings/modules')) ?>">Gérer les modules</a>
+        </div>
+        <p class="muted text-footnote">Seuls les administrateurs peuvent téléverser et activer du code de module.</p>
+    </section>
+<?php endif; ?>

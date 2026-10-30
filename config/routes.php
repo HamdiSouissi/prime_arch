@@ -12,6 +12,8 @@ use App\Controllers\GeographyController;
 use App\Controllers\HomeController;
 use App\Controllers\HourlyRateController;
 use App\Controllers\MediaController;
+use App\Controllers\ModuleAssetController;
+use App\Controllers\ModuleController;
 use App\Controllers\ProjectController;
 use App\Controllers\TimeEntryController;
 use App\Controllers\ProjectPhaseController;
@@ -86,6 +88,11 @@ return function (Router $router): void {
     $router->post('/settings/custom-fields/{id}', [CustomFieldController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/settings/custom-fields/{id}/toggle', [CustomFieldController::class, 'toggle'], [AuthMiddleware::class, CsrfMiddleware::class]);
 
+    $router->get('/settings/modules', [ModuleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+    $router->post('/settings/modules/install', [ModuleController::class, 'install'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/modules/{slug}/activate', [ModuleController::class, 'activate'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/modules/{slug}/deactivate', [ModuleController::class, 'deactivate'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+
     $router->get('/settings', [SettingsController::class, 'edit'], [AuthMiddleware::class]);
     $router->post('/settings', [SettingsController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/admin/users', [UserController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
@@ -95,6 +102,7 @@ return function (Router $router): void {
     $router->get('/api/geography/delegations', [GeographyController::class, 'delegations'], [AuthMiddleware::class]);
     $router->get('/api/geography/postal-codes', [GeographyController::class, 'postalCodes'], [AuthMiddleware::class]);
     $router->get('/media/cabinet-logo', [MediaController::class, 'cabinetLogo'], [AuthMiddleware::class]);
+    $router->get('/module-assets/{slug}', [ModuleAssetController::class, 'show'], [AuthMiddleware::class]);
 
     // Les aperçus statiques ne sont enregistrés qu'en dehors de la production.
     if (strtolower((string) config('app.env', 'production')) !== 'production') {

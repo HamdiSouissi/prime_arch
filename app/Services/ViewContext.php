@@ -25,6 +25,7 @@ final class ViewContext
             || Auth::can('settings.manage');
         $rateSettingsAvailable = Auth::can('finance.rates.view') || Auth::can('finance.rates.manage');
         $settingsAvailable = Auth::can('settings.view')
+            || Auth::can('users.manage')
             || Auth::can('clients.manage')
             || Auth::can('projects.configure')
             || $rateSettingsAvailable;
@@ -34,7 +35,9 @@ final class ViewContext
                 ? url('/settings/hourly-rates')
                 : (Auth::can('settings.view')
                     ? url('/settings')
-                    : (Auth::can('projects.configure') ? url('/settings/project-phases') : url('/settings/custom-fields'))));
+                    : (Auth::can('projects.configure')
+                        ? url('/settings/project-phases')
+                        : (Auth::can('users.manage') ? url('/settings/modules') : url('/settings/custom-fields')))));
         $items = [
             ['label' => __('nav.dashboard'), 'short' => __('nav.home'), 'url' => url('/dashboard'), 'icon' => 'grid', 'key' => 'dashboard', 'available' => true],
             ['label' => __('nav.clients'), 'short' => __('nav.clients'), 'url' => url('/clients'), 'icon' => 'people', 'key' => 'clients', 'available' => $clientsAvailable],
@@ -74,6 +77,7 @@ final class ViewContext
             'showAppActions' => true,
             'showDesignActions' => false,
             'canManageUsers' => Auth::can('users.manage'),
+            'canManageModules' => Auth::can('users.manage'),
             'canViewRates' => $rateSettingsAvailable,
             'commands' => $commands,
             'quickActions' => [],

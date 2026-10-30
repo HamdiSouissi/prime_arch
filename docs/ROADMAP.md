@@ -17,27 +17,36 @@ Le projet avance par phases validées une à une. Une phase suivante ne commence
 
 ## Phase 2 — Clients et projets
 
-**Fonctionnalités prévues :** fiches particuliers/entreprises/organismes, contacts, adresses tunisiennes, liste et recherche des clients ; création des projets liés à un client ; phases d'architecte configurables ; champs personnalisés typés avec valeurs JSON ; filtres, statuts et pages de détail.
+**Statut : livrée pour validation.**
+
+**Fonctionnalités livrées :** fiches particuliers/entreprises/organismes, contacts, adresses tunisiennes, liste et recherche des clients ; création des projets liés à un client ; phases d'architecte configurables ; champs personnalisés typés avec valeurs JSON ; filtres, statuts et pages de détail.
 
 **Objectif :** gérer le portefeuille clients/projets et les champs propres à un cabinet sans modifier le noyau pour chaque nouvelle donnée.
 
 ## Phase 3 — Temps, coûts et avancement
 
-**Fonctionnalités prévues :** saisies de temps par utilisateur/projet/phase, taux horaires historisés, budgets d'heures, avancement pondéré, calcul des coûts et indicateurs de rentabilité protégés par permissions.
+**Statut : livrée pour validation.**
+
+**Fonctionnalités livrées :** saisies de temps par utilisateur/projet/phase, taux horaires historisés, budgets d'heures, avancement pondéré, calcul des coûts et indicateurs de rentabilité protégés par permissions.
 
 **Objectif :** connaître l'effort réel et la rentabilité par phase et par projet, en conservant des calculs monétaires exacts en millimes/DECIMAL.
 
 ## Phase 4 — Documents et PDF
 
-**Fonctionnalités prévues :** devis, contrats, factures, lignes et modèles éditables ; taxes paramétrables ; numérotation séquentielle à l'émission ; instantané JSON immuable des données émises ; génération mPDF en français et en arabe ; paiements, factures d'acompte/phase et avoirs.
+**Statut : livrée pour validation.**
+
+- Devis, contrats, factures, lignes et modèles éditables; taxes paramétrables; numérotation séquentielle à l'émission; instantanés des données émises; génération mPDF en français et en arabe; paiements, factures d'acompte/phase et avoirs.
 
 **Objectif :** garantir que les documents brouillons reflètent les données actuelles et qu'un document émis puisse être régénéré à l'identique.
 
 ## Phase 5 — Modules
 
-**Fonctionnalités prévues :** manifeste `module.json`, installation/activation/désactivation, hooks et événements ; téléversement réservé aux administrateurs ; validation stricte des ZIP, protection zip-slip, extraction isolée, dépendances et migrations dédiées.
+**Statut : implémentée pour validation.**
 
-**Objectif :** étendre le produit sans modifier les fonctionnalités stables du noyau et sans exposer le serveur à un téléversement de code arbitraire.
+- Manifeste `module.json`, installation/activation/désactivation; hooks et événements; téléversement réservé aux administrateurs; validation stricte des ZIP, prévention du zip-slip, extraction isolée dans `storage/`, dépendances et migrations propres à chaque module.
+- Désactiver un module ne supprime ni ses migrations ni ses données. Les modules PHP ne sont pas sandboxés : seules des archives de confiance doivent être installées.
+
+**Objectif :** étendre le produit sans modifier les fonctionnalités stables du noyau, tout en protégeant l’extraction d’archives et en avertissant explicitement du risque inhérent au code PHP fourni par un module.
 
 ## Phase 6 — Finition et exploitation
 

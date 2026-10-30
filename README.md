@@ -55,6 +55,16 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 - Coûts et indicateurs de rentabilité calculés en `DECIMAL` à trois décimales, avec des permissions financières distinctes des permissions `time.*`.
 - Détails de fonctionnement et mise en service dans `docs/TIME-COSTS.md`.
 
+### Phase 4 — Documents et PDF
+
+- Devis, contrats, factures, modèles, instantanés immuables des documents émis, génération PDF bilingue, paiements, acomptes et avoirs.
+
+### Phase 5 — Modules
+
+- Installation ZIP réservée aux administrateurs, extraction contrôlée dans `storage/modules/`, manifeste, dépendances, migrations à l’activation et hooks.
+- Les modules sont du code PHP non sandboxé : installer uniquement des archives de confiance. La désactivation conserve le code et les données.
+- Format, limites d’archive et cycle de vie dans `docs/MODULES.md`.
+
 Avant utilisation de la phase 3, les migrations `0006` à `0008` doivent avoir été exécutées avec succès ; les rôles intégrés doivent ensuite être resynchronisés avec `php bin/seed.php`. L’état d’exécution des migrations ne peut pas être déduit du code seul.
 
 Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
@@ -73,4 +83,4 @@ composer test
 - `docs/DESIGN-SYSTEM.md` — tokens, composants, accessibilité et RTL.
 - `docs/ROADMAP.md` — phases et critères de progression.
 - `docs/TIME-COSTS.md` — taux historisés, calculs financiers et permissions de la phase 3.
-- `docs/MODULES.md` — format cible des modules.
+- `docs/MODULES.md` — format, installation et sécurité des modules.

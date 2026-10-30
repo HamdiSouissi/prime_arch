@@ -417,15 +417,36 @@ function initUpload() {
     const zone = document.querySelector("[data-upload-zone]");
     const input = zone?.querySelector("input[type='file']");
     const name = zone?.querySelector("[data-upload-name]");
+    const isPreview = !zone?.hasAttribute("data-upload-real");
     if (!zone || !input) return;
-    const showFile = (file) => {
+    const showFile = (file, fromDrop = false) => {
         if (!file) return;
         if (!file.name.toLowerCase().endsWith(".zip")) {
+            input.value = "";
+            if (name) name.textContent = "Fichier .zip uniquement";
             showToast("Choisissez une archive au format .zip.", "warning");
             return;
         }
+        if (file.size > 25_000_000) {
+            input.value = "";
+            if (name) name.textContent = "Archive de 25 Mo maximum";
+            showToast("L’archive dépasse la limite de 25 Mo.", "warning");
+            return;
+        }
+        if (fromDrop) {
+            try {
+                const transfer = new DataTransfer();
+                transfer.items.add(file);
+                input.files = transfer.files;
+            } catch {
+                showToast("Utilisez le bouton Parcourir pour sélectionner l’archive.", "warning");
+                return;
+            }
+        }
         if (name) name.textContent = file.name;
-        showToast("Archive prête pour la prévisualisation. Aucun téléversement n'est effectué.", "info");
+        showToast(isPreview
+            ? "Archive prête pour la prévisualisation. Aucun téléversement n'est effectué."
+            : "Archive sélectionnée. Elle sera vérifiée côté serveur avant l’installation.", "info");
     };
     input.addEventListener("change", () => showFile(input.files?.[0]));
     ["dragenter", "dragover"].forEach((type) => zone.addEventListener(type, (event) => {
@@ -436,7 +457,7 @@ function initUpload() {
         event.preventDefault();
         zone.classList.remove("is-dragover");
     }));
-    zone.addEventListener("drop", (event) => showFile(event.dataTransfer?.files?.[0]));
+    zone.addEventListener("drop", (event) => showFile(event.dataTransfer?.files?.[0], true));
 }
 
 export function initUI() {
