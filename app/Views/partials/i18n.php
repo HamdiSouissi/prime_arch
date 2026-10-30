@@ -35,6 +35,11 @@ $keys = [
     'js.action_done',
     'js.demo_only',
     'js.copied',
+    // Recherche globale (palette de commandes).
+    'js.search_recents',
+    'js.search_count',
+    'js.search_none',
+    'js.search_unavailable',
 ];
 
 $payload = [];

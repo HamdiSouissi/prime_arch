@@ -108,6 +108,42 @@ Règles :
 - **Dégradation silencieuse** : module absent ou désactivé ⇒ la fiche est inchangée, sans espace vide.
 - **Ordre** : l'ordre d'ajout est conservé, les entrées du noyau passées en entrée restent en tête.
 
+### Recherche globale
+
+Le filtre `search.results` reçoit les groupes déjà trouvés par le noyau et le terme saisi
+(`$groups`, `$query`) ; le module renvoie la liste complète, augmentée de ses propres groupes :
+
+```php
+HookManager::addFilter('search.results', static function (array $groups, string $query = ''): array {
+    if (!Auth::can('projects.view') || mb_strlen(trim($query)) < 2) {
+        return $groups;
+    }
+    $items = [];
+    foreach ((new MonRepository())->search($query) as $row) {
+        $items[] = [
+            'title' => (string) $row['reference'],
+            'meta' => $row['commune'] . ' · ' . $row['project_name'],
+            'url' => url('/mon-module/' . (int) $row['id']),
+            'icon' => 'shield',
+        ];
+    }
+    if ($items !== []) {
+        $groups[] = ['key' => 'mon-module', 'label' => __('mon-module.title'), 'items' => $items];
+    }
+
+    return $groups;
+});
+```
+
+Règles :
+
+- **Huit résultats par groupe** (`SearchRepository::LIMIT`), et un titre court qui tient sur une ligne.
+- **Échappement partagé** : `SearchRepository::likeTerm($query)` neutralise `%`, `_` et `\`
+  (`likeTerm($query, true)` pour un préfixe). Ne jamais concaténer le terme dans le SQL.
+- **Texte brut uniquement** : la palette construit ses éléments par `textContent`, jamais par `innerHTML`.
+- **Défensif** : entourer la requête d'un `try/catch (Throwable)` et renvoyer `$groups` inchangé
+  si la table du module manque, sinon une base incomplète casserait la recherche de tout le cabinet.
+
 Les extensions utilisent `HookManager` pour enregistrer des filtres (par exemple `sidebar.items`) et des actions/événements. Les événements émis par le noyau comprennent : `module.installed`, `module.activated`, `module.deactivated`, `module.booting` et `module.booted`. Les callbacks de hook sont du code PHP du module et s’exécutent avec les droits du processus PHP.
 
 ## Migrations et dépendances

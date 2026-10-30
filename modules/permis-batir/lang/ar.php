@@ -6,6 +6,7 @@ declare(strict_types=1);
  * Toutes les clés sont préfixées par `permis.` pour éviter toute collision avec le noyau.
  */
 return [
+    'permis.search_group' => 'رخص البناء',
     'permis.title' => 'رخصة البناء',
     'permis.eyebrow' => 'ملفات إدارية',
     'permis.intro' => 'تابع كل إيداع لرخصة البناء: الوثائق المجمّعة، الدراسة، القرارات والآجال التي يحدّدها المكتب.',

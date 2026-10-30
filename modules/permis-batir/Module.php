@@ -8,8 +8,11 @@ use App\Core\HookManager;
 use App\Core\Router;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CsrfMiddleware;
+use App\Models\SearchRepository;
+use Modules\PermisBatir\Models\DossierRepository;
 use Modules\PermisBatir\Controllers\DossierController;
 use Modules\PermisBatir\Services\PermisContext;
+use Throwable;
 
 /**
  * Module « permis-batir » : dossiers de permis de bâtir.
@@ -46,6 +49,53 @@ final class Module
 
         // Passerelle vers la fiche projet / client / document du noyau.
         PermisContext::register();
+
+        // Recherche globale : le module complète la palette du noyau sans la modifier.
+        HookManager::addFilter('search.results', static function (array $groups, string $query = ''): array {
+            if (!Auth::can('projects.view') || mb_strlen(trim($query), 'UTF-8') < 2) {
+                return $groups;
+            }
+
+            try {
+                $rows = (new DossierRepository())->search($query);
+            } catch (Throwable $error) {
+                // Table du module absente ou base indisponible : la palette reste utilisable.
+                error_log('Recherche permis-batir indisponible : ' . $error->getMessage());
+
+                return $groups;
+            }
+
+            $items = [];
+            foreach ($rows as $row) {
+                $meta = array_values(array_filter([
+                    trim((string) ($row['commune'] ?? '')),
+                    trim((string) ($row['project_name'] ?? '')),
+                    trim((string) ($row['client_name'] ?? '')),
+                ], static fn (string $value): bool => $value !== ''));
+
+                $items[] = [
+                    'title' => (string) ($row['reference'] ?? ''),
+                    'meta' => implode(' · ', array_unique($meta)),
+                    'url' => url('/permis/' . (int) ($row['id'] ?? 0)),
+                    'icon' => 'shield',
+                    'type' => 'permis',
+                ];
+            }
+
+            if ($items === []) {
+                return $groups;
+            }
+
+            $groups[] = [
+                'key' => 'permis',
+                'label' => __('permis.search_group'),
+                'icon' => 'shield',
+                'items' => $items,
+                'truncated' => count($items) >= SearchRepository::LIMIT,
+            ];
+
+            return $groups;
+        });
     }
 
     /** Déclare les routes du module ; l'ordre compte, `/permis/new` précède `/permis/{id}`. */

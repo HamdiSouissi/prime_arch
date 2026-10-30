@@ -122,7 +122,31 @@ if ($isDesignPreview) {
     <?php View::partial('partials/quick-add', ['quickActions' => $quickActions]) ?>
 <?php endif; ?>
 <?php if ($isDesignPreview || $isAuthenticated): ?>
-    <?php View::partial('partials/command-palette', ['commands' => $commands]) ?>
+    <?php
+    // Fiche en cours de consultation : la palette l'enregistre comme « récent » (session du
+    // navigateur). Le fil d'Ariane est la seule source : une page de liste n'en a pas.
+    $recentRecord = null;
+    $breadcrumbItems = is_array($breadcrumb ?? null) ? array_values($breadcrumb) : [];
+    if (count($breadcrumbItems) >= 2) {
+        $lastCrumb = $breadcrumbItems[count($breadcrumbItems) - 1];
+        $recentRecord = [
+            'title' => (string) ($lastCrumb['label'] ?? ''),
+            'group' => (string) ($breadcrumbItems[1]['label'] ?? ''),
+            'url' => (string) ($lastCrumb['url'] ?? current_path()),
+            'icon' => match (true) {
+                ($activeNav ?? '') === 'clients' => 'people',
+                ($activeNav ?? '') === 'projects' => 'briefcase',
+                ($activeNav ?? '') === 'documents' => 'file-text',
+                default => 'file-text',
+            },
+        ];
+    }
+    ?>
+    <?php View::partial('partials/command-palette', [
+        'commands' => $commands,
+        'searchEndpoint' => $searchEndpoint ?? url('/api/recherche'),
+        'recentRecord' => $recentRecord,
+    ]) ?>
 <?php endif; ?>
 <?php View::partial('partials/toast', ['toastMessage' => $toastMessage ?? null]) ?>
 <?php \App\Core\View::partial('partials/i18n') ?>

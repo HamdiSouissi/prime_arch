@@ -82,6 +82,8 @@ final class ViewContext
             'canManageModules' => Auth::can('users.manage'),
             'canViewRates' => $rateSettingsAvailable,
             'commands' => $commands,
+            // Recherche globale de la palette (GET JSON, filtrée par les droits).
+            'searchEndpoint' => url('/api/recherche'),
             'quickActions' => [],
         ];
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Modules\PermisBatir\Models;
 
 use App\Core\Database;
+use App\Models\SearchRepository;
 use PDO;
 
 /**
@@ -77,6 +78,45 @@ final class DossierRepository
             . ' ORDER BY d.reference'
         );
         $statement->execute($parameters);
+
+        return $statement->fetchAll();
+    }
+
+    /**
+     * Dossiers correspondant à la recherche globale du noyau.
+     *
+     * Le module ne modifie pas la recherche du cœur : il s'y branche par le filtre
+     * `search.results` et réutilise son échappement de `LIKE` (SearchRepository::likeTerm).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function search(string $query, int $limit = SearchRepository::LIMIT): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT d.id, d.reference, d.commune, d.status, d.deposit_number,
+                    p.name AS project_name, c.display_name AS client_name
+             FROM permis_batir_dossiers d
+             INNER JOIN projects p ON p.id = d.project_id
+             INNER JOIN clients c ON c.id = p.client_id
+             WHERE d.reference LIKE :reference ESCAPE \'\\\\\'
+                OR d.commune LIKE :commune ESCAPE \'\\\\\'
+                OR d.deposit_number LIKE :deposit ESCAPE \'\\\\\'
+                OR d.decision_number LIKE :decision ESCAPE \'\\\\\'
+                OR p.name LIKE :project ESCAPE \'\\\\\'
+                OR c.display_name LIKE :client ESCAPE \'\\\\\'
+             ORDER BY CASE WHEN d.reference LIKE :prefix ESCAPE \'\\\\\' THEN 0 ELSE 1 END,
+                      d.updated_at DESC, d.id DESC
+             LIMIT ' . max(1, min($limit, SearchRepository::LIMIT))
+        );
+        $statement->execute([
+            'reference' => SearchRepository::likeTerm($query),
+            'commune' => SearchRepository::likeTerm($query),
+            'deposit' => SearchRepository::likeTerm($query),
+            'decision' => SearchRepository::likeTerm($query),
+            'project' => SearchRepository::likeTerm($query),
+            'client' => SearchRepository::likeTerm($query),
+            'prefix' => SearchRepository::likeTerm($query, true),
+        ]);
 
         return $statement->fetchAll();
     }

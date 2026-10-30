@@ -228,7 +228,7 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 |---|---|---|---|
 | **Lot 0 — correctifs** (1 journée) | défilement du menu, `color-scheme`, `aria-current`, `scope`, palette clavier/accents, liens des fiches document | S | supprime 3 échecs, rend 7 modules visibles |
 | **Lot 1 — contexte** (3–5 jours) | filtres P1 + cartes de contexte dans projet / client / document + fil d'Ariane | M | **tous les trajets projet↔module passent à 1 clic** |
-| **Lot 2 — recherche** (3 jours) | `/api/recherche`, palette à sections, récents, raccourcis | M | destination atteinte en 2 frappes, 0 clic |
+| **Lot 2 — recherche** (3 jours) — **livré** | `/api/recherche`, palette à sections, récents, raccourcis | M | destination atteinte en 2 frappes, 0 clic |
 | **Lot 3 — coquille** (3 jours) | menu groupé + mobile « Plus » + bouton global « Nouveau » | M | mobile : plus aucun trajet > 3 clics |
 | **Lot 4 — tableau de bord** (3–4 jours) | KPI réels, échéances 14 jours, activité, heures | M | première page utile |
 | **Lot 5 — garde-fou** (1–2 jours) | test PHPUnit de profondeur ≤ 3 + documentation | S | la règle ne peut plus régresser |
@@ -443,3 +443,46 @@ la barre garde ses six onglets et ne recouvre pas les messages, aucune page ne d
 et `body`, piste `minmax(0, 1fr)` sur les piles, conteneur de tableau compressible, `contain: layout` sur les deux
 conteneurs de tableau, `contain: none` à l'impression, barre ancrée au viewport. 15 assertions, rejouées hors PHPUnit :
 15 / 15.
+
+## 10. Lot 2 — recherche globale livrée
+
+La palette ne se contente plus de filtrer douze entrées : elle interroge le serveur et renvoie de vraies fiches.
+`GET /api/recherche?q=` répond en JSON, derrière `AuthMiddleware`.
+
+### 10.1 Contrat de la route
+
+| Élément | Règle |
+|---|---|
+| Méthode | `GET /api/recherche?q=<terme>` |
+| Longueur | 2 caractères minimum (`SearchController::MIN_LENGTH`), 80 au maximum ; les caractères de contrôle sont retirés et les espaces compactés |
+| Catégories | clients (`clients.view`), projets (`projects.view`), documents (les mêmes droits que l'entrée « Documents ») |
+| Limite | 8 fiches par catégorie (`SearchRepository::LIMIT`), tri par pertinence de préfixe puis par date |
+| Échappement | requêtes préparées ; `%`, `_` et `\` neutralisés (`SearchRepository::likeTerm`) — « 50 % » reste une chaîne |
+| Cache | `Cache-Control: private, no-store` : jamais de résultat d'un autre utilisateur en cache |
+| Extensions | filtre `search.results` ; le module permis-batir ajoute sa section (contrat dans `docs/MODULES.md`) |
+
+Réponse : `{"query": "villa", "tooShort": false, "total": 4, "groups": [{"key": "clients", "label": "Clients", "items": [{"title", "meta", "url", "icon"}]}]}`.
+
+### 10.2 Palette
+
+- Combobox et listbox réelles : le champ garde le focus, `aria-activedescendant` désigne la ligne active,
+  chaque résultat est un `role="option"` cliquable ; un région `aria-live` annonce « n résultat(s) ».
+- Clavier : `↓` `↑` `Home` `End` `Entrée` `Échap` ; `⌘K` / `Ctrl K` ouvre la palette, le libellé du raccourci suit la plateforme.
+- **Récents** : les cinq dernières fiches consultées, dédupliquées, conservées en `sessionStorage` (donc effacées
+  à la fermeture de l'onglet). La fiche courante est déclarée par le layout à partir de son fil d'Ariane.
+- Anti-rebond de 180 ms, requêtes obsolètes annulées (`AbortController`), résultats mis en cache pour la session de la page.
+- Les résultats sont construits par `textContent` : un intitulé contenant `<script>` s'affiche comme du texte.
+
+### 10.3 Mesures
+
+Palette pilotée dans Chromium, réponse de l'API simulée : 3 groupes affichés (Clients, Projets, Documents),
+`aria-activedescendant` posé sur le premier résultat, une seule requête pour « villa », `↓` puis `Entrée`
+ouvre bien le deuxième résultat (`/projects/11`), section « Récents » peuplée après visite d'une fiche,
+aucun débordement à 390 px, rendu correct en arabe (`dir="rtl"`) et en thème sombre.
+
+### 10.4 Garde-fous
+
+`tests/SearchApiTest.php` — 10 cas : route protégée, permissions et filtre dans le contrôleur, trois requêtes
+préparées avec `LIMIT 8` et échappement, normalisation du terme, balisage combobox/listbox/`aria-live`,
+appel `fetch` avec `AbortController` et anti-rebond, `textContent` sans `innerHTML`, cinq récents dédupliqués,
+fiche courante exposée par le layout, libellés FR/AR et contribution du module permis.

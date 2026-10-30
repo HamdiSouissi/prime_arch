@@ -97,7 +97,11 @@ Les illustrations `empty-*.svg` restent vectorielles, légères et cohérentes a
 
 ### Recherche et commandes
 
-- La palette globale est disponible par le bouton de recherche ou `⌘K` / `Ctrl+K`. Elle propose des liens filtrables au clavier et se ferme avec `Échap`.
+- La palette globale est disponible par le bouton de recherche ou `⌘K` / `Ctrl+K`. Elle interroge
+  `GET /api/recherche` (clients, projets, documents, puis les sections des modules) et affiche les résultats
+  groupés, les cinq fiches récentes et les commandes de navigation. Le champ est une combobox : `↑` `↓`
+  `Home` `End` déplacent `aria-activedescendant`, `Entrée` ouvre, `Échap` ferme, et une région `aria-live`
+  annonce le nombre de résultats. Les éléments sont construits par `textContent` (aucun `innerHTML`).
 - Le bouton `Nouveau` ouvre une sheet d’actions rapides.
 - Les tabs, switches, vues grille/liste, saisie de champs personnalisés, toast, impressions et chronomètre fonctionnent en JavaScript vanilla. Les formulaires de démonstration affichent un toast et n’enregistrent rien.
 

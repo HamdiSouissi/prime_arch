@@ -20,6 +20,7 @@ use App\Controllers\ProjectController;
 use App\Controllers\ProjectImageController;
 use App\Controllers\TimeEntryController;
 use App\Controllers\ProjectPhaseController;
+use App\Controllers\SearchController;
 use App\Controllers\SettingsController;
 use App\Controllers\UserController;
 use App\Core\Router;
@@ -111,6 +112,9 @@ return function (Router $router): void {
     $router->post('/admin/users', [UserController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
     $router->post('/admin/users/{id}', [UserController::class, 'update'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
     $router->get('/admin/audit', [AuditController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
+
+    // Recherche globale de la palette : groupes filtrés par les droits de l'utilisateur.
+    $router->get('/api/recherche', [SearchController::class, 'index'], [AuthMiddleware::class]);
 
     $router->get('/api/geography/delegations', [GeographyController::class, 'delegations'], [AuthMiddleware::class]);
     $router->get('/api/geography/postal-codes', [GeographyController::class, 'postalCodes'], [AuthMiddleware::class]);

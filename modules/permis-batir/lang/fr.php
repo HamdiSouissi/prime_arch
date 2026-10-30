@@ -6,6 +6,7 @@ declare(strict_types=1);
  * Toutes les clés sont préfixées par `permis.` pour éviter toute collision avec le noyau.
  */
 return [
+    'permis.search_group' => 'Permis de bâtir',
     'permis.title' => 'Permis de bâtir',
     'permis.eyebrow' => 'Dossiers administratifs',
     'permis.intro' => 'Suivez chaque dépôt de permis : pièces réunies, instruction, décisions et échéances du cabinet.',

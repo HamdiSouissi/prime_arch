@@ -173,83 +173,281 @@ function addCustomField(form) {
     return true;
 }
 
+/**
+ * Fiches récemment consultées (5 au maximum), conservées pour l'onglet courant.
+ * Le stockage peut être indisponible (navigation privée stricte) : on l'ignore alors.
+ */
+const RECENT_PAGES_KEY = "prime-arch:recent-pages";
+const RECENT_PAGES_LIMIT = 5;
+
+function readRecentPages() {
+    try {
+        const stored = JSON.parse(window.sessionStorage.getItem(RECENT_PAGES_KEY) ?? "[]");
+        if (!Array.isArray(stored)) return [];
+        return stored
+            .filter((entry) => entry && typeof entry.url === "string" && typeof entry.title === "string" && entry.title.trim() !== "")
+            .slice(0, RECENT_PAGES_LIMIT);
+    } catch {
+        return [];
+    }
+}
+
+function rememberPage(entry) {
+    if (!entry || !entry.title) return;
+    try {
+        const others = readRecentPages().filter((item) => item.url !== entry.url);
+        window.sessionStorage.setItem(RECENT_PAGES_KEY, JSON.stringify([entry, ...others].slice(0, RECENT_PAGES_LIMIT)));
+    } catch {
+        // Stockage refusé : la section « Récents » reste simplement vide.
+    }
+}
+
+/** Icône SVG d'un résultat, construite par DOM pour ne jamais interpréter de HTML. */
+function commandIcon(name) {
+    const sprite = document.documentElement.dataset.icons ?? "/assets/img/icons.svg";
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "icon icon--small");
+    svg.setAttribute("aria-hidden", "true");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", `${sprite}#${name || "search"}`);
+    svg.append(use);
+    return svg;
+}
+
 function initCommandPalette() {
     const dialog = document.querySelector("[data-command-palette]");
-    const input = dialog?.querySelector("[data-command-search]");
-    const list = dialog?.querySelector(".command-list");
-    const items = Array.from(dialog?.querySelectorAll("[data-command-item]") ?? []);
-    const empty = dialog?.querySelector("[data-command-empty]");
+    if (!dialog) return;
+    const input = dialog.querySelector("[data-command-search]");
+    const list = dialog.querySelector(".command-list");
+    const dynamicRegion = dialog.querySelector("[data-command-results]");
+    const staticItems = Array.from(dialog.querySelectorAll("[data-command-static]"));
+    const staticGroups = Array.from(dialog.querySelectorAll("[data-command-group]"));
+    const empty = dialog.querySelector("[data-command-empty]");
+    const loading = dialog.querySelector("[data-command-loading]");
+    const status = dialog.querySelector("[data-command-status]");
+    const endpoint = dialog.dataset.searchEndpoint ?? "/api/recherche";
+    const minLength = Number.parseInt(dialog.dataset.searchMin ?? "2", 10) || 2;
 
-    // Libellé du groupe (« Navigation », « Actions »…) : il est masqué quand aucun de
-    // ses éléments ne correspond à la recherche, pour éviter les titres vides.
-    const groupOf = new Map();
-    items.forEach((item) => {
-        let label = item.previousElementSibling;
-        while (label && !label.classList.contains("command-list__label")) label = label.previousElementSibling;
-        groupOf.set(item, label);
-    });
+    let activeId = null;
+    let groups = [];            // derniers groupes renvoyés par le serveur
+    let requestId = 0;          // ignore les réponses arrivées dans le désordre
+    let controller = null;
+    let timer = 0;
+    let groupSeq = 0;
+    const cache = new Map();
 
-    const visibleItems = () => items.filter((item) => !item.hidden);
+    // Fiche affichée : elle entre dans les « Récents » dès l'ouverture de la page.
+    if (dialog.hasAttribute("data-recent-record")) {
+        rememberPage({
+            title: dialog.dataset.recentTitle ?? "",
+            group: dialog.dataset.recentGroup ?? "",
+            url: dialog.dataset.recentUrl ?? window.location.pathname,
+            icon: dialog.dataset.recentIcon ?? "file-text",
+        });
+    }
 
-    const filterItems = () => {
-        // Recherche insensible à la casse et aux accents (« devis » trouve « Dêvis »).
+    const visibleItems = () => Array.from(dialog.querySelectorAll("[data-command-item]")).filter((item) => !item.hidden);
+
+    const setActive = (item) => {
+        Array.from(dialog.querySelectorAll("[data-command-item]")).forEach((candidate) => {
+            candidate.classList.remove("is-active");
+            candidate.setAttribute("aria-selected", "false");
+            candidate.tabIndex = -1;
+        });
+        if (!item) {
+            activeId = null;
+            input?.removeAttribute("aria-activedescendant");
+            return;
+        }
+        item.classList.add("is-active");
+        item.setAttribute("aria-selected", "true");
+        // `tabIndex` reste géré : un élément actif est atteignable au clavier, les autres non.
+        item.tabIndex = 0;
+        activeId = item.id;
+        input?.setAttribute("aria-activedescendant", item.id);
+        item.scrollIntoView?.({ block: "nearest" });
+    };
+
+    const focusAt = (index) => {
+        const items = visibleItems();
+        if (items.length === 0) {
+            setActive(null);
+            return;
+        }
+        setActive(items[(index + items.length) % items.length]);
+    };
+
+    const announce = (text) => {
+        if (status) status.textContent = text;
+    };
+
+    /** Un élément de résultat : lien réel, donc cliquable et ouvert au clavier. */
+    const buildItem = (item) => {
+        const link = document.createElement("a");
+        link.className = "command-item";
+        link.href = String(item.url ?? "#");
+        link.id = `command-result-${++groupSeq}`;
+        link.setAttribute("role", "option");
+        link.setAttribute("aria-selected", "false");
+        link.tabIndex = -1;
+        link.dataset.commandItem = "";
+        link.dataset.commandDynamic = "";
+
+        const icon = document.createElement("span");
+        icon.className = "command-item__icon";
+        icon.append(commandIcon(item.icon));
+
+        const copy = document.createElement("span");
+        copy.className = "command-item__copy";
+        const title = document.createElement("span");
+        title.className = "command-item__title";
+        title.textContent = String(item.title ?? "");
+        const meta = document.createElement("span");
+        meta.className = "command-item__meta";
+        meta.textContent = String(item.meta ?? "");
+        copy.append(title, meta);
+        link.append(icon, copy);
+        return link;
+    };
+
+    const buildGroup = (label, items) => {
+        const group = document.createElement("div");
+        group.className = "command-group";
+        group.setAttribute("role", "group");
+        const labelId = `command-dynamic-label-${++groupSeq}`;
+        group.setAttribute("aria-labelledby", labelId);
+        const heading = document.createElement("p");
+        heading.className = "command-list__label";
+        heading.id = labelId;
+        heading.textContent = label;
+        group.append(heading);
+        items.forEach((item) => group.append(buildItem(item)));
+        return group;
+    };
+
+    /** Empêche un groupe statique sans résultat de laisser un titre orphelin. */
+    const syncStaticGroups = () => {
+        staticGroups.forEach((group) => {
+            const items = Array.from(group.querySelectorAll("[data-command-item]"));
+            group.hidden = items.length > 0 && items.every((item) => item.hidden);
+        });
+    };
+
+    const render = () => {
         const query = normalizeSearch(input?.value.trim() ?? "");
-        items.forEach((item) => {
-            item.hidden = query !== "" && !normalizeSearch(item.textContent).includes(query);
+        if (!dynamicRegion) return;
+        dynamicRegion.replaceChildren();
+
+        if (query.length < minLength) {
+            const recents = readRecentPages();
+            if (recents.length > 0) {
+                dynamicRegion.append(buildGroup(t("js.search_recents", "Récents"), recents));
+            }
+        } else {
+            groups.forEach((group) => {
+                const items = Array.isArray(group?.items) ? group.items : [];
+                if (items.length === 0) return;
+                dynamicRegion.append(buildGroup(String(group.label ?? ""), items));
+            });
+        }
+
+        staticItems.forEach((item) => {
+            item.hidden = query !== "" && !normalizeSearch(item.textContent ?? "").includes(query);
         });
-        const visible = visibleItems();
-        if (empty) empty.hidden = visible.length > 0;
-        groupOf.forEach((label, item) => {
-            if (!label) return;
-            const siblings = items.filter((candidate) => groupOf.get(candidate) === label);
-            label.hidden = siblings.every((candidate) => candidate.hidden);
-        });
-        if (visible.length > 0) {
-            visible[0].tabIndex = 0;
-            visible.slice(1).forEach((item) => { item.tabIndex = -1; });
+        syncStaticGroups();
+
+        const items = visibleItems();
+        if (empty) empty.hidden = items.length > 0;
+        setActive(items[0] ?? null);
+        if (query.length < minLength) {
+            announce("");
         }
     };
 
-    // Navigation au clavier dans la liste : les flèches déplacent le focus réel sur les
-    // liens, donc Entrée ouvre la destination choisie sans code supplémentaire.
-    const focusAt = (index) => {
-        const visible = visibleItems();
-        if (visible.length === 0) return;
-        const target = visible[(index + visible.length) % visible.length];
-        visible.forEach((item) => { item.tabIndex = -1; });
-        target.tabIndex = 0;
-        target.focus({ preventScroll: true });
-        // `scrollIntoView` n’existe pas dans tous les environnements (tests, vieux moteurs).
-        target.scrollIntoView?.({ block: "nearest" });
+    const search = async (rawQuery) => {
+        const query = rawQuery.trim();
+        if (normalizeSearch(query).length < minLength) {
+            groups = [];
+            if (loading) loading.hidden = true;
+            render();
+            return;
+        }
+        const key = normalizeSearch(query);
+        if (cache.has(key)) {
+            groups = cache.get(key);
+            render();
+            return;
+        }
+        controller?.abort();
+        controller = typeof AbortController === "function" ? new AbortController() : null;
+        const current = ++requestId;
+        if (loading) loading.hidden = false;
+        try {
+            const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
+                headers: { Accept: "application/json" },
+                credentials: "same-origin",
+                signal: controller?.signal,
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (current !== requestId) return;
+            groups = Array.isArray(data?.groups) ? data.groups : [];
+            cache.set(key, groups);
+        } catch (error) {
+            if (error?.name === "AbortError" || current !== requestId) return;
+            groups = [];
+            announce(t("js.search_unavailable", "Recherche indisponible."));
+        } finally {
+            if (current === requestId && loading) loading.hidden = true;
+        }
+        render();
+        const total = groups.reduce((sum, group) => sum + (Array.isArray(group?.items) ? group.items.length : 0), 0);
+        announce(total === 0
+            ? t("js.search_none", "Aucun résultat.")
+            : t("js.search_count", `${total} résultat(s).`, { count: total }));
     };
 
-    input?.addEventListener("input", filterItems);
+    input?.addEventListener("input", () => {
+        render();
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => search(input.value), 180);
+    });
+
     input?.addEventListener("keydown", (event) => {
-        if (event.key === "ArrowDown") {
+        const items = visibleItems();
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
             event.preventDefault();
-            focusAt(0);
+            const down = event.key === "ArrowDown";
+            const index = items.findIndex((item) => item.id === activeId);
+            // Depuis le champ (aucun élément actif), ↑ part du dernier et ↓ du premier.
+            focusAt(index === -1 ? (down ? 0 : items.length - 1) : index + (down ? 1 : -1));
         } else if (event.key === "Home") {
             event.preventDefault();
             focusAt(0);
         } else if (event.key === "End") {
             event.preventDefault();
-            focusAt(visibleItems().length - 1);
+            focusAt(items.length - 1);
+        } else if (event.key === "Enter") {
+            const target = items.find((item) => item.id === activeId);
+            if (target) {
+                event.preventDefault();
+                window.location.assign(target.href);
+            }
         }
     });
 
-    // Sur un élément de la liste : flèches, retour à la recherche, échappement.
+    // Sur un élément de la liste (clic puis Tab) : flèches, retour à la recherche, échappement.
     if (list) {
         list.addEventListener("keydown", (event) => {
             const current = event.target instanceof Element ? event.target.closest("[data-command-item]") : null;
             if (!current) return;
-            const visible = visibleItems();
-            const index = visible.indexOf(current);
+            const items = visibleItems();
             if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                 event.preventDefault();
-                focusAt(index + (event.key === "ArrowDown" ? 1 : -1));
+                setActive(items[(items.indexOf(current) + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length] ?? null);
             } else if (event.key === "Home" || event.key === "End") {
                 event.preventDefault();
-                focusAt(event.key === "Home" ? 0 : visible.length - 1);
+                setActive((event.key === "Home" ? items[0] : items[items.length - 1]) ?? null);
             } else if (event.key === "Escape" && input) {
                 event.preventDefault();
                 input.focus();
@@ -257,10 +455,11 @@ function initCommandPalette() {
         });
     }
 
-    dialog?.addEventListener("close", () => {
+    dialog.addEventListener("close", () => {
         // Le navigateur rend déjà le focus au déclencheur : on ne fait que vider la recherche.
         if (input) input.value = "";
-        filterItems();
+        groups = [];
+        render();
     });
 
     document.addEventListener("keydown", (event) => {
@@ -271,7 +470,7 @@ function initCommandPalette() {
         }
     });
 
-    filterItems();
+    render();
 }
 
 function initShortcutHints() {
