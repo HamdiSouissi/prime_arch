@@ -185,15 +185,14 @@ final class DossierService
     /** Jours restants avant l’échéance (négatif si dépassée), null si aucune échéance. */
     public static function daysLeft(?string $deadline, ?string $today = null): ?int
     {
-        if ($deadline === null || $deadline === '') {
+        if ($deadline === null || $deadline === '' || !self::isDate($deadline)) {
             return null;
         }
-        try {
-            $end = new DateTimeImmutable($deadline);
-            $start = new DateTimeImmutable($today ?? date('Y-m-d'));
-        } catch (\Throwable) {
+        if ($today !== null && !self::isDate($today)) {
             return null;
         }
+        $end = new DateTimeImmutable($deadline);
+        $start = new DateTimeImmutable($today ?? date('Y-m-d'));
 
         return (int) $start->diff($end)->format('%r%a');
     }

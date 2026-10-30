@@ -143,14 +143,14 @@ final class ChantierService
     /** Nombre de jours ouverts d’une réserve, null si elle est levée. */
     public static function openDays(string $openedOn, ?string $today = null): int
     {
-        try {
-            $start = new DateTimeImmutable($openedOn);
-            $end = new DateTimeImmutable($today ?? date('Y-m-d'));
-        } catch (\Throwable) {
+        if (!self::isDate($openedOn) || ($today !== null && !self::isDate($today))) {
             return 0;
         }
+        $start = new DateTimeImmutable($openedOn);
+        $end = new DateTimeImmutable($today ?? date('Y-m-d'));
 
-        return max(0, (int) $start->diff($end)->format('%a'));
+        // Une réserve datée dans le futur compte pour zéro jour ouvert.
+        return max(0, (int) $start->diff($end)->format('%r%a'));
     }
 
     private static function isDate(string $value): bool
