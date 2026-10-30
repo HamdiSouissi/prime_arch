@@ -19,7 +19,7 @@ final class CabinetSettings
     public function get(): array
     {
         $values = [
-            'name' => (string) config('app.name', 'Prime Arch'),
+            'name' => (string) config('app.name', 'Prime Architecture'),
             'address' => '',
             'phone' => '',
             'email' => '',

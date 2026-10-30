@@ -83,6 +83,8 @@ if ($isDesignPreview) {
     <meta name="theme-color" content="#F4F7FF" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#111821" media="(prefers-color-scheme: dark)">
     <title><?= e(($title ?? '') !== '' ? $title . ' — ' : '') ?><?= e(config('app.name')) ?></title>
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= e(asset('img/favicon.png')) ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= e(asset('img/logo-prime-architecture.png')) ?>">
     <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
 <body>

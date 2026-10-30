@@ -47,6 +47,8 @@ Chaque entrée est incluse dans `prime-arch-design.zip` à son chemin de projet 
 - **A — `public/assets/img/empty-tasks.svg`** : illustration vectorielle d’une liste de tâches vide.
 - **A — `public/assets/img/icons.svg`** : sprite SVG de 61 icônes au trait arrondi.
 - **A — `public/assets/img/logo-placeholder.svg`** : marque vectorielle de remplacement pour le cabinet.
+- **Marque du produit** : `public/assets/img/logo-prime-architecture.png` (512, 96, 64 px) et
+  `favicon.png` ; l'ancien emplacement vectoriel ne sert plus qu'au logo du cabinet, avant téléversement.
 - **A — `public/assets/js/ui.js`** : interactions vanilla pour dialogues, palette, onglets, filtres, toasts et menu.
 
 ## Fichiers modifiés (M)

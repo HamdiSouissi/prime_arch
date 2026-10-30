@@ -8,7 +8,7 @@ use App\Core\Env;
  * Les valeurs proviennent du fichier .env (voir .env.example).
  */
 return [
-    'name'    => Env::get('APP_NAME', 'Prime Arch'),
+    'name'    => Env::get('APP_NAME', 'Prime Architecture'),
     'env'     => Env::get('APP_ENV', 'production'),
     'debug'   => (bool) Env::get('APP_DEBUG', false),
     'url'     => Env::get('APP_URL', 'http://localhost:8000'),

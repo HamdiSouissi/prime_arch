@@ -15,7 +15,7 @@ $swatches = [
 ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => 'Bibliothèque de composants',
-    'eyebrow' => 'Prime Arch · Design system',
+    'eyebrow' => 'Prime Architecture · Design system',
     'subtitle' => 'Les fondations de l’interface : claires, accessibles et composables par les modules.',
     'secondaryAction' => ['label' => 'Voir les modules', 'icon' => 'layers', 'url' => url('/design/modules')],
 ]) ?>

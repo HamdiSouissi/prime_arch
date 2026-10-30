@@ -1,4 +1,4 @@
-# Prime Arch
+# Prime Architecture
 
 Application web de gestion d'un cabinet d'architecture en Tunisie. Le noyau est développé en PHP 8.2+ natif, selon une architecture MVC maison, MySQL 8/InnoDB, PDO et interfaces HTML/CSS/JavaScript vanilla. Seul `public/` est exposé au web.
 
@@ -80,6 +80,14 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 Avant utilisation de la phase 3, les migrations `0006` à `0008` doivent avoir été exécutées avec succès ; les rôles intégrés doivent ensuite être resynchronisés avec `php bin/seed.php`. L’état d’exécution des migrations ne peut pas être déduit du code seul.
 
 Les suggestions postales viennent d'un jeu communautaire ancien et non officiel ; elles ne garantissent ni l'exhaustivité ni l'actualité des données. Vérifier les codes auprès de La Poste tunisienne avant tout usage officiel. Les sources, l'attribution MIT et les cas non rattachés à une délégation sont détaillés dans `docs/DATA-SOURCES.md`.
+
+## Identité du produit
+
+Le nom affiché (`Prime Architecture`), l'éditeur (`Prime Vision Solutions`), l'adresse publique
+(`primevisionsolutions.fr`) et les fichiers du logo sont centralisés dans `config/brand.php`. La barre latérale et
+l'écran de connexion lisent cette configuration : aucune vue ne contient le nom en dur. Le nom par défaut de la base
+(`APP_NAME`) suit le produit ; le nom du **cabinet client** reste réglable dans « Réglages » et prévaut sur les
+documents PDF. Le logo du cabinet téléversé reste distinct de la marque du produit.
 
 ## Langues de l'interface
 

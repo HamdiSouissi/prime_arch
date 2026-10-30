@@ -279,7 +279,7 @@ final class BackupService
                 || !in_array('roles', $tableNames, true)
                 || !in_array('migrations', $tableNames, true)
             ) {
-                throw new RuntimeException('La base ne contient pas le schéma Prime Arch initialisé.');
+                throw new RuntimeException('La base ne contient pas le schéma Prime Architecture initialisé.');
             }
             if (count($tableNames) > 10_000) {
                 throw new RuntimeException('La base dépasse le nombre maximal de tables pris en charge.');
@@ -693,7 +693,7 @@ final class BackupService
             $dataPaths[$dataPath] = true;
         }
         if (!isset($tableNames['users'], $tableNames['roles'], $tableNames['migrations'])) {
-            throw new RuntimeException('Le schéma de sauvegarde ne contient pas les tables principales de Prime Arch.');
+            throw new RuntimeException('Le schéma de sauvegarde ne contient pas les tables principales de Prime Architecture.');
         }
         foreach ($archivePaths as $archivePath) {
             if (str_starts_with($archivePath, 'database/data/') && !isset($dataPaths[$archivePath])) {

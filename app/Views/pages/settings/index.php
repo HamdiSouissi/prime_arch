@@ -6,7 +6,7 @@ use App\Core\View;
 <?php View::partial('partials/page-header', [
     'pageTitle' => 'Réglages du cabinet',
     'eyebrow' => 'Votre espace de travail',
-    'subtitle' => 'Personnalisez les coordonnées, la fiscalité, l’équipe et les modules de Prime Arch.',
+    'subtitle' => 'Personnalisez les coordonnées, la fiscalité, l’équipe et les modules de Prime Architecture.',
 ]) ?>
 
 <div class="settings-layout">

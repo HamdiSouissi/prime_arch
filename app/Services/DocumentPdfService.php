@@ -65,7 +65,7 @@ final class DocumentPdfService
             $pdf->SetDirectionality($locale === 'ar' ? 'rtl' : 'ltr');
             $document = is_array($snapshot['document'] ?? null) ? $snapshot['document'] : [];
             $pdf->SetTitle((string) ($document['title'] ?? __('documents.title')));
-            $pdf->SetAuthor((string) ($cabinet['name'] ?? 'Prime Arch'));
+            $pdf->SetAuthor((string) ($cabinet['name'] ?? 'Prime Architecture'));
             $pdf->WriteHTML($html);
             $contents = $pdf->Output('', Destination::STRING_RETURN);
             if (!is_string($contents) || !str_starts_with($contents, '%PDF-')) {

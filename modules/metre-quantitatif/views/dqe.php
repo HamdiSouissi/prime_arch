@@ -16,7 +16,7 @@ $project = is_array($project ?? null) ? $project : [];
 $summary = is_array($summary ?? null) ? $summary : [];
 $cabinet = is_array($cabinet ?? null) ? $cabinet : [];
 $lots = is_array($summary['lots'] ?? null) ? $summary['lots'] : [];
-$cabinetName = trim((string) ($cabinet['name'] ?? '')) !== '' ? (string) $cabinet['name'] : (string) config('app.name', 'Prime Arch');
+$cabinetName = trim((string) ($cabinet['name'] ?? '')) !== '' ? (string) $cabinet['name'] : (string) config('app.name', 'Prime Architecture');
 $cabinetAddress = trim((string) ($cabinet['address'] ?? ''));
 $cabinetPhone = trim((string) ($cabinet['phone'] ?? ''));
 $cabinetEmail = trim((string) ($cabinet['email'] ?? ''));

@@ -40,18 +40,25 @@
     backdrop-filter: blur(28px) saturate(155%);
 }
 
+/* Bloc de marque : le nom du produit à côté du logo, puis l'éditeur et l'adresse du site
+   en petit sous l'ensemble. Les deux lignes secondaires occupent toute la largeur utile de
+   la barre : elles ne sont donc jamais tronquées. */
+.sidebar-brand-block {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 0.1rem;
+    min-inline-size: 0;
+    margin-block-end: var(--space-5);
+    padding-inline: var(--space-2);
+}
+
 .sidebar-brand {
     display: flex;
-    flex: 0 0 auto;
     align-items: center;
-    gap: var(--space-3);
-    min-block-size: 3.75rem;
-    margin-block-end: var(--space-6);
-    padding-inline: var(--space-2);
+    gap: 0.55rem;
+    min-inline-size: 0;
     color: var(--color-ink);
-    font-size: var(--font-size-headline);
-    font-weight: 750;
-    letter-spacing: -0.04em;
+    text-decoration: none;
 }
 
 .sidebar-brand:hover {
@@ -60,23 +67,53 @@
 
 .sidebar-brand__logo {
     flex: 0 0 auto;
-    inline-size: 2.75rem;
-    block-size: 2.75rem;
-    border-radius: 1rem;
-    box-shadow: 0 8px 18px rgba(47, 107, 255, 0.15);
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: 0.8rem;
 }
 
-.sidebar-brand__name {
-    display: block;
+.sidebar-brand__product {
+    min-inline-size: 0;
+    color: var(--color-ink);
+    font-size: 0.92rem;
+    font-weight: 750;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
 }
 
 .sidebar-brand__caption {
-    display: block;
-    margin-block-start: 1px;
     color: var(--color-ink-secondary);
-    font-size: var(--font-size-caption);
-    font-weight: 550;
-    letter-spacing: 0.01em;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.35;
+    text-align: start;
+}
+
+/* L'éditeur et le site commencent sous la marque, à l'aplomb du logo : deux lignes
+   secondaires discrètes, jamais tronquées. */
+.sidebar-brand__caption,
+.sidebar-brand__site {
+    justify-self: stretch;
+    max-inline-size: 100%;
+}
+
+.sidebar-brand__site {
+    color: var(--color-ink-tertiary);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.35;
+    text-align: start;
+    text-decoration: none;
+    /* Adresse latine dans une interface arabe : elle garde son sens de lecture. */
+    unicode-bidi: isolate;
+}
+
+.sidebar-brand__site:hover,
+.sidebar-brand__site:focus-visible {
+    color: var(--color-primary-strong);
+    text-decoration: underline;
 }
 
 /* Le menu ne doit jamais être tronqué : avec les douze modules, la liste dépasse la
@@ -464,14 +501,19 @@ a.topbar-avatar:focus-visible {
         padding-inline: var(--space-2);
     }
 
-    .sidebar-brand {
-        justify-content: center;
+    .sidebar-brand-block {
+        justify-items: center;
         margin-block-end: var(--space-5);
-        padding-block: 0;
         padding-inline: 0;
     }
 
-    .sidebar-brand__name,
+    .sidebar-brand {
+        justify-content: center;
+    }
+
+    .sidebar-brand__product,
+    .sidebar-brand__caption,
+    .sidebar-brand__site,
     .sidebar-section-label,
     .sidebar-link__label,
     .sidebar-workspace__copy {

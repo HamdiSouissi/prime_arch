@@ -424,7 +424,7 @@ final class RelanceService
             $name = '';
         }
 
-        return $name !== '' ? $name : (string) config('app.name', 'Prime Arch');
+        return $name !== '' ? $name : (string) config('app.name', 'Prime Architecture');
     }
 
     private static function string(mixed $value): string
