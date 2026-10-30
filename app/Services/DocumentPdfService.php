@@ -57,7 +57,7 @@ final class DocumentPdfService
                 'useSubstitutions' => true,
                 'margin_left' => 17,
                 'margin_right' => 17,
-                'margin_top' => 34,
+                'margin_top' => 48,
                 'margin_bottom' => 22,
                 'margin_header' => 8,
                 'margin_footer' => 8,

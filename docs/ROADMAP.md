@@ -53,7 +53,8 @@ Le projet avance par phases validées une à une. Une phase suivante ne commence
 **Statut : implémentation en cours de validation opérationnelle.**
 
 - Thème clair conservé par défaut ; palette sombre appliquée automatiquement sous `prefers-color-scheme: dark`, avec adaptations CSS et contrôles de contraste documentés.
-- Migrations `0011_create_audit_logs.sql` et `0012_create_auth_throttle_markers.sql`, journal consultable par les administrateurs et événements d’authentification, de gestion et de documents sans copie des champs personnels ou financiers.
+- Migrations `0011_create_audit_logs.sql`, `0012_create_auth_throttle_markers.sql` et `0013_create_project_images.sql` ; journal administrateur et galerie d’images privées de projet. Les événements d’audit n’enregistrent pas de champs personnels ou financiers.
+- Espacement PDF harmonisé avec une marge haute de 48 mm pour tous les types lors de la génération/régénération ; liste des documents associés sur la fiche client, conditionnée par les permissions.
 - Sauvegarde complète CLI, manifeste/empreintes, vérification en lecture seule et restauration protégée réservée à une base et des dossiers de stockage vides ; limites et procédure dans `docs/OPERATIONS.md`.
 - Rôles non-administrateurs avec permissions énumérées explicitement ; accès aux réglages sensibles et à l’audit limité à l’administrateur.
 - Tests unitaires ajoutés pour l’assainissement du journal, les chemins de sauvegarde et les permissions. Ils n’ont pas été exécutés faute de PHP, Composer/PHPUnit et MySQL dans l’environnement courant.

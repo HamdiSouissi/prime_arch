@@ -11,6 +11,7 @@ use App\Core\View;
 use App\Models\ClientRepository;
 use App\Models\CustomFieldRepository;
 use App\Models\GeographyRepository;
+use App\Models\ProjectImageRepository;
 use App\Models\ProjectRepository;
 use App\Models\TimeEntryRepository;
 use App\Services\AuditLogger;
@@ -129,6 +130,9 @@ final class ProjectController
         $timeRepository = new TimeEntryRepository();
         return Response::html(View::render('pages/projects/show', $context + [
             'project' => $project,
+            'projectImages' => (new ProjectImageRepository())->forProject((int) $project['id']),
+            'imageErrors' => Session::pullFlash('projects.image_errors', []),
+            'imageNotice' => Session::pullFlash('projects.image_notice'),
             'phases' => $repository->phaseAssignments((int) $project['id']),
             'phaseSummaries' => ($canViewCosts || $canViewTime)
                 ? $timeRepository->projectPhaseSummaries((int) $project['id'], $canViewCosts)

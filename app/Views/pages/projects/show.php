@@ -6,8 +6,12 @@ use App\Core\Translator;
 use App\Core\View;
 
 $project = is_array($project ?? null) ? $project : [];
+$projectImages = is_array($projectImages ?? null) ? $projectImages : [];
+$imageErrors = is_array($imageErrors ?? null) ? $imageErrors : [];
 $phases = is_array($phases ?? null) ? $phases : [];
 $phaseSummaries = is_array($phaseSummaries ?? null) ? $phaseSummaries : [];
+$projectImages = is_array($projectImages ?? null) ? $projectImages : [];
+$imageErrors = is_array($imageErrors ?? null) ? $imageErrors : [];
 $customFields = is_array($customFields ?? null) ? $customFields : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $timeSummary = is_array($timeSummary ?? null) ? $timeSummary : null;
@@ -65,6 +69,61 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                 <?php endif; ?>
                 <div class="detail-list__item detail-list__item--stack"><dt><?= e(__('projects.description')) ?></dt><dd><?= !empty($project['description']) ? nl2br(e($project['description'])) : '—' ?></dd></div>
             </dl>
+        </section>
+
+        <section class="card stack-md" aria-labelledby="project-images-title">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-header__title" id="project-images-title"><?= e(__('projects.images')) ?></h2>
+                    <p class="section-heading__note"><?= e(__('projects.images_help')) ?></p>
+                </div>
+                <span class="badge badge--neutral"><?= e((string) count($projectImages)) ?></span>
+            </div>
+            <?php if (!empty($imageNotice)): ?>
+                <p class="form-feedback form-feedback--success" role="status"><?= e($imageNotice) ?></p>
+            <?php endif; ?>
+            <?php if (!empty($imageErrors['image'])): ?>
+                <p class="form-feedback form-feedback--error" role="alert"><?= e($imageErrors['image']) ?></p>
+            <?php endif; ?>
+            <?php if ($projectImages === []): ?>
+                <p class="muted text-footnote"><?= e(__('projects.images_empty')) ?></p>
+            <?php else: ?>
+                <div class="project-image-grid">
+                    <?php foreach ($projectImages as $image): ?>
+                        <figure class="project-image-card">
+                            <a class="project-image-link" href="<?= e(url('/projects/' . (int) $project['id'] . '/images/' . (int) $image['id'])) ?>"
+                                target="_blank" rel="noopener noreferrer"
+                                aria-label="<?= e(__('projects.image_open', ['name' => $image['original_name']])) ?>">
+                                <img src="<?= e(url('/projects/' . (int) $project['id'] . '/images/' . (int) $image['id'])) ?>"
+                                    alt="<?= e($image['original_name']) ?>" loading="lazy" decoding="async"
+                                    width="<?= e((string) $image['width']) ?>" height="<?= e((string) $image['height']) ?>">
+                            </a>
+                            <figcaption class="project-image-caption">
+                                <strong><?= e($image['original_name']) ?></strong>
+                                <span><?= e(__('projects.image_dimensions', [
+                                    'width' => (string) $image['width'],
+                                    'height' => (string) $image['height'],
+                                ])) ?></span>
+                                <time datetime="<?= e($image['created_at']) ?>"><?= e(date('d/m/Y', strtotime($image['created_at']))) ?></time>
+                            </figcaption>
+                        </figure>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($canManage)): ?>
+                <form class="project-image-upload" method="post"
+                    action="<?= e(url('/projects/' . (int) $project['id'] . '/images')) ?>"
+                    enctype="multipart/form-data">
+                    <?= csrf_field() ?>
+                    <div class="field">
+                        <label class="field__label" for="project-image-upload"><?= e(__('projects.image_select')) ?></label>
+                        <input class="field__control" id="project-image-upload" name="image" type="file"
+                            accept="image/jpeg,image/png,image/webp" required>
+                        <span class="field__hint"><?= e(__('projects.image_upload_help')) ?></span>
+                    </div>
+                    <button class="button button--secondary" type="submit"><?= e(__('projects.image_upload')) ?></button>
+                </form>
+            <?php endif; ?>
         </section>
 
         <?php if ($canEditPlan): ?>

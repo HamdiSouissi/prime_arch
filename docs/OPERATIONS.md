@@ -2,9 +2,13 @@
 
 ## Journal d’audit
 
-Après déploiement, appliquer les migrations (`php bin/migrate.php`) avant d’utiliser l’application : `0011_create_audit_logs.sql` crée `audit_logs` et `0012_create_auth_throttle_markers.sql` déduplique atomiquement les événements de limitation. Le journal suit les connexions réussies/échouées/limitées, les changements de comptes et rôles, les fiches et contacts clients, les projets/plans/phases, les champs personnalisés, les modèles de documents et les taux horaires (sans les montants), le cycle de vie des brouillons et documents émis, les règlements, les saisies de temps, les réglages du cabinet, les modules et les commandes de sauvegarde/restauration.
+Après déploiement, appliquer les migrations (`php bin/migrate.php`) avant d’utiliser l’application : `0011_create_audit_logs.sql` crée `audit_logs`, `0012_create_auth_throttle_markers.sql` déduplique atomiquement les événements de limitation et `0013_create_project_images.sql` crée les métadonnées des images de projet. Le journal suit les connexions réussies/échouées/limitées, les changements de comptes et rôles, les fiches et contacts clients, les projets, phases et images, les champs personnalisés, les modèles de documents et les taux horaires (sans les montants), le cycle de vie des brouillons et documents émis, les règlements, les saisies de temps, les réglages du cabinet, les modules et les commandes de sauvegarde/restauration.
 
 Le journal est consultable à `/admin/audit` par un administrateur. Il conserve l’identifiant de l’objet, l’acteur, la date, le type d’événement et quelques détails d’état explicitement autorisés. Il n’enregistre pas les adresses IP brutes, courriels, coordonnées, identifiants fiscaux, RIB, descriptions, montants ou contenus de documents. Les échecs d’écriture sont envoyés au journal PHP et ne bloquent pas une action métier. Il faut donc surveiller les logs serveur et vérifier que la migration est appliquée. Aucun délai de rétention n’est fixé ici : le cabinet doit le décider avec son conseil en fonction des obligations applicables.
+
+## Images de projet
+
+Les utilisateurs autorisés à gérer les projets peuvent téléverser une image JPEG, PNG ou WebP par envoi, jusqu’à 20 Mio, 10 000 pixels par côté et 40 mégapixels. Configurer PHP avec `upload_max_filesize=20M` et `post_max_size=24M` au minimum. Le serveur vérifie le MIME réel et les dimensions, attribue un nom aléatoire et conserve le fichier sous `storage/uploads/projects/`, hors de `public/`. L’affichage passe par une route authentifiée qui vérifie l’accès `projects.view` ; les images ne sont pas exposées comme fichiers statiques. La sauvegarde inclut ces fichiers via `storage/uploads/`.
 
 ## Créer et contrôler une sauvegarde
 

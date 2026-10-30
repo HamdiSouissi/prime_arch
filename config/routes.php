@@ -16,6 +16,7 @@ use App\Controllers\MediaController;
 use App\Controllers\ModuleAssetController;
 use App\Controllers\ModuleController;
 use App\Controllers\ProjectController;
+use App\Controllers\ProjectImageController;
 use App\Controllers\TimeEntryController;
 use App\Controllers\ProjectPhaseController;
 use App\Controllers\SettingsController;
@@ -56,6 +57,8 @@ return function (Router $router): void {
     $router->post('/projects/{id}/plan', [ProjectController::class, 'savePlan'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/phases/{assignmentId}/progress', [ProjectController::class, 'updatePhaseProgress'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/phases/{assignmentId}', [ProjectController::class, 'updatePhase'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/images', [ProjectImageController::class, 'upload'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/projects/{id}/images/{imageId}', [ProjectImageController::class, 'show'], [AuthMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/documents', [DocumentController::class, 'index'], [AuthMiddleware::class]);

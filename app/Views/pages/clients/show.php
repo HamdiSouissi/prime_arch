@@ -7,6 +7,7 @@ use App\Core\View;
 $client = is_array($client ?? null) ? $client : [];
 $contacts = is_array($contacts ?? null) ? $contacts : [];
 $projects = is_array($projects ?? null) ? $projects : [];
+$documents = is_array($documents ?? null) ? $documents : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $contactValues = is_array($contactValues ?? null) ? $contactValues : [];
 $contactErrors = is_array($errors['contact'] ?? null) ? $errors['contact'] : [];
@@ -59,6 +60,73 @@ $addressParts = array_filter([
                 </tbody></table></div>
             <?php endif; ?>
         </section>
+        <?php endif; ?>
+
+        <?php if (!empty($canViewDocuments)): ?>
+            <section class="card" aria-labelledby="client-documents-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="client-documents-title"><?= e(__('clients.documents')) ?></h2>
+                        <p class="section-heading__note"><?= e((string) count($documents)) ?> · <?= e(__('documents.title')) ?></p>
+                    </div>
+                </div>
+                <?php if ($documents === []): ?>
+                    <?php View::partial('partials/empty-state', [
+                        'title' => __('clients.no_documents'),
+                        'description' => __('clients.no_documents_help'),
+                    ]) ?>
+                <?php else: ?>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col"><?= e(__('documents.number')) ?></th>
+                                    <th scope="col"><?= e(__('documents.type_label')) ?></th>
+                                    <th scope="col"><?= e(__('documents.status_label')) ?></th>
+                                    <th scope="col"><?= e(__('documents.project')) ?></th>
+                                    <th scope="col"><?= e(__('clients.document_date')) ?></th>
+                                    <th scope="col" class="number"><?= e(__('documents.total')) ?></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($documents as $document): ?>
+                                    <?php
+                                    $documentNumber = $document['document_number'] !== ''
+                                        ? $document['document_number']
+                                        : __('documents.draft_number', ['id' => (string) $document['id']]);
+                                    $documentDate = $document['issue_date'] !== ''
+                                        ? $document['issue_date']
+                                        : $document['created_at'];
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <a class="table-primary" href="<?= e(url('/documents/' . (int) $document['id'])) ?>">
+                                                <span class="table-primary__text">
+                                                    <span class="table-primary__name"><?= e($documentNumber) ?></span>
+                                                    <span class="table-primary__meta"><?= e($document['title']) ?></span>
+                                                </span>
+                                            </a>
+                                        </td>
+                                        <td><?= e(__('documents.type.' . $document['document_type'])) ?></td>
+                                        <td>
+                                            <span class="badge badge--<?= e(match ($document['status']) {
+                                                'issued' => 'success',
+                                                'void' => 'neutral',
+                                                default => 'warning',
+                                            }) ?>">
+                                                <?= e(__('documents.status.' . $document['status'])) ?>
+                                            </span>
+                                        </td>
+                                        <td><?= e($document['project_name'] !== '' ? $document['project_name'] : '—') ?></td>
+                                        <td><?= e(date('d/m/Y', strtotime($documentDate))) ?></td>
+                                        <td class="number"><?= e(money_format_tnd($document['total_amount'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </section>
         <?php endif; ?>
 
         <?php if ($customFields !== []): ?>

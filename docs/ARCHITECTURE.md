@@ -29,7 +29,8 @@ Les modules téléversés et leurs vues, migrations et ressources résident sous
 - Les permissions sont chargées depuis le rôle courant à chaque requête afin que la désactivation d'un compte prenne effet immédiatement.
 - Les rôles intégrés hors administrateur énumèrent leurs droits au lieu d’utiliser des jokers de domaine ; le journal `audit_logs` n’enregistre pas les champs de formulaire ni l’adresse IP brute.
 - Les commandes de sauvegarde/restauration sont limitées à la CLI ; une restauration exige une base vide et des dossiers privés de stockage vides. Voir `docs/OPERATIONS.md`.
-- Le téléversement du logo n'accepte que JPEG, PNG et WebP, vérifie le MIME réel et les dimensions, génère un nom aléatoire et stocke le fichier hors de `public/`.
+- Les logos et images de projet n'acceptent que JPEG, PNG et WebP, vérifient le MIME réel et les dimensions, génèrent un nom aléatoire et restent hors de `public/`. Les images de projet ne sont servies qu'après contrôle de la permission `projects.view`.
+
 
 ## Initialisation des données
 

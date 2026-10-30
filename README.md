@@ -69,6 +69,8 @@ En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_K
 
 - Le clair reste le rendu normal ; le sombre suit automatiquement la préférence `prefers-color-scheme: dark` du système.
 - Journal d’audit administrateur, sauvegarde ZIP privée en CLI, vérification d’intégrité et restauration limitée à une base vide.
+- Marge supérieure PDF harmonisée à 48 mm pour les régénérations de tous types de documents ; documents associés listés sur la fiche client selon les permissions.
+- Images JPEG/PNG/WebP téléversées par projet, stockées hors webroot et servies après contrôle d’accès ; galerie pour les plans 2D et visuels de référence.
 - Permissions des rôles intégrés explicites et moindres privilèges ; les réglages de cabinet contenant des données sensibles sont réservés à l’administrateur.
 - Les tests de sécurité et de politique de permissions sont ajoutés, mais doivent encore être exécutés avec PHP/PHPUnit/MySQL. Aucune règle fiscale ou juridique tunisienne n’est déclarée conforme sans validation de l’expert-comptable et de l’OAT.
 - Procédures d’exploitation et limites : `docs/OPERATIONS.md`.

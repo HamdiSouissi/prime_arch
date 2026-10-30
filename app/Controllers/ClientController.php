@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\ClientRepository;
 use App\Models\CustomFieldRepository;
+use App\Models\DocumentRepository;
 use App\Models\GeographyRepository;
 use App\Services\AuditLogger;
 use App\Services\ClientService;
@@ -104,7 +105,15 @@ final class ClientController
             return Response::html(View::render('pages/404', [], 'layouts/app'), 404);
         }
         $context = (new ViewContext())->authenticated((string) $client['display_name'], 'clients');
+        $canViewDocuments = Auth::can('documents.view') || Auth::can('documents.manage')
+            || Auth::can('documents.issue') || Auth::can('documents.create')
+            || Auth::can('documents.payments.manage') || Auth::can('documents.templates.manage')
+            || Auth::can('settings.manage');
         return Response::html(View::render('pages/clients/show', $context + [
+            'documents' => $canViewDocuments
+                ? (new DocumentRepository())->forClient((int) $client['id'])
+                : [],
+            'canViewDocuments' => $canViewDocuments,
             'client' => $client,
             'contacts' => $repository->contacts((int) $client['id']),
             'projects' => Auth::can('projects.view') ? $repository->projects((int) $client['id']) : [],

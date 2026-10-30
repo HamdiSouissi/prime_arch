@@ -120,6 +120,33 @@ final class DocumentRepository
     }
 
     /** @return array<int,array<string,mixed>> */
+    public function forClient(int $clientId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT d.id, d.document_number, d.document_type, d.status, d.title,
+                    d.issue_date, d.due_date, d.total_amount, d.created_at,
+                    p.name AS project_name
+             FROM documents d
+             LEFT JOIN projects p ON p.id = d.project_id
+             WHERE d.client_id = :client_id
+             ORDER BY COALESCE(d.issue_date, DATE(d.created_at)) DESC, d.id DESC'
+        );
+        $statement->execute(['client_id' => $clientId]);
+        return array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'document_number' => (string) ($row['document_number'] ?? ''),
+            'document_type' => (string) $row['document_type'],
+            'status' => (string) $row['status'],
+            'title' => (string) $row['title'],
+            'issue_date' => (string) ($row['issue_date'] ?? ''),
+            'due_date' => (string) ($row['due_date'] ?? ''),
+            'total_amount' => (string) $row['total_amount'],
+            'created_at' => (string) $row['created_at'],
+            'project_name' => (string) ($row['project_name'] ?? ''),
+        ], $statement->fetchAll());
+    }
+
+    /** @return array<int,array<string,mixed>> */
     public function lines(int $documentId): array
     {
         $statement = $this->pdo->prepare(
