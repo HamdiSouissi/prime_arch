@@ -199,9 +199,10 @@ vivent dans des courriels.
 4. **Vague 3** : `comptabilite-export` (rapide), `fiscal-tn`, `crm-opportunites`,
    `portail-client` (avec revue de sécurité), `ged-versions`.
 
-État de la vague 3 : `comptabilite-export`, `fiscal-tn`, `crm-opportunites` et `portail-client`
-sont livrés (v1.0.0) ; `portail-client` a fait l’objet de la revue de sécurité dédiée demandée
-par le catalogue, consignée dans `docs/SECURITE-PORTAIL-CLIENT.md`. Reste `ged-versions`.
+**Vague 3 terminée.** `comptabilite-export`, `fiscal-tn`, `crm-opportunites`, `portail-client` et
+`ged-versions` sont livrés (v1.0.0). `portail-client`, seule surface publique du catalogue, a fait
+l’objet de la revue de sécurité dédiée demandée, consignée dans
+`docs/SECURITE-PORTAIL-CLIENT.md`.
 
 Critères de priorisation retenus : valeur quotidienne pour l’architecte > impact trésorerie >
 risque technique. Les deux modules à **plus fort effet perçu** sont `suivi-chantier` (il crée de la
@@ -242,11 +243,13 @@ génériques ajoutées pour tous les modules : `[data-print]`, `[data-copy]`, `f
 | `conformite-oat` | 1.0.0 | `conformite_inscriptions`, `conformite_assurances`, `conformite_formations`, `conformite_partenaires` | `projects.view` / `projects.manage` (+ `settings.view` / `settings.manage`) | Dossier professionnel : inscription et carte OAT, responsabilité civile, formation continue, bureaux d’études partenaires, alertes d’échéance à horizon réglable, attestation d’assurance imprimable par projet |
 | `comptabilite-export` | 1.0.0 | Aucune (lecture seule) | `documents.view` ou `finance.view` (aucune écriture) | Journaux du mois : ventes (factures et avoirs, TVA, timbre, retenue) et encaissements, ventilation de la TVA par taux, export CSV par journal et par période |
 | `fiscal-tn` | 1.0.0 | `fiscal_echeances`, `fiscal_declarations` | `documents.view` / `documents.manage` (+ `finance.view` / `finance.manage`, `settings.manage`) | Calendrier des obligations (TVA, retenue à la source, TCL, autre) à période et échéance libres, états « à préparer / déposée / payée », alertes à horizon réglable, récapitulatif par période, export CSV |
-
 | `crm-opportunites` | 1.0.0 | `crm_opportunites`, `crm_activites` | `clients.view` / `clients.manage` (+ `projects.view` / `projects.manage`) | Liste du pipeline (filtres étape, origine, responsable, relance et recherche libre), fiche opportunité (avancement d’étape, rattachement à un client et à un projet existants, journal des activités, édition), répartition par étape, export CSV |
-| `portail-client` | 1.0.0 | `portail_jetons`, `portail_acces` | `clients.view` / `clients.manage` (+ `projects.view`, vérification d’appartenance à chaque requête publique) | Écran du cabinet : liens actifs et statistiques, création d’un lien (client, portée projet ou client, durée 1–365 jours, droits documents/montants/photos), révocation, prolongation, suppression, journal des consultations. Espace public autonome `/portail/{jeton}` : projets, phases, avancement, documents émis, photos ; pages d’état (invalide, expiré, révoqué, débit dépassé) |
+| `portail-client` | 1.0.0 | `portail_jetons`, `portail_acces`, `portail_tentatives` | `clients.view` / `clients.manage` (+ `projects.view`, vérification d’appartenance à chaque requête publique) | Écran du cabinet : liens actifs et statistiques, création d’un lien (client, portée projet ou client, durée 1–365 jours, droits documents/montants/photos), révocation, prolongation, suppression, journal des consultations. Espace public autonome `/portail/{jeton}` : projets, phases, avancement, documents émis, photos ; pages d’état (invalide, expiré, révoqué, débit dépassé) |
+| `ged-versions` | 1.0.0 | `ged_documents`, `ged_versions` | `documents.view` ou `projects.view` / `documents.manage` ou `projects.manage` | Liste des documents (recherche libre, catégorie, client, projet, archive), fiche documentaire (référence `GED-…`, classement, étiquettes, rétention, empreinte SHA-256), dépôt de versions successives avec note, téléchargement vérifié, archivage, édition et suppression, export CSV de l’index |
 
-Il y a **dix modules livrés** (vagues 1 à 3, moins `ged-versions` encore à faire).
+Il y a **onze modules livrés** : les trois vagues du catalogue sont complètes.
+
+### Points de vigilance (à valider par le cabinet)
 
 - **Délais de permis** : le module n’impose aucun délai légal ; l’architecte saisit les échéances
   et le module se contente de signaler les retards. Les valeurs usuelles doivent être confirmées
@@ -315,6 +318,15 @@ Il y a **dix modules livrés** (vagues 1 à 3, moins `ged-versions` encore à fa
   financière interne (coûts, honoraires, taux, notes privées, règlements) n’est exposée ; les
   montants des documents ne sont visibles que si le cabinet a coché le droit correspondant.
   La revue de sécurité complète est dans **`docs/SECURITE-PORTAIL-CLIENT.md`**.
+- **Dépôt documentaire** : `ged-versions` écrit uniquement dans ses tables `ged_*` et dans
+  `storage/modules/ged-versions/`, **hors de `public/`**. Le nom du fichier sur le disque est
+  opaque (`ged-file-<32 hex>.<ext>`), l’extension est déduite du **type MIME réel** relevé par
+  `finfo` (liste blanche : PDF, JPEG, PNG, WebP, texte, CSV, ZIP, DOCX, XLSX, ODT, ODS ; rien
+  d’exécutable), la taille est bornée à 25 Mo et le nom fourni par l’utilisateur n’est jamais
+  utilisé pour construire un chemin. Chaque lecture est contrôlée (répertoire réel, absence de
+  lien symbolique, type réel) et l’empreinte **SHA-256** enregistrée à l’import est revérifiée
+  avant l’envoi. La **rétention** est une date librement saisie : le module n’impose aucune durée
+  légale et n’efface rien automatiquement. Aucun fichier du noyau n’est lu, déplacé ni supprimé.
 - **Journaux comptables** : `comptabilite-export` est **strictement en lecture** — aucune table,
   aucune route d’écriture, aucun taux appliqué. Il reprend les montants figés dans les documents
   émis (HT + TVA + timbre − retenue) et les règlements du noyau ; les brouillons et les pièces
@@ -335,6 +347,7 @@ cd modules && zip -r comptabilite-export-1.0.0.zip comptabilite-export
 cd modules && zip -r fiscal-tn-1.0.0.zip fiscal-tn
 cd modules && zip -r crm-opportunites-1.0.0.zip crm-opportunites
 cd modules && zip -r portail-client-1.0.0.zip portail-client
+cd modules && zip -r ged-versions-1.0.0.zip ged-versions
 ```
 
 Puis **Réglages → Modules → Installer**, sélectionner le ZIP, cocher la case de confiance, puis
@@ -345,7 +358,7 @@ ses tables et ses données ; la désinstallation complète n’est jamais silenc
 
 Les préfixes suivent le domaine fonctionnel et restent réservés au module : `permis_batir_*`,
 `chantier_*`, `relances_*`, `metre_*`, `bareme_*`, `planning_*`, `conformite_*`, `fiscal_*`,
-`crm_*` et `portail_*`.
+`crm_*`, `portail_*` et `ged_*`.
 `comptabilite-export` ne crée aucune table : il ne lit que `documents`, `document_payments`,
 `clients` et `projects`. Le gestionnaire de modules n’impose pas le préfixe du slug, mais
 chaque migration est idempotente (`CREATE TABLE IF NOT EXISTS`) et ne touche aucune table du cœur.

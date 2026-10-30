@@ -8,6 +8,10 @@ Le module ajoute des **routes publiques**, c’est-à-dire accessibles sans sess
 surface de ce type parmi les modules livrés : tout le reste du catalogue reste derrière
 `AuthMiddleware`.
 
+Trois tables préfixées `portail_*` sont créées : `portail_jetons` (liens et droits),
+`portail_acces` (journal des consultations), `portail_tentatives` (compteur de limitation de
+débit, purgé périodiquement).
+
 ---
 
 ## 1. Ce que le module expose, et à qui
