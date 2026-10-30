@@ -180,6 +180,43 @@ function initCommandPalette() {
     });
 }
 
+function initLocalClock() {
+    const clock = document.querySelector("[data-local-clock]");
+    const dateElement = clock?.querySelector("[data-clock-date]");
+    const timeElement = clock?.querySelector("[data-clock-time]");
+    if (!(clock instanceof HTMLTimeElement) || !dateElement || !timeElement) return;
+
+    const timezone = clock.dataset.timezone || "Africa/Tunis";
+    const locale = document.documentElement.lang === "ar" ? "ar-TN" : "fr-TN";
+    try {
+        const dateFormatter = new Intl.DateTimeFormat(locale, {
+            timeZone: timezone,
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+        const timeFormatter = new Intl.DateTimeFormat(locale, {
+            timeZone: timezone,
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        });
+        const update = () => {
+            const now = new Date();
+            const date = dateFormatter.format(now);
+            const time = timeFormatter.format(now);
+            dateElement.textContent = date;
+            timeElement.textContent = time;
+            clock.dateTime = now.toISOString();
+            clock.setAttribute("aria-label", `${clock.dataset.clockLabel ?? "Local time"} · ${date} ${time}`);
+        };
+        update();
+        window.setInterval(update, 60_000);
+    } catch {
+        // Le texte rendu côté serveur reste disponible si le navigateur ne gère pas le fuseau configuré.
+    }
+}
+
 function initLargeTitles() {
     const titles = document.querySelectorAll("[data-large-title]");
     if (!titles.length) return;
@@ -413,6 +450,119 @@ function initVatRatesSelect() {
     ratesInput.addEventListener("input", refreshOptions);
 }
 
+function initCsvImports() {
+    document.querySelectorAll("[data-csv-file-input]").forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) return;
+        const field = input.closest(".field");
+        const status = field?.querySelector("[data-csv-file-status]");
+        if (!field || !status) return;
+        const maxBytes = Number(input.closest("[data-csv-import-form]")?.dataset.fileMaxBytes ?? 5_242_880);
+
+        input.addEventListener("change", () => {
+            const file = input.files?.[0];
+            if (!file) {
+                input.setCustomValidity("");
+                input.setAttribute("aria-invalid", "false");
+                field.classList.remove("is-invalid", "is-valid");
+                input.classList.remove("is-invalid", "is-valid");
+                status.classList.remove("field__hint--error", "field__hint--success");
+                status.textContent = "";
+                return;
+            }
+
+            const valid = file.name.toLowerCase().endsWith(".csv") && file.size > 0 && file.size <= maxBytes;
+            if (!valid) {
+                const message = input.dataset.fileInvalid ?? "Choose a valid CSV file.";
+                input.value = "";
+                input.setCustomValidity(message);
+                input.setAttribute("aria-invalid", "true");
+                field.classList.add("is-invalid");
+                field.classList.remove("is-valid");
+                input.classList.add("is-invalid");
+                input.classList.remove("is-valid");
+                status.classList.add("field__hint--error");
+                status.classList.remove("field__hint--success");
+                status.textContent = message;
+                return;
+            }
+
+            input.setCustomValidity("");
+            input.setAttribute("aria-invalid", "false");
+            field.classList.remove("is-invalid");
+            field.classList.add("is-valid");
+            input.classList.remove("is-invalid");
+            input.classList.add("is-valid");
+            status.classList.remove("field__hint--error");
+            status.classList.add("field__hint--success");
+            status.textContent = `${input.dataset.fileSelected ?? "File ready:"} ${file.name}`;
+        });
+    });
+}
+
+function initTunisianPhones() {
+    document.querySelectorAll("[data-tunisian-phone]").forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) return;
+        const field = input.closest(".phone-field");
+        const status = field?.querySelector("[data-phone-validation]");
+        let pattern;
+        try {
+            pattern = new RegExp(input.dataset.phonePattern ?? "");
+        } catch {
+            return;
+        }
+        if (!field || !status) return;
+
+        const update = () => {
+            const value = input.value.trim();
+            if (value === "") {
+                input.setCustomValidity("");
+                input.setAttribute("aria-invalid", "false");
+                input.classList.remove("is-invalid", "is-valid");
+                field.classList.remove("is-invalid", "is-valid");
+                status.classList.remove("field__hint--error", "field__hint--success");
+                status.textContent = "";
+                status.setAttribute("role", "status");
+                return;
+            }
+
+            const valid = pattern.test(value);
+            const message = valid ? (input.dataset.phoneValid ?? "") : (input.dataset.phoneInvalid ?? "");
+            input.setCustomValidity(valid ? "" : message);
+            input.setAttribute("aria-invalid", String(!valid));
+            input.classList.toggle("is-invalid", !valid);
+            input.classList.toggle("is-valid", valid);
+            field.classList.toggle("is-invalid", !valid);
+            field.classList.toggle("is-valid", valid);
+            status.classList.toggle("field__hint--error", !valid);
+            status.classList.toggle("field__hint--success", valid);
+            status.textContent = message;
+            status.setAttribute("role", "status");
+        };
+
+        input.addEventListener("input", update);
+        input.addEventListener("blur", update);
+        if (input.value.trim() !== "") update();
+    });
+}
+
+function initValidationFeedback() {
+    document.addEventListener("invalid", (event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLElement)) return;
+        input.classList.add("is-invalid");
+        input.closest(".field")?.classList.add("is-invalid");
+    }, true);
+
+    document.addEventListener("input", (event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement || input instanceof HTMLSelectElement || input instanceof HTMLTextAreaElement)) return;
+        if (input.validity.valid) {
+            input.classList.remove("is-invalid");
+            input.closest(".field")?.classList.remove("is-invalid");
+        }
+    });
+}
+
 function initUpload() {
     const zone = document.querySelector("[data-upload-zone]");
     const input = zone?.querySelector("input[type='file']");
@@ -545,6 +695,12 @@ export function initUI() {
         } else if (form.matches("[data-demo-form]")) {
             event.preventDefault();
             showToast("Démo uniquement : aucune donnée n'a été enregistrée.", "info");
+        } else {
+            form.classList.add("is-submitting");
+            form.setAttribute("aria-busy", "true");
+            form.querySelectorAll("button[type='submit'], input[type='submit']").forEach((button) => {
+                button.disabled = true;
+            });
         }
     });
 
@@ -581,12 +737,16 @@ export function initUI() {
     });
 
     initCommandPalette();
+    initLocalClock();
     initTabKeyboard();
     initLargeTitles();
     initFilters();
     initViewToggle();
     initTimer();
     initUpload();
+    initTunisianPhones();
+    initCsvImports();
+    initValidationFeedback();
     initGeographySelects();
     initTimeEntryPhases();
     initVatRatesSelect();

@@ -62,10 +62,10 @@ final class ClientService
         if ($values['email'] !== '' && (!filter_var($values['email'], FILTER_VALIDATE_EMAIL) || strlen($values['email']) > 190)) {
             $errors['email'] = __('clients.invalid');
         }
-        if (mb_strlen($values['phone'], 'UTF-8') > 32
-            || ($values['phone'] !== '' && !preg_match((string) config('tunisia.phone.pattern'), $values['phone']))
-        ) {
-            $errors['phone'] = __('clients.invalid');
+        if (mb_strlen($values['phone'], 'UTF-8') > 32 || !TunisianPhoneNumber::isValid($values['phone'])) {
+            $errors['phone'] = __('clients.invalid_phone');
+        } elseif ($values['phone'] !== '') {
+            $values['phone'] = TunisianPhoneNumber::normalize($values['phone']);
         }
         if (mb_strlen($values['address_line'], 'UTF-8') > 255) {
             $errors['address_line'] = __('clients.invalid');

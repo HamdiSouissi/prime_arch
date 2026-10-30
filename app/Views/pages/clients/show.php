@@ -30,8 +30,8 @@ $addressParts = array_filter([
     'primaryAction' => !empty($canManage) ? ['label' => __('clients.edit'), 'icon' => 'edit', 'url' => url('/clients/' . (int) $client['id'] . '/edit')] : null,
 ]) ?>
 
-<div class="content-grid client-detail-grid">
-    <div class="stack-lg">
+<div class="client-record-layout">
+    <div class="client-overview-grid">
         <section class="card" aria-labelledby="client-contact-title">
             <div class="card-header">
                 <div><h2 class="card-header__title" id="client-contact-title"><?= e(__('clients.contact_details')) ?></h2><p class="section-heading__note"><?= e(__('clients.created_at')) ?> <?= e(date('d/m/Y', strtotime((string) $client['created_at']))) ?></p></div>
@@ -47,8 +47,61 @@ $addressParts = array_filter([
             </dl>
         </section>
 
+        <section class="card" aria-labelledby="client-contacts-title">
+            <div class="card-header"><div><h2 class="card-header__title" id="client-contacts-title"><?= e(__('clients.contacts')) ?></h2><p class="section-heading__note"><?= e((string) count($contacts)) ?> · <?= e(__('clients.contacts')) ?></p></div></div>
+            <?php if ($contacts === [] && empty($canManage)): ?><p class="muted text-footnote"><?= e(__('clients.no_contacts')) ?></p><?php endif; ?>
+            <?php foreach ($contacts as $contact): ?>
+                <details class="contact-record" <?= $contactErrorId === (int) $contact['id'] ? 'open' : '' ?>>
+                    <summary class="contact-record__summary"><span><strong><?= e($contact['full_name']) ?></strong><?php if (!empty($contact['job_title'])): ?><span class="table-primary__meta"><?= e($contact['job_title']) ?></span><?php endif; ?></span><?php if ($contact['is_primary']): ?><span class="badge badge--info badge--plain"><?= e(__('clients.primary_contact')) ?></span><?php endif; ?></summary>
+                    <?php if (!empty($canManage)): ?>
+                        <?php $contactFormValues = $contactErrorId === (int) $contact['id'] ? $contactValues : $contact; ?>
+                        <form class="contact-edit-form" method="post" action="<?= e(url('/clients/' . $client['id'] . '/contacts/' . $contact['id'])) ?>">
+                            <?= csrf_field() ?>
+                            <div class="form-grid">
+                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-name"><?= e(__('clients.contact_name')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-name" name="full_name" maxlength="150" required value="<?= e($contactFormValues['full_name'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['full_name'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['full_name']) ?></span><?php endif; ?></div>
+                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-title"><?= e(__('clients.contact_role')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-title" name="job_title" maxlength="100" value="<?= e($contactFormValues['job_title'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['job_title'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['job_title']) ?></span><?php endif; ?></div>
+                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-email"><?= e(__('settings.email')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-email" name="email" type="email" maxlength="190" value="<?= e($contactFormValues['email'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['email'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['email']) ?></span><?php endif; ?></div>
+                                <?php View::partial('partials/tunisian-phone-field', [
+                                    'inputId' => 'contact-' . (int) $contact['id'] . '-phone',
+                                    'value' => $contactFormValues['phone'] ?? '',
+                                    'fieldError' => $contactErrorId === (int) $contact['id'] ? ($contactErrors['phone'] ?? '') : '',
+                                ]) ?>
+                            </div>
+                            <div class="cluster cluster--between"><label class="check-label"><input type="checkbox" name="is_primary" value="1" <?= !empty($contactFormValues['is_primary']) ? 'checked' : '' ?>> <?= e(__('clients.primary_contact')) ?></label><div class="cluster"><button class="button button--small button--secondary" type="submit"><?= e(__('common.save')) ?></button></div></div>
+                        </form>
+                        <form method="post" action="<?= e(url('/clients/' . $client['id'] . '/contacts/' . $contact['id'] . '/delete')) ?>" data-confirm-message="<?= e(__('clients.confirm_delete_contact')) ?>">
+                            <?= csrf_field() ?><button class="button button--small button--ghost button--danger" type="submit"><?= e(__('common.delete')) ?></button>
+                        </form>
+                    <?php else: ?>
+                        <dl class="detail-list"><div class="detail-list__item"><dt><?= e(__('settings.email')) ?></dt><dd><?= e($contact['email'] !== '' ? $contact['email'] : '—') ?></dd></div><div class="detail-list__item"><dt><?= e(__('settings.phone')) ?></dt><dd><?= e($contact['phone'] !== '' ? $contact['phone'] : '—') ?></dd></div></dl>
+                    <?php endif; ?>
+                </details>
+            <?php endforeach; ?>
+            <?php if (!empty($canManage)): ?>
+                <?php $newContactValues = $contactErrorId === 0 ? $contactValues : []; ?>
+                <form class="contact-new-form" method="post" action="<?= e(url('/clients/' . $client['id'] . '/contacts')) ?>">
+                    <?= csrf_field() ?>
+                    <h3 class="section-heading__title"><?= e(__('clients.add_contact')) ?></h3>
+                    <div class="form-grid">
+                        <div class="field"><label class="field__label" for="new-contact-name"><?= e(__('clients.contact_name')) ?></label><input class="field__control" id="new-contact-name" name="full_name" maxlength="150" required value="<?= e($newContactValues['full_name'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['full_name'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['full_name']) ?></span><?php endif; ?></div>
+                        <div class="field"><label class="field__label" for="new-contact-title"><?= e(__('clients.contact_role')) ?></label><input class="field__control" id="new-contact-title" name="job_title" maxlength="100" value="<?= e($newContactValues['job_title'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['job_title'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['job_title']) ?></span><?php endif; ?></div>
+                        <div class="field"><label class="field__label" for="new-contact-email"><?= e(__('settings.email')) ?></label><input class="field__control" id="new-contact-email" name="email" type="email" maxlength="190" value="<?= e($newContactValues['email'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['email'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['email']) ?></span><?php endif; ?></div>
+                        <?php View::partial('partials/tunisian-phone-field', [
+                            'inputId' => 'new-contact-phone',
+                            'value' => $newContactValues['phone'] ?? '',
+                            'fieldError' => $contactErrorId === 0 ? ($contactErrors['phone'] ?? '') : '',
+                        ]) ?>
+                    </div>
+                    <?php if (!empty($contactErrors['general'])): ?><p class="field__hint field__hint--error"><?= e($contactErrors['general']) ?></p><?php endif; ?>
+                    <div class="cluster cluster--between"><label class="check-label"><input type="checkbox" name="is_primary" value="1" <?= !empty($newContactValues['is_primary']) ? 'checked' : '' ?>> <?= e(__('clients.primary_contact')) ?></label><button class="button button--secondary" type="submit"><?= e(__('clients.add_contact')) ?></button></div>
+                </form>
+            <?php endif; ?>
+        </section>
+    </div>
+
+    <div class="client-associated-grid">
         <?php if (!empty($canViewProjects)): ?>
-        <section class="card" aria-labelledby="client-projects-title">
+        <section class="card client-associated-card client-projects-card" aria-labelledby="client-projects-title">
             <div class="card-header"><div><h2 class="card-header__title" id="client-projects-title"><?= e(__('clients.projects')) ?></h2><p class="section-heading__note"><?= e((string) count($projects)) ?> · <?= e(__('projects.title')) ?></p></div></div>
             <?php if ($projects === []): ?>
                 <?php View::partial('partials/empty-state', ['title' => __('clients.no_projects'), 'description' => __('clients.no_projects_help')]) ?>
@@ -63,7 +116,7 @@ $addressParts = array_filter([
         <?php endif; ?>
 
         <?php if (!empty($canViewDocuments)): ?>
-            <section class="card" aria-labelledby="client-documents-title">
+            <section class="card client-associated-card client-documents-card" aria-labelledby="client-documents-title">
                 <div class="card-header">
                     <div>
                         <h2 class="card-header__title" id="client-documents-title"><?= e(__('clients.documents')) ?></h2>
@@ -130,57 +183,13 @@ $addressParts = array_filter([
         <?php endif; ?>
 
         <?php if ($customFields !== []): ?>
-            <section class="card" aria-labelledby="client-custom-title"><div class="card-header"><h2 class="card-header__title" id="client-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canManage)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div><dl class="detail-list">
+            <section class="card client-associated-card client-custom-fields-card" aria-labelledby="client-custom-title"><div class="card-header"><h2 class="card-header__title" id="client-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canManage)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div><dl class="detail-list">
                 <?php foreach ($customFields as $field): ?>
                     <?php $value = $client['custom_fields'][$field['field_key']] ?? null; ?>
                     <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
                 <?php endforeach; ?>
             </dl></section>
         <?php endif; ?>
-    </div>
 
-    <div class="stack-lg">
-        <section class="card" aria-labelledby="client-contacts-title">
-            <div class="card-header"><div><h2 class="card-header__title" id="client-contacts-title"><?= e(__('clients.contacts')) ?></h2><p class="section-heading__note"><?= e((string) count($contacts)) ?> · <?= e(__('clients.contacts')) ?></p></div></div>
-            <?php if ($contacts === [] && empty($canManage)): ?><p class="muted text-footnote"><?= e(__('clients.no_contacts')) ?></p><?php endif; ?>
-            <?php foreach ($contacts as $contact): ?>
-                <details class="contact-record" <?= $contactErrorId === (int) $contact['id'] ? 'open' : '' ?>>
-                    <summary class="contact-record__summary"><span><strong><?= e($contact['full_name']) ?></strong><?php if (!empty($contact['job_title'])): ?><span class="table-primary__meta"><?= e($contact['job_title']) ?></span><?php endif; ?></span><?php if ($contact['is_primary']): ?><span class="badge badge--info badge--plain"><?= e(__('clients.primary_contact')) ?></span><?php endif; ?></summary>
-                    <?php if (!empty($canManage)): ?>
-                        <?php $contactFormValues = $contactErrorId === (int) $contact['id'] ? $contactValues : $contact; ?>
-                        <form class="contact-edit-form" method="post" action="<?= e(url('/clients/' . $client['id'] . '/contacts/' . $contact['id'])) ?>">
-                            <?= csrf_field() ?>
-                            <div class="form-grid">
-                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-name"><?= e(__('clients.contact_name')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-name" name="full_name" maxlength="150" required value="<?= e($contactFormValues['full_name'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['full_name'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['full_name']) ?></span><?php endif; ?></div>
-                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-title"><?= e(__('clients.contact_role')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-title" name="job_title" maxlength="100" value="<?= e($contactFormValues['job_title'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['job_title'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['job_title']) ?></span><?php endif; ?></div>
-                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-email"><?= e(__('settings.email')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-email" name="email" type="email" maxlength="190" value="<?= e($contactFormValues['email'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['email'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['email']) ?></span><?php endif; ?></div>
-                                <div class="field"><label class="field__label" for="contact-<?= e((string) $contact['id']) ?>-phone"><?= e(__('settings.phone')) ?></label><input class="field__control" id="contact-<?= e((string) $contact['id']) ?>-phone" name="phone" type="tel" maxlength="32" value="<?= e($contactFormValues['phone'] ?? '') ?>"><?php if ($contactErrorId === (int) $contact['id'] && !empty($contactErrors['phone'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['phone']) ?></span><?php endif; ?></div>
-                            </div>
-                            <div class="cluster cluster--between"><label class="check-label"><input type="checkbox" name="is_primary" value="1" <?= !empty($contactFormValues['is_primary']) ? 'checked' : '' ?>> <?= e(__('clients.primary_contact')) ?></label><div class="cluster"><button class="button button--small button--secondary" type="submit"><?= e(__('common.save')) ?></button></div></div>
-                        </form>
-                        <form method="post" action="<?= e(url('/clients/' . $client['id'] . '/contacts/' . $contact['id'] . '/delete')) ?>" data-confirm-message="<?= e(__('clients.confirm_delete_contact')) ?>">
-                            <?= csrf_field() ?><button class="button button--small button--ghost button--danger" type="submit"><?= e(__('common.delete')) ?></button>
-                        </form>
-                    <?php else: ?>
-                        <dl class="detail-list"><div class="detail-list__item"><dt><?= e(__('settings.email')) ?></dt><dd><?= e($contact['email'] !== '' ? $contact['email'] : '—') ?></dd></div><div class="detail-list__item"><dt><?= e(__('settings.phone')) ?></dt><dd><?= e($contact['phone'] !== '' ? $contact['phone'] : '—') ?></dd></div></dl>
-                    <?php endif; ?>
-                </details>
-            <?php endforeach; ?>
-            <?php if (!empty($canManage)): ?>
-                <?php $newContactValues = $contactErrorId === 0 ? $contactValues : []; ?>
-                <form class="contact-new-form" method="post" action="<?= e(url('/clients/' . $client['id'] . '/contacts')) ?>">
-                    <?= csrf_field() ?>
-                    <h3 class="section-heading__title"><?= e(__('clients.add_contact')) ?></h3>
-                    <div class="form-grid">
-                        <div class="field"><label class="field__label" for="new-contact-name"><?= e(__('clients.contact_name')) ?></label><input class="field__control" id="new-contact-name" name="full_name" maxlength="150" required value="<?= e($newContactValues['full_name'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['full_name'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['full_name']) ?></span><?php endif; ?></div>
-                        <div class="field"><label class="field__label" for="new-contact-title"><?= e(__('clients.contact_role')) ?></label><input class="field__control" id="new-contact-title" name="job_title" maxlength="100" value="<?= e($newContactValues['job_title'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['job_title'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['job_title']) ?></span><?php endif; ?></div>
-                        <div class="field"><label class="field__label" for="new-contact-email"><?= e(__('settings.email')) ?></label><input class="field__control" id="new-contact-email" name="email" type="email" maxlength="190" value="<?= e($newContactValues['email'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['email'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['email']) ?></span><?php endif; ?></div>
-                        <div class="field"><label class="field__label" for="new-contact-phone"><?= e(__('settings.phone')) ?></label><input class="field__control" id="new-contact-phone" name="phone" type="tel" maxlength="32" value="<?= e($newContactValues['phone'] ?? '') ?>"><?php if ($contactErrorId === 0 && !empty($contactErrors['phone'])): ?><span class="field__hint field__hint--error"><?= e($contactErrors['phone']) ?></span><?php endif; ?></div>
-                    </div>
-                    <?php if (!empty($contactErrors['general'])): ?><p class="field__hint field__hint--error"><?= e($contactErrors['general']) ?></p><?php endif; ?>
-                    <div class="cluster cluster--between"><label class="check-label"><input type="checkbox" name="is_primary" value="1" <?= !empty($newContactValues['is_primary']) ? 'checked' : '' ?>> <?= e(__('clients.primary_contact')) ?></label><button class="button button--secondary" type="submit"><?= e(__('clients.add_contact')) ?></button></div>
-                </form>
-            <?php endif; ?>
-        </section>
     </div>
 </div>

@@ -49,11 +49,11 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
                     <?php if (!empty($errors['address'])): ?><span class="field__hint field__hint--error"><?= e($errors['address']) ?></span><?php endif; ?>
                 </div>
                 <div class="foundation-settings__grid">
-                    <div class="field">
-                        <label class="field__label" for="cabinet-phone"><?= e(__('settings.phone')) ?></label>
-                        <input class="field__control" id="cabinet-phone" name="phone" type="tel" inputmode="tel" maxlength="32" value="<?= e($settings['phone'] ?? '') ?>" placeholder="+216 20 123 456" autocomplete="tel">
-                        <?php if (!empty($errors['phone'])): ?><span class="field__hint field__hint--error"><?= e($errors['phone']) ?></span><?php endif; ?>
-                    </div>
+                    <?php View::partial('partials/tunisian-phone-field', [
+                        'inputId' => 'cabinet-phone',
+                        'value' => $settings['phone'] ?? '',
+                        'fieldError' => $errors['phone'] ?? '',
+                    ]) ?>
                     <div class="field">
                         <label class="field__label" for="cabinet-email"><?= e(__('settings.email')) ?></label>
                         <input class="field__control" id="cabinet-email" name="email" type="email" maxlength="190" value="<?= e($settings['email'] ?? '') ?>" autocomplete="email">

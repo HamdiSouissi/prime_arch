@@ -40,6 +40,9 @@ return function (Router $router): void {
     $router->get('/dashboard', [DashboardController::class, 'index'], [AuthMiddleware::class]);
 
     $router->get('/clients', [ClientController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/clients/export-csv', [ClientController::class, 'exportCsv'], [AuthMiddleware::class]);
+    $router->get('/clients/import-template', [ClientController::class, 'importTemplate'], [AuthMiddleware::class]);
+    $router->post('/clients/import', [ClientController::class, 'importCsv'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/clients/new', [ClientController::class, 'createForm'], [AuthMiddleware::class]);
     $router->post('/clients', [ClientController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/clients/{id}/edit', [ClientController::class, 'edit'], [AuthMiddleware::class]);
@@ -50,6 +53,9 @@ return function (Router $router): void {
     $router->get('/clients/{id}', [ClientController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/projects', [ProjectController::class, 'index'], [AuthMiddleware::class]);
+    $router->get('/projects/export-csv', [ProjectController::class, 'exportCsv'], [AuthMiddleware::class]);
+    $router->get('/projects/import-template', [ProjectController::class, 'importTemplate'], [AuthMiddleware::class]);
+    $router->post('/projects/import', [ProjectController::class, 'importCsv'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/new', [ProjectController::class, 'createForm'], [AuthMiddleware::class]);
     $router->post('/projects', [ProjectController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}/edit', [ProjectController::class, 'edit'], [AuthMiddleware::class]);

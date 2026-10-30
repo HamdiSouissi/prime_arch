@@ -44,6 +44,36 @@ final class ClientRepository
         return ['items' => $items, 'total' => $total];
     }
 
+    /** @param array<string,string> $filters
+     *  @return array<int,array<string,mixed>>
+     */
+    public function exportRows(array $filters): array
+    {
+        [$where, $parameters] = $this->listConditions($filters);
+        $statement = $this->pdo->prepare(
+            'SELECT c.reference, c.client_type, c.display_name, c.legal_name, c.tax_id,
+                    c.email, c.phone, c.address_line, c.city, g.iso_code AS governorate_iso_code,
+                    d.code AS delegation_code, c.postal_code, c.status, c.notes, c.custom_fields,
+                    c.created_at, c.updated_at
+             FROM clients c
+             LEFT JOIN governorates g ON g.id = c.governorate_id
+             LEFT JOIN delegations d ON d.id = c.delegation_id'
+            . $where . ' ORDER BY c.updated_at DESC, c.id DESC'
+        );
+        $statement->execute($parameters);
+        return $statement->fetchAll();
+    }
+
+    public function findIdByReference(string $reference): ?int
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id FROM clients WHERE reference = :reference LIMIT 1'
+        );
+        $statement->execute(['reference' => trim($reference)]);
+        $id = $statement->fetchColumn();
+        return $id === false ? null : (int) $id;
+    }
+
     /** @return array<int,array<string,mixed>> */
     public function forSelect(): array
     {

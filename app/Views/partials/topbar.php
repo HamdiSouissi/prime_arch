@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 /** @var string $title */
+$headerNow = new \DateTimeImmutable('now', new \DateTimeZone((string) config('tunisia.timezone', 'Africa/Tunis')));
 /** @var array{name:string,location:string,plan:string} $workspace */
 /** @var array{name:string,initials:string} $userProfile */
 ?>
@@ -16,6 +17,13 @@ declare(strict_types=1);
         <button class="button button--icon button--ghost" type="button" data-mobile-menu-toggle aria-expanded="false" aria-label="Ouvrir le menu" title="Navigation">
             <svg class="icon"><use href="<?= e(asset('img/icons.svg')) ?>#menu"></use></svg>
         </button>
+        <div class="topbar-info" role="group" aria-label="<?= e(__('app.local_time')) ?>">
+            <span class="topbar-info__place"><svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#map-pin"></use></svg><?= e(__('app.tunis')) ?></span>
+            <time class="topbar-info__clock" datetime="<?= e($headerNow->format(DATE_ATOM)) ?>" data-local-clock data-timezone="<?= e((string) config('tunisia.timezone', 'Africa/Tunis')) ?>" data-clock-label="<?= e(__('app.local_time')) ?>" aria-label="<?= e(__('app.local_time') . ' · ' . $headerNow->format('d/m/Y H:i')) ?>">
+                <span class="topbar-info__date" data-clock-date><?= e($headerNow->format('d/m/Y')) ?></span>
+                <strong data-clock-time><?= e($headerNow->format('H:i')) ?></strong>
+            </time>
+        </div>
         <?php if (!empty($showDesignActions) || !empty($showAppActions)): ?>
             <button class="topbar-search" type="button" data-command-open aria-haspopup="dialog" aria-controls="command-palette">
                 <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#search"></use></svg>

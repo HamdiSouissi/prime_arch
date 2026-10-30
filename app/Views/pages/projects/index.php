@@ -27,6 +27,14 @@ $pageCount = max(1, (int) ($pageCount ?? 1));
         <?php if ($filters['q'] !== '' || $filters['status'] !== '' || $filters['client_id'] !== ''): ?><a class="button button--ghost" href="<?= e(url('/projects')) ?>"><?= e(__('common.clear')) ?></a><?php endif; ?>
     </form>
 
+    <?php View::partial('partials/csv-transfer', [
+        'entity' => 'projects',
+        'filters' => $filters,
+        'importResult' => $importResult ?? null,
+        'importFileError' => $importFileError ?? '',
+        'canManage' => !empty($canManage),
+    ]) ?>
+
     <?php if ($projects === []): ?>
         <?php View::partial('partials/empty-state', [
             'title' => $filters['q'] !== '' || $filters['status'] !== '' || $filters['client_id'] !== '' ? __('projects.no_results') : __('projects.no_projects'),

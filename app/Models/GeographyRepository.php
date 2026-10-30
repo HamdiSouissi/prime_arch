@@ -32,6 +32,27 @@ final class GeographyRepository
         ], $rows);
     }
 
+    public function governorateIdByIsoCode(string $isoCode): ?int
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id FROM governorates WHERE iso_code = :iso_code LIMIT 1'
+        );
+        $statement->execute(['iso_code' => strtoupper(trim($isoCode))]);
+        $id = $statement->fetchColumn();
+        return $id === false ? null : (int) $id;
+    }
+
+    public function delegationIdByCode(string $code, int $governorateId): ?int
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id FROM delegations
+             WHERE code = :code AND governorate_id = :governorate_id LIMIT 1'
+        );
+        $statement->execute(['code' => trim($code), 'governorate_id' => $governorateId]);
+        $id = $statement->fetchColumn();
+        return $id === false ? null : (int) $id;
+    }
+
     /** @return array<int,array{id:int,governorate_id:int,code:string,name_latin:string,name_ar:string}> */
     public function delegations(int $governorateId): array
     {

@@ -65,6 +65,29 @@ final class ProjectRepository
         ];
     }
 
+    /** @param array<string,string> $filters
+     *  @return array<int,array<string,mixed>>
+     */
+    public function exportRows(array $filters, bool $includeCosts = false): array
+    {
+        [$where, $parameters] = $this->listConditions($filters);
+        $costColumn = $includeCosts ? ', p.fee_budget_amount' : '';
+        $statement = $this->pdo->prepare(
+            'SELECT p.reference, c.reference AS client_reference, c.display_name AS client_name,
+                    p.name, p.project_type, p.description, p.status, p.address_line, p.city,
+                    g.iso_code AS governorate_iso_code, d.code AS delegation_code,
+                    p.postal_code, p.start_date, p.target_end_date, p.budget_hours,
+                    p.custom_fields, p.created_at, p.updated_at' . $costColumn . '
+             FROM projects p
+             INNER JOIN clients c ON c.id = p.client_id
+             LEFT JOIN governorates g ON g.id = p.governorate_id
+             LEFT JOIN delegations d ON d.id = p.delegation_id'
+            . $where . ' ORDER BY p.updated_at DESC, p.id DESC'
+        );
+        $statement->execute($parameters);
+        return $statement->fetchAll();
+    }
+
     /** @return array<string,mixed>|null */
     public function findById(int $id, bool $includeCosts = false): ?array
     {

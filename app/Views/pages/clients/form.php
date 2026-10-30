@@ -64,11 +64,11 @@ $formAction = $isEdit ? url('/clients/' . $clientId) : url('/clients');
                 <input class="field__control" id="client-email" name="email" type="email" maxlength="190" autocomplete="email" value="<?= e($values['email'] ?? '') ?>">
                 <?php if (!empty($errors['email'])): ?><span class="field__hint field__hint--error"><?= e($errors['email']) ?></span><?php endif; ?>
             </div>
-            <div class="field">
-                <label class="field__label" for="client-phone"><?= e(__('settings.phone')) ?></label>
-                <input class="field__control" id="client-phone" name="phone" type="tel" maxlength="32" autocomplete="tel" placeholder="+216 20 123 456" value="<?= e($values['phone'] ?? '') ?>">
-                <?php if (!empty($errors['phone'])): ?><span class="field__hint field__hint--error"><?= e($errors['phone']) ?></span><?php endif; ?>
-            </div>
+            <?php View::partial('partials/tunisian-phone-field', [
+                'inputId' => 'client-phone',
+                'value' => $values['phone'] ?? '',
+                'fieldError' => $errors['phone'] ?? '',
+            ]) ?>
         </div>
     </section>
 

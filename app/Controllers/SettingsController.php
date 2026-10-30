@@ -12,6 +12,7 @@ use App\Models\GeographyRepository;
 use App\Services\AuditLogger;
 use App\Services\CabinetLogoStorage;
 use App\Services\CabinetSettings;
+use App\Services\TunisianPhoneNumber;
 use App\Services\ViewContext;
 use Throwable;
 
@@ -77,6 +78,7 @@ final class SettingsController
         }
 
         $current = (new CabinetSettings())->get();
+        $values['phone'] = TunisianPhoneNumber::normalize($values['phone']);
         $values['vat_rates'] = implode(',', array_map(static fn (string $rate): string => (string) (int) trim($rate), explode(',', $values['vat_rates'])));
         $values['stamp_duty'] = (string) self::decimal3($values['stamp_duty']);
         $values['withholding_rate'] = (string) self::decimal3($values['withholding_rate']);
@@ -134,10 +136,8 @@ final class SettingsController
         if (mb_strlen($values['address'], 'UTF-8') > 255) {
             $errors['address'] = __('settings.invalid');
         }
-        if (mb_strlen($values['phone'], 'UTF-8') > 32
-            || ($values['phone'] !== '' && !preg_match((string) config('tunisia.phone.pattern'), $values['phone']))
-        ) {
-            $errors['phone'] = __('settings.invalid');
+        if (mb_strlen($values['phone'], 'UTF-8') > 32 || !TunisianPhoneNumber::isValid($values['phone'])) {
+            $errors['phone'] = __('settings.invalid_phone');
         }
         if ($values['email'] !== '' && (!filter_var($values['email'], FILTER_VALIDATE_EMAIL) || strlen($values['email']) > 190)) {
             $errors['email'] = __('settings.invalid');

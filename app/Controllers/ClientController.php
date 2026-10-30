@@ -14,6 +14,8 @@ use App\Models\DocumentRepository;
 use App\Models\GeographyRepository;
 use App\Services\AuditLogger;
 use App\Services\ClientService;
+use App\Services\CsvDataTransferService;
+use App\Services\TunisianPhoneNumber;
 use App\Services\ViewContext;
 use Throwable;
 
@@ -51,7 +53,52 @@ final class ClientController
             'filters' => ['q' => $search, 'status' => $status, 'type' => $type],
             'canViewProjects' => Auth::can('projects.view'),
             'canManage' => Auth::can('clients.manage'),
+            'importResult' => Session::pullFlash('clients.import_result'),
+            'importFileError' => Session::pullFlash('clients.import_file_error', ''),
         ]));
+    }
+
+    public function exportCsv(Request $request): Response
+    {
+        if (!Auth::can('clients.view')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $filters = self::indexFilters($request);
+        $contents = (new CsvDataTransferService())->exportClients($filters);
+        return Response::download(
+            $contents,
+            'prime-arch-clients-' . date('Ymd-His') . '.csv',
+            'text/csv; charset=UTF-8'
+        );
+    }
+
+    public function importTemplate(Request $request): Response
+    {
+        if (!Auth::can('clients.view')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $transfer = new CsvDataTransferService();
+        $contents = $transfer->template('clients', $transfer->customFieldsFor('clients'));
+        return Response::download($contents, 'prime-arch-clients-template.csv', 'text/csv; charset=UTF-8');
+    }
+
+    public function importCsv(Request $request): Response
+    {
+        if (!Auth::can('clients.manage')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $result = (new CsvDataTransferService())->importClients($request->file('csv_file') ?? [], Auth::id());
+        if ($result['file_error'] !== '') {
+            Session::flash('clients.import_file_error', $result['file_error']);
+        } else {
+            (new AuditLogger())->record('clients.csv_imported', 'client_import', null, [
+                'created_count' => $result['created'],
+                'failed_count' => $result['failed'],
+            ], Auth::id());
+            unset($result['created_ids'], $result['file_error']);
+            Session::flash('clients.import_result', $result);
+        }
+        return Response::redirect(self::listUrl($request));
     }
 
     public function createForm(Request $request): Response
@@ -245,7 +292,7 @@ final class ClientController
         }
         $contact['job_title'] = $contact['job_title'] !== '' ? $contact['job_title'] : null;
         $contact['email'] = $contact['email'] !== '' ? $contact['email'] : null;
-        $contact['phone'] = $contact['phone'] !== '' ? $contact['phone'] : null;
+        $contact['phone'] = $contact['phone'] !== '' ? TunisianPhoneNumber::normalize($contact['phone']) : null;
         try {
             if ($contactId === null) {
                 $createdContactId = $repository->createContact((int) $clientId, $contact);
@@ -287,10 +334,8 @@ final class ClientController
         if ($contact['email'] !== '' && (!filter_var($contact['email'], FILTER_VALIDATE_EMAIL) || strlen($contact['email']) > 190)) {
             $errors['email'] = __('clients.invalid_contact');
         }
-        if (mb_strlen($contact['phone'], 'UTF-8') > 32
-            || ($contact['phone'] !== '' && !preg_match((string) config('tunisia.phone.pattern'), $contact['phone']))
-        ) {
-            $errors['phone'] = __('clients.invalid_contact');
+        if (mb_strlen($contact['phone'], 'UTF-8') > 32 || !TunisianPhoneNumber::isValid($contact['phone'])) {
+            $errors['phone'] = __('clients.invalid_phone');
         }
         return $errors;
     }
@@ -316,6 +361,34 @@ final class ClientController
             'title' => $title,
             'notice' => Session::pullFlash('clients.notice'),
         ]));
+    }
+
+    /** @return array{search:string,status:string,type:string} */
+    private static function indexFilters(Request $request): array
+    {
+        $search = self::queryString($request, 'q');
+        $status = self::queryString($request, 'status');
+        $type = self::queryString($request, 'type');
+        return [
+            'search' => mb_substr($search, 0, 100, 'UTF-8'),
+            'status' => in_array($status, ['', 'prospect', 'active', 'archived'], true) ? $status : '',
+            'type' => in_array($type, ['', 'individual', 'company', 'organization'], true) ? $type : '',
+        ];
+    }
+
+    private static function listUrl(Request $request): string
+    {
+        $filters = self::indexFilters($request);
+        $query = [];
+        if ($filters['search'] !== '') {
+            $query['q'] = $filters['search'];
+        }
+        foreach (['status', 'type'] as $key) {
+            if ($filters[$key] !== '') {
+                $query[$key] = $filters[$key];
+            }
+        }
+        return url('/clients' . ($query !== [] ? '?' . http_build_query($query) : ''));
     }
 
     /** @return array<string,mixed> */

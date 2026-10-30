@@ -15,6 +15,7 @@ use App\Models\ProjectImageRepository;
 use App\Models\ProjectRepository;
 use App\Models\TimeEntryRepository;
 use App\Services\AuditLogger;
+use App\Services\CsvDataTransferService;
 use App\Services\ProjectPlanService;
 use App\Services\ProjectService;
 use App\Services\ViewContext;
@@ -61,7 +62,61 @@ final class ProjectController
             'canConfigure' => Auth::can('projects.configure'),
             'canViewCosts' => $canViewCosts,
             'canViewTime' => $canViewTime,
+            'importResult' => Session::pullFlash('projects.import_result'),
+            'importFileError' => Session::pullFlash('projects.import_file_error', ''),
         ]));
+    }
+
+    public function exportCsv(Request $request): Response
+    {
+        if (!Auth::can('projects.view')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $filters = self::indexFilters($request);
+        $includeCosts = Auth::can('finance.costs.view') || Auth::can('finance.costs.manage');
+        $contents = (new CsvDataTransferService())->exportProjects($filters, $includeCosts);
+        return Response::download(
+            $contents,
+            'prime-arch-projects-' . date('Ymd-His') . '.csv',
+            'text/csv; charset=UTF-8'
+        );
+    }
+
+    public function importTemplate(Request $request): Response
+    {
+        if (!Auth::can('projects.view')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $transfer = new CsvDataTransferService();
+        $contents = $transfer->template(
+            'projects',
+            $transfer->customFieldsFor('projects'),
+            Auth::can('finance.costs.manage')
+        );
+        return Response::download($contents, 'prime-arch-projects-template.csv', 'text/csv; charset=UTF-8');
+    }
+
+    public function importCsv(Request $request): Response
+    {
+        if (!Auth::can('projects.manage')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $result = (new CsvDataTransferService())->importProjects(
+            $request->file('csv_file') ?? [],
+            Auth::id(),
+            Auth::can('finance.costs.manage')
+        );
+        if ($result['file_error'] !== '') {
+            Session::flash('projects.import_file_error', $result['file_error']);
+        } else {
+            (new AuditLogger())->record('projects.csv_imported', 'project_import', null, [
+                'created_count' => $result['created'],
+                'failed_count' => $result['failed'],
+            ], Auth::id());
+            unset($result['created_ids'], $result['file_error']);
+            Session::flash('projects.import_result', $result);
+        }
+        return Response::redirect(self::listUrl($request));
     }
 
     public function createForm(Request $request): Response
@@ -353,6 +408,41 @@ final class ProjectController
             'delegations' => $governorateId > 0 ? (new GeographyRepository())->delegations($governorateId) : [],
             'title' => $title,
         ]));
+    }
+
+    /** @return array{search:string,status:string,client_id:string} */
+    private static function indexFilters(Request $request): array
+    {
+        $search = self::queryString($request, 'q');
+        $status = self::queryString($request, 'status');
+        $clientId = self::queryString($request, 'client_id');
+        if (!in_array($status, ['', 'planning', 'active', 'on_hold', 'completed', 'cancelled'], true)) {
+            $status = '';
+        }
+        if ($clientId !== '' && (!ctype_digit($clientId) || (int) $clientId < 1)) {
+            $clientId = '';
+        }
+        return [
+            'search' => mb_substr($search, 0, 100, 'UTF-8'),
+            'status' => $status,
+            'client_id' => $clientId,
+        ];
+    }
+
+    private static function listUrl(Request $request): string
+    {
+        $filters = self::indexFilters($request);
+        $query = [];
+        if ($filters['search'] !== '') {
+            $query['q'] = $filters['search'];
+        }
+        if ($filters['status'] !== '') {
+            $query['status'] = $filters['status'];
+        }
+        if ($filters['client_id'] !== '') {
+            $query['client_id'] = $filters['client_id'];
+        }
+        return url('/projects' . ($query !== [] ? '?' . http_build_query($query) : ''));
     }
 
     /** @return array<string,mixed> */
