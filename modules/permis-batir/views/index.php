@@ -24,6 +24,8 @@ $query = http_build_query(array_filter($filters, static fn ($value) => $value !=
 <?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
 <?php if (!empty($error)): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($error) ?></p><?php endif; ?>
 
+<p class="table-meta" role="note"><?= e(__('permis.deadline_notice')) ?></p>
+
 <section class="stats-grid" aria-label="<?= e(__('permis.statistics')) ?>">
     <?php View::partial('partials/stat-card', ['label' => __('permis.stat.instruction'), 'value' => (string) ($statistics['instruction'] ?? 0), 'icon' => 'plan', 'tone' => 'blue']) ?>
     <?php View::partial('partials/stat-card', ['label' => __('permis.stat.granted'), 'value' => (string) ($statistics['granted'] ?? 0), 'icon' => 'check-circle', 'tone' => 'mint']) ?>

@@ -35,6 +35,7 @@ return [
     'permis.decision_number' => 'Numéro de décision',
     'permis.decision_date' => 'Date de décision',
     'permis.deadline_date' => 'Échéance',
+    'permis.deadline_notice' => 'Les dates et délais sont saisis par le cabinet : aucun délai réglementaire n’est appliqué ni garanti par le module. Faites confirmer les échéances par l’OAT et la commune compétente.',
     'permis.deadline_help' => 'Date saisie par le cabinet : aucun délai réglementaire n’est appliqué automatiquement.',
     'permis.notes' => 'Notes internes',
     'permis.pieces' => 'Pièces',

@@ -35,6 +35,8 @@ $pieceLabel = static function (array $piece): string {
 <?php if (!empty($notice)): ?><p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p><?php endif; ?>
 <?php if (!empty($error)): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($error) ?></p><?php endif; ?>
 
+<p class="table-meta" role="note"><?= e(__('permis.deadline_notice')) ?></p>
+
 <div class="content-grid">
     <div class="stack-lg">
         <section class="card stack-md" aria-labelledby="permis-summary-title">
