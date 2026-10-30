@@ -20,7 +20,39 @@
 
 - Apple HIG : sobriété, hiérarchie claire, cibles tactiles ≥ 44 px, mode sombre automatique.
 - Propriétés CSS logiques (`margin-inline`, `padding-inline`) pour le RTL (arabe).
-- Navigation : toute destination à 3 clics maximum.
+- Navigation : **toute destination à trois clics maximum** depuis n'importe quel écran, sur ordinateur
+  comme sur mobile.
+
+## Navigation — la règle des trois clics
+
+Le budget est une contrainte de CI, pas une intention : `tests/NavigationDepthTest.php` reconstruit
+le graphe de navigation à partir du code réel et échoue si une destination du noyau dépasse trois
+clics depuis `/dashboard`.
+
+**Ce que le test lit :** les routes GET de `config/routes.php`, la vue rendue par chaque méthode de
+contrôleur (la 404 de garde est ignorée), les liens des vues (`url()` et `href` absolus), la coquille
+commune — menu latéral, barre d'onglets, feuille « Plus », actions rapides, palette — et les entrées
+de menu déclarées par les modules.
+
+**Comment il compte :** un lien de liste (`/clients/` suivi d'un identifiant) désigne **une** fiche,
+pas ses sous-écrans ; `/clients/{id}/edit` doit donc être atteint depuis la fiche. La coquille coûte
+un clic depuis n'importe quelle page authentifiée. Les routes techniques (`/api/`, `/health`,
+`/media/`, `/module-assets/`, `/design/`, `*/export-csv`, `*/import-template`) ne sont pas des
+destinations et restent hors budget.
+
+**Conséquences pratiques :**
+
+- une nouvelle page du noyau doit être liée depuis une liste, une fiche, le menu ou une action
+  rapide ; sans lien entrant, le test échoue avec la mention « inatteignable » ;
+- un écran ajouté à une fiche (édition, PDF, pièce jointe) se compte depuis cette fiche : deux
+  niveaux de sous-écran maximum sous une liste ;
+- un module déclare ses entrées de menu dans `Module.php` (`'url' => url('/permis')`) en même temps
+  que ses routes ; le test vérifie que chaque entrée correspond à une route déclarée et qu'aucun
+  module ne revendique deux fois le même chemin ;
+- pour une exception assumée, préférer un changement de structure (passerelle contextuelle, action
+  sur la fiche) à un ajout dans la liste d'exclusions.
+
+Exécution : `composer test` ou `vendor/bin/phpunit --filter NavigationDepthTest`.
 
 ## Traductions
 

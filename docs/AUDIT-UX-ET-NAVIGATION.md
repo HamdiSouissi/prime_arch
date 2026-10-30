@@ -170,12 +170,13 @@ Rendre cliquables les entités citées dans les fiches : `documents/show.php` af
 le projet en **texte brut** ; `documents/index.php` idem. Chaque nom propre doit être un lien vers
 sa fiche (sous réserve des droits). Effort : **S**.
 
-### G. Test automatisé de la règle des 3 clics
+### G. Test automatisé de la règle des 3 clics — **fait au lot 5**
 
-Un test PHPUnit de « profondeur de navigation » : parser `config/routes.php` et
-`modules/*/Module.php`, chercher les liens entrants dans les vues, calculer la distance minimale
-depuis `/dashboard`, **échouer si une route dépassable dépasse 3**. Le budget cesse d'être une
-intention et devient une contrainte de CI, y compris pour la vague 4. Effort : **S/M**.
+`tests/NavigationDepthTest.php` reconstruit le graphe depuis le code réel (routes GET, vue rendue
+par chaque contrôleur, liens des vues, coquille commune, entrées de menu des modules), calcule la
+distance minimale depuis `/dashboard` et échoue si une destination du noyau dépasse trois clics.
+Le budget cesse d'être une intention et devient une contrainte de CI, y compris pour la vague 4.
+Détail du fonctionnement et des exclusions : `docs/CONVENTIONS.md`, §13 ci-dessous.
 
 ---
 
@@ -231,11 +232,14 @@ intention et devient une contrainte de CI, y compris pour la vague 4. Effort : *
 | **Lot 2 — recherche** (3 jours) — **livré** | `/api/recherche`, palette à sections, récents, raccourcis | M | destination atteinte en 2 frappes, 0 clic |
 | **Lot 3 — coquille** (3 jours) — **livré** | menu groupé + mobile « Plus » + bouton global « Nouveau » | M | mobile : plus aucun trajet > 3 clics |
 | **Lot 4 — tableau de bord** (3–4 jours) — **livré** | KPI réels, échéances 14 jours, activité, heures | M | première page utile |
-| **Lot 5 — garde-fou** (1–2 jours) | test PHPUnit de profondeur ≤ 3 + documentation | S | la règle ne peut plus régresser |
+| **Lot 5 — garde-fou** (1–2 jours) — **livré** | test PHPUnit de profondeur ≤ 3 + documentation | S | la règle ne peut plus régresser |
 
 Les lots 0 à 3 suffisent à **garantir 3 clics partout** ; les lots 4 et 5 rendent le résultat
 durable. Aucun de ces lots ne modifie les 12 modules livrés : le lot 1 ajoute des points
 d'accroche que les modules consommeront, le lot 0 est purement correctif.
+
+**État final : les six lots du plan sont livrés.** La règle des trois clics est désormais
+vérifiée par `tests/NavigationDepthTest.php` à chaque exécution de la suite (§13).
 
 ---
 
@@ -614,3 +618,59 @@ préparées et bornées, permissions de chaque bloc, horizon de 14 jours avec re
 filtrée, cartes réelles et cliquables, filtre `dashboard.cards` appliqué une fois, semaine du
 lundi, vue sans donnée de démonstration, accessibilité, parité FR/AR des 48 clés, fonctions de
 formatage pures.
+
+## 13. Lot 5 — garde-fou de navigation livré
+
+### 13.1 Ce que le test reconstruit
+
+`tests/NavigationDepthTest.php` ne lit pas une table écrite à la main : il déduit le graphe du code.
+
+| Élément | Source lue |
+|---|---|
+| Sommets | `$router->get('…')` de `config/routes.php` |
+| Arêtes d'écran | vue rendue par la méthode du contrôleur (`View::render`), liens `url()` et `href` absolus |
+| Arêtes de coquille | `ViewContext` + `sidebar`, `tabbar`, `mobile-menu`, `topbar`, `quick-add`, `command-palette`, `context-links`, `layouts/app` |
+| Entrées de modules | `'url' => url('/…')` dans `modules/*/Module.php` |
+
+Un littéral suivi d'une expression devient un motif : `'/clients/' . $id . '/edit'` donne
+`/clients/{*}/edit`, qui ne correspond qu'à un segment paramétré. Une liste pointe donc **une**
+fiche, jamais ses sous-écrans : `/clients/{id}/edit` doit être atteint depuis la fiche.
+
+La coquille est présente sur chaque page authentifiée : son coût est d'un clic depuis n'importe
+quel écran. Les pages publiques (`/`, `/login`, `/health`) n'en héritent pas.
+
+### 13.2 Budget vérifié
+
+Toutes les destinations du noyau sont à **trois clics ou moins** depuis `/dashboard` :
+
+| Profondeur | Destinations |
+|---|---|
+| 0 | `/dashboard` |
+| 1 | `/clients`, `/projects`, `/time`, `/documents`, `/settings`, `/settings/hourly-rates`, `/settings/project-phases`, `/settings/custom-fields`, `/settings/modules`, `/clients/new`, `/projects/new`, `/documents/new`, fiches projet (liées depuis le tableau de bord) |
+| 2 | fiches client et document, `/time/new`, `/time/{id}/edit`, `/settings/document-templates`, `/admin/users`, édition de projet, `/projects/{id}/images/{imageId}` |
+| 3 | `/clients/{id}/edit`, `/documents/{id}/edit`, `/documents/{id}/pdf`, `/admin/audit` |
+
+Exclusions assumées, toutes techniques : `/health`, `/api/*`, `/media/*`, `/module-assets/*`,
+`/design/*` (aperçus de développement), `*/export-csv`, `*/import-template`. Un second test vérifie
+qu'aucune page utilisateur ne s'y glisse.
+
+### 13.3 Preuve que le garde-fou mord
+
+Le lien « Modifier » de la fiche client a été retiré temporairement : le test échoue aussitôt avec
+`/clients/{id}/edit (inatteignable)`, puis repasse au vert une fois le lien restauré. Un graphe vide
+ne peut pas passer pour autant : un test vérifie que `/dashboard`, `/clients`, `/clients/{id}` et
+`/clients/{id}/edit` sont bien trouvés, et qu'au moins 25 destinations sont analysées.
+
+### 13.4 Modules
+
+Chaque entrée de menu d'un module doit désigner une route que **ce** module déclare, et aucun module
+ne peut revendiquer deux fois le même chemin. La profondeur *interne* d'un module reste de sa
+responsabilité : le noyau ne connaît pas ses écrans, et la règle qui le lie est celle des passerelles
+contextuelles (lot 1).
+
+### 13.5 Documentation
+
+- `docs/CONVENTIONS.md` — nouvelle section « Navigation — la règle des trois clics » : ce que lit le
+  test, comment il compte, ce qu'il faut faire pour une nouvelle page.
+- `README.md` — la règle figure dans la liste des garanties du projet.
+- Exécution : `composer test` ou `vendor/bin/phpunit --filter NavigationDepthTest`.
