@@ -616,11 +616,24 @@
 .timer-card__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
 
 /* Connexion */
-.auth-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(22rem, 0.9fr);
+/* La page de connexion est une colonne : le contenu occupe la hauteur restante et le pied
+   de page légal reste collé en bas de la fenêtre. */
+.auth-shell {
+    display: flex;
+    flex-direction: column;
     min-block-size: 100vh;
     background: var(--gradient-mesh), rgba(248, 250, 255, 0.94);
+}
+
+.auth-layout {
+    display: grid;
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 1.1fr) minmax(22rem, 0.9fr);
+    min-block-size: 0;
+}
+
+.auth-shell > .app-footer {
+    padding-inline: clamp(1.25rem, 3vw, 2.5rem);
 }
 
 .auth-aside {
@@ -628,7 +641,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-block-size: 100vh;
+    min-block-size: 0;
     padding-block: clamp(2rem, 5vw, 5rem);
     padding-inline: clamp(2rem, 5vw, 5rem);
     overflow: hidden;
@@ -647,14 +660,9 @@
     pointer-events: none;
 }
 
-.auth-aside__brand-block { display: grid; gap: 0.2rem; justify-items: start; }
 .auth-aside__brand { display: flex; align-items: center; gap: var(--space-3); font-weight: 750; line-height: 1.15; }
 .auth-aside__brand img { flex: 0 0 auto; inline-size: 3rem; block-size: 3rem; border-radius: 0.9rem; }
-.auth-aside__brand-name { display: grid; gap: 1px; }
 .auth-aside__brand-product { font-size: var(--font-size-callout); font-weight: 750; letter-spacing: -0.02em; }
-.auth-aside__brand-vendor { color: var(--color-ink-secondary); font-size: var(--font-size-caption); font-weight: 550; letter-spacing: 0.01em; }
-.auth-aside__brand-site { padding-inline-start: calc(3rem + var(--space-3)); color: var(--color-ink-tertiary); font-size: var(--font-size-caption); font-weight: 550; text-decoration: none; unicode-bidi: isolate; }
-.auth-aside__brand-site:hover, .auth-aside__brand-site:focus-visible { color: var(--color-primary-strong); text-decoration: underline; }
 .auth-aside__message { position: relative; z-index: 1; max-inline-size: 40rem; }
 .auth-aside__message h1 { margin-block-end: var(--space-4); font-size: clamp(2.5rem, 5.4vw, 5rem); letter-spacing: -0.07em; line-height: 1.02; }
 .auth-aside__message p { max-inline-size: 32rem; color: var(--color-ink-secondary); font-size: var(--font-size-title-3); }
@@ -711,7 +719,7 @@
     .document-preview__top { align-items: flex-start; flex-direction: column; }
     .auth-layout { grid-template-columns: minmax(0, 1fr); }
     .auth-aside { display: none; }
-    .auth-form-area { min-block-size: 100vh; padding-block: var(--space-4);
+    .auth-form-area { min-block-size: 0; padding-block: var(--space-4);
  padding-inline: var(--space-4); }
     .custom-field { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: var(--space-2); }
 }

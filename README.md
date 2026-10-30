@@ -84,10 +84,12 @@ Les suggestions postales viennent d'un jeu communautaire ancien et non officiel 
 ## Identité du produit
 
 Le nom affiché (`Prime Architecture`), l'éditeur (`Prime Vision Solutions`), l'adresse publique
-(`primevisionsolutions.fr`) et les fichiers du logo sont centralisés dans `config/brand.php`. La barre latérale et
-l'écran de connexion lisent cette configuration : aucune vue ne contient le nom en dur. Le nom par défaut de la base
-(`APP_NAME`) suit le produit ; le nom du **cabinet client** reste réglable dans « Réglages » et prévaut sur les
-documents PDF. Le logo du cabinet téléversé reste distinct de la marque du produit.
+(`primevisionsolutions.fr`) et les fichiers du logo sont centralisés dans `config/brand.php`. La barre latérale
+n'affiche que le logo et le nom ; l'éditeur, l'adresse du site et le copyright sont regroupés en **pied de page**
+(`partials/brand-footer.php`), sous le contenu de chaque page et sous l'écran de connexion. Aucune vue ne contient le
+nom en dur. Le nom par défaut de la base (`APP_NAME`) suit le produit ; le nom du **cabinet client** reste réglable
+dans « Réglages » et prévaut sur les documents PDF. Le logo du cabinet téléversé reste distinct de la marque du
+produit.
 
 ## Langues de l'interface
 

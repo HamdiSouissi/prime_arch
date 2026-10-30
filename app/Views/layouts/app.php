@@ -113,6 +113,7 @@ if ($isDesignPreview) {
         <main class="app-content" id="main" tabindex="-1">
             <?= $content ?>
         </main>
+        <?php View::partial('partials/brand-footer') ?>
     </div>
     <button class="mobile-menu-backdrop" type="button" data-mobile-menu-backdrop aria-label="<?= e(__('common.close_navigation')) ?>" aria-hidden="true" tabindex="-1"></button>
 </div>

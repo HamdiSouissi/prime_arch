@@ -6,13 +6,14 @@ namespace Tests;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Garde-fous de l'identité affichée : marque du produit, éditeur et site public.
+ * Garde-fous de l'identité affichée : marque du produit en tête, mentions légales en pied.
  *
  * Trois régressions sont figées ici :
  *  - la barre latérale et l'écran de connexion affichaient un nom de produit écrit en dur
  *    dans la vue, impossible à changer sans toucher au balisage ;
  *  - le logo affiché était un emplacement de remplacement, pas la marque livrée ;
- *  - l'éditeur et l'adresse du site n'étaient affichés nulle part.
+ *  - l'éditeur, l'adresse du site et le copyright encombraient l'en-tête de la barre latérale :
+ *    ils doivent rester regroupés en pied de page, avec le millésime courant.
  *
  * Les tests sont statiques : ils lisent la configuration, le balisage, les feuilles de style et
  * les fichiers de langue. Aucune base de données, aucun navigateur.
@@ -71,63 +72,88 @@ final class BrandIdentityTest extends TestCase
             $markup = self::file($view);
             self::assertStringContainsString("config('brand.product'", $markup, $view);
             self::assertStringContainsString("config('brand.logo'", $markup, $view);
-            self::assertStringContainsString("config('brand.site'", $markup, $view);
-            self::assertStringContainsString("config('brand.site_url'", $markup, $view);
             self::assertStringNotContainsString('img/logo-placeholder.svg', $markup, $view);
         }
     }
 
-    public function testSidebarShowsProductThenVendorThenSite(): void
+    public function testSidebarHeaderShowsOnlyTheProductName(): void
     {
         $markup = self::file('/app/Views/partials/sidebar.php');
 
-        $product = strpos($markup, 'sidebar-brand__product');
-        $vendor = strpos($markup, 'sidebar-brand__caption');
-        $site = strpos($markup, 'sidebar-brand__site');
-        self::assertNotFalse($product);
-        self::assertNotFalse($vendor);
-        self::assertNotFalse($site);
-        self::assertLessThan($vendor, $product, 'Le produit précède l’éditeur.');
-        self::assertLessThan($site, $vendor, 'L’éditeur précède l’adresse du site.');
+        self::assertStringContainsString('sidebar-brand__product', $markup);
+        self::assertStringContainsString('sidebar-brand__logo', $markup);
+        // L'éditeur, l'adresse et le copyright ont quitté l'en-tête de la barre latérale.
+        self::assertStringNotContainsString('sidebar-brand__caption', $markup);
+        self::assertStringNotContainsString('sidebar-brand__site', $markup);
+        self::assertStringNotContainsString("config('brand.site'", $markup);
+        self::assertStringNotContainsString("config('brand.vendor'", $markup);
 
-        // Deux liens ne peuvent pas être imbriqués : l'adresse du site est hors du lien de marque.
-        self::assertStringContainsString('<div class="sidebar-brand-block">', $markup);
-        self::assertStringContainsString('rel="noopener noreferrer"', $markup);
+        $login = self::file('/app/Views/pages/auth/login.php');
+        self::assertStringNotContainsString('auth-aside__brand-vendor', $login);
+        self::assertStringNotContainsString('auth-aside__brand-site', $login);
     }
 
-    public function testBrandLinesNeverTruncateAndStayLegible(): void
+    public function testLegalFooterCarriesVendorSiteAndCopyright(): void
+    {
+        $footer = self::file('/app/Views/partials/brand-footer.php');
+
+        self::assertStringContainsString("config('brand.vendor'", $footer);
+        self::assertStringContainsString("config('brand.site'", $footer);
+        self::assertStringContainsString("config('brand.site_url'", $footer);
+        self::assertStringContainsString("__('app.copyright'", $footer);
+        self::assertStringContainsString("date('Y')", $footer, 'Le millésime suit l’horloge du serveur.');
+        self::assertStringContainsString('rel="noopener noreferrer"', $footer);
+        self::assertStringContainsString('<footer class="app-footer">', $footer);
+
+        // Le pied de page est rendu par les deux layouts, sous le contenu principal.
+        foreach (['/app/Views/layouts/app.php', '/app/Views/layouts/auth.php'] as $layout) {
+            self::assertStringContainsString(
+                "partial('partials/brand-footer')",
+                self::file($layout),
+                $layout
+            );
+        }
+
+        $appLayout = self::file('/app/Views/layouts/app.php');
+        self::assertGreaterThan(
+            (int) strpos($appLayout, '</main>'),
+            (int) strpos($appLayout, "partial('partials/brand-footer')"),
+            'Le pied de page vient après le contenu principal.'
+        );
+    }
+
+    public function testLegalFooterStaysAtTheBottomAndClearsTheMobileTabbar(): void
     {
         $layout = self::file('/public/assets/css/layout.css');
 
-        // Dernier bloc de règles du sélecteur exact : la première occurrence peut être une
-        // règle partagée (`.a, .b { … }`) qui ne décrit pas le style propre de l'élément.
-        foreach (['.sidebar-brand__caption', '.sidebar-brand__site'] as $selector) {
-            $rules[$selector] = self::lastRule($layout, $selector);
-            self::assertNotSame('', $rules[$selector], $selector);
-        }
+        self::assertStringContainsString('flex: 1 1 auto', self::lastRule($layout, '.app-content'), 'Le contenu pousse le pied de page en bas.');
 
-        foreach ($rules as $rule) {
-            // Petites mais lisibles (≥ 0,65 rem) et jamais rognées par une ellipse.
-            self::assertMatchesRegularExpression('/font-size:\s*0?\.6[5-9]rem|font-size:\s*0\.7/', $rule);
-            self::assertStringNotContainsString('text-overflow: ellipsis', $rule);
-            self::assertStringNotContainsString('white-space: nowrap', $rule);
-        }
+        $footer = self::lastRule($layout, '.app-footer');
+        self::assertStringContainsString('flex-wrap: wrap', $footer);
+        self::assertStringContainsString('padding-inline', $footer);
+
+        // Sur mobile, le dernier élément de la colonne dégage la barre d'onglets fixe.
+        self::assertMatchesRegularExpression(
+            '/\.app-main > \.app-footer\s*\{[^}]*calc\(6\.5rem \+ env\(safe-area-inset-bottom\)\)/',
+            $layout
+        );
 
         // L'adresse latine garde son sens de lecture dans une interface arabe.
-        self::assertStringContainsString('unicode-bidi: isolate', $rules['.sidebar-brand__site']);
+        self::assertStringContainsString('unicode-bidi: isolate', self::lastRule($layout, '.app-footer__site'));
     }
 
-    public function testVendorLabelIsTranslatedInBothLanguages(): void
+    public function testCopyrightAndSiteLabelsAreTranslatedInBothLanguages(): void
     {
-        foreach (['fr' => 'Produit de :vendor', 'ar' => 'منتج :vendor'] as $locale => $expected) {
+        foreach (['fr' => 'Tous droits réservés', 'ar' => 'جميع الحقوق محفوظة'] as $locale => $expected) {
             $translations = self::file('/lang/' . $locale . '.php');
-            self::assertStringContainsString(
-                "'app.brand_vendor' => '" . $expected . "'",
-                $translations,
-                'Libellé éditeur manquant en ' . $locale
-            );
-            self::assertStringContainsString("'app.brand_site' =>", $translations);
+            self::assertStringContainsString("'app.copyright' =>", $translations, 'Copyright manquant en ' . $locale);
+            self::assertStringContainsString($expected, $translations, 'Mention de droits en ' . $locale);
+            self::assertStringContainsString(':year', $translations, 'Millésime paramétré en ' . $locale);
+            self::assertStringContainsString(':vendor', $translations, 'Éditeur paramétré en ' . $locale);
             self::assertStringContainsString("'app.brand_site_label' =>", $translations);
+            // Les anciennes clés de l'en-tête ne doivent pas survivre.
+            self::assertStringNotContainsString("'app.brand_vendor'", $translations);
+            self::assertStringNotContainsString("'app.brand_site' =>", $translations);
         }
     }
 
@@ -155,13 +181,10 @@ final class BrandIdentityTest extends TestCase
             if ($file->getExtension() !== 'php') {
                 continue;
             }
-            $contents = $file->getContents();
-            // « Prime Architecture » contient « Prime Arch » : on exclut donc explicitement
-            // le nom complet avant de chercher l'ancien.
-            $needle = str_replace('Prime Architecture', '', $contents);
-            if (str_contains($needle, 'Prime Arch')
-                && (str_contains($needle, 'Prime Arch,') || str_contains($needle, "'Prime Arch'") || str_contains($needle, 'de Prime Arch'))
-            ) {
+            // « Prime Architecture » contient « Prime Arch » : on retire le nom complet avant
+            // de chercher l'ancien, qui n'apparaît que suivi d'une virgule ou entre guillemets.
+            $needle = str_replace('Prime Architecture', '', $file->getContents());
+            if (str_contains($needle, 'Prime Arch,') || str_contains($needle, "'Prime Arch'")) {
                 $legacy[] = $file->getPathname();
             }
         }

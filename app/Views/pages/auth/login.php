@@ -2,16 +2,10 @@
 declare(strict_types=1);
 ?>
 <section class="auth-aside" aria-label="<?= e(__('auth.aside_label')) ?>">
-    <div class="auth-aside__brand-block">
-        <a class="auth-aside__brand" href="<?= e(url(!empty($demoMode) ? '/design/dashboard' : '/')) ?>">
-            <img src="<?= e(asset((string) config('brand.logo', 'img/logo-prime-architecture.png'))) ?>" alt="" width="48" height="48" decoding="async">
-            <span class="auth-aside__brand-name">
-                <span class="auth-aside__brand-product"><?= e((string) config('brand.product', 'Prime Architecture')) ?></span>
-                <span class="auth-aside__brand-vendor"><?= e(__('app.brand_vendor', ['vendor' => (string) config('brand.vendor', 'Prime Vision Solutions')])) ?></span>
-            </span>
-        </a>
-        <a class="auth-aside__brand-site" href="<?= e((string) config('brand.site_url', 'https://primevisionsolutions.fr')) ?>" target="_blank" rel="noopener noreferrer" title="<?= e(__('app.brand_site_label')) ?>"><?= e((string) config('brand.site', 'primevisionsolutions.fr')) ?></a>
-    </div>
+    <a class="auth-aside__brand" href="<?= e(url(!empty($demoMode) ? '/design/dashboard' : '/')) ?>">
+        <img src="<?= e(asset((string) config('brand.logo', 'img/logo-prime-architecture.png'))) ?>" alt="" width="48" height="48" decoding="async">
+        <span class="auth-aside__brand-product"><?= e((string) config('brand.product', 'Prime Architecture')) ?></span>
+    </a>
     <div class="auth-aside__message">
         <p class="page-header__eyebrow"><?= e(__('auth.hero_eyebrow')) ?></p>
         <h1><?= e(__('auth.hero_title')) ?></h1>

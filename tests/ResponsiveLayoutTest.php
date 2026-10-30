@@ -137,10 +137,13 @@ final class ResponsiveLayoutTest extends TestCase
     {
         $layout = self::file('/public/assets/css/layout.css');
 
+        // La réserve de la barre fixe est portée par le dernier élément de la colonne :
+        // le pied de page légal, qui est désormais toujours présent sous le contenu.
         self::assertMatchesRegularExpression(
-            '/\.app-content\s*\{[^}]*padding-block-end:\s*calc\(6\.5rem \+ env\(safe-area-inset-bottom\)\)/',
+            '/\.app-main > \.app-footer\s*\{[^}]*padding-block-end:\s*calc\(6\.5rem \+ env\(safe-area-inset-bottom\)\)/',
             $layout
         );
+        self::assertStringContainsString('.app-footer', $layout);
     }
 
     public function testMobileContentCannotOverflowTheViewport(): void

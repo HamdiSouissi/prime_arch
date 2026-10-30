@@ -54,15 +54,12 @@ $renderItem = static function (array $item) use ($activeNav): void {
 };
 ?>
 <aside class="sidebar" aria-label="<?= e(__('common.main_navigation')) ?>">
-    <?php /* Marque du produit : le nom, puis l'éditeur, puis l'adresse du site (lien distinct :
-             deux liens ne peuvent pas être imbriqués). */ ?>
+    <?php /* Marque du produit seule : l'éditeur, le site et le copyright sont en pied de page. */ ?>
     <div class="sidebar-brand-block">
         <a class="sidebar-brand" href="<?= e($brandUrl) ?>" aria-label="<?= e(__('app.brand_home')) ?>">
             <img class="sidebar-brand__logo" src="<?= e(asset((string) config('brand.logo', 'img/logo-prime-architecture.png'))) ?>" alt="" width="40" height="40" decoding="async">
             <span class="sidebar-brand__product"><?= e((string) config('brand.product', 'Prime Architecture')) ?></span>
         </a>
-        <p class="sidebar-brand__caption"><?= e(__('app.brand_vendor', ['vendor' => (string) config('brand.vendor', 'Prime Vision Solutions')])) ?></p>
-        <a class="sidebar-brand__site" href="<?= e((string) config('brand.site_url', 'https://primevisionsolutions.fr')) ?>" target="_blank" rel="noopener noreferrer" title="<?= e(__('app.brand_site_label')) ?>"><?= e((string) config('brand.site', 'primevisionsolutions.fr')) ?></a>
     </div>
     <nav class="sidebar-nav" aria-label="<?= e(__('common.main_navigation')) ?>">
         <p class="sidebar-section-label"><?= e(__('common.workspace')) ?></p>

@@ -24,9 +24,12 @@ use App\Core\Translator;
 <div class="auth-locale">
     <?php \App\Core\View::partial('partials/language-switcher', ['variant' => 'labeled', 'returnTo' => '/login']) ?>
 </div>
-<main id="main" class="auth-layout">
-    <?= $content ?>
-</main>
+<div class="auth-shell">
+    <main id="main" class="auth-layout">
+        <?= $content ?>
+    </main>
+    <?php \App\Core\View::partial('partials/brand-footer') ?>
+</div>
 <?php \App\Core\View::partial('partials/toast') ?>
 <?php \App\Core\View::partial('partials/i18n') ?>
 <script type="module" src="<?= e(asset('js/app.js')) ?>"></script>

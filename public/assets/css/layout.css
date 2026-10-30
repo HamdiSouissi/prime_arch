@@ -40,13 +40,10 @@
     backdrop-filter: blur(28px) saturate(155%);
 }
 
-/* Bloc de marque : le nom du produit à côté du logo, puis l'éditeur et l'adresse du site
-   en petit sous l'ensemble. Les deux lignes secondaires occupent toute la largeur utile de
-   la barre : elles ne sont donc jamais tronquées. */
+/* Bloc de marque : le logo et le nom du produit. L'éditeur, l'adresse du site et le
+   copyright sont regroupés en pied de page (.app-footer). */
 .sidebar-brand-block {
     flex: 0 0 auto;
-    display: grid;
-    gap: 0.1rem;
     min-inline-size: 0;
     margin-block-end: var(--space-5);
     padding-inline: var(--space-2);
@@ -75,43 +72,43 @@
 .sidebar-brand__product {
     min-inline-size: 0;
     color: var(--color-ink);
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     font-weight: 750;
     letter-spacing: -0.025em;
     line-height: 1.15;
 }
 
-.sidebar-brand__caption {
-    color: var(--color-ink-secondary);
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0;
-    line-height: 1.35;
-    text-align: start;
-}
-
-/* L'éditeur et le site commencent sous la marque, à l'aplomb du logo : deux lignes
-   secondaires discrètes, jamais tronquées. */
-.sidebar-brand__caption,
-.sidebar-brand__site {
-    justify-self: stretch;
-    max-inline-size: 100%;
-}
-
-.sidebar-brand__site {
+/* Pied de page légal : éditeur et adresse du site, sous la colonne de contenu.
+   Discret (petite taille, teinte tertiaire) mais toujours lisible et cliquable. */
+.app-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-4) var(--space-6);
+    padding-inline: clamp(1.25rem, 3vw, 2.5rem);
+    border-block-start: 1px solid rgba(91, 112, 149, 0.12);
     color: var(--color-ink-tertiary);
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0;
-    line-height: 1.35;
-    text-align: start;
+    font-size: var(--font-size-caption);
+    line-height: 1.4;
+}
+
+.app-footer__legal {
+    margin: 0;
+    min-inline-size: 0;
+}
+
+.app-footer__site {
+    color: var(--color-ink-secondary);
+    font-weight: 600;
     text-decoration: none;
     /* Adresse latine dans une interface arabe : elle garde son sens de lecture. */
     unicode-bidi: isolate;
 }
 
-.sidebar-brand__site:hover,
-.sidebar-brand__site:focus-visible {
+.app-footer__site:hover,
+.app-footer__site:focus-visible {
     color: var(--color-primary-strong);
     text-decoration: underline;
 }
@@ -443,11 +440,14 @@ a.topbar-avatar:focus-visible {
 }
 
 .app-content {
+    /* La colonne de contenu occupe la hauteur restante : le pied de page légal reste ainsi
+       collé au bas de la fenêtre, même sur une page courte. */
+    flex: 1 1 auto;
     inline-size: min(100%, var(--content-max));
     margin-inline: auto;
     padding-block-start: clamp(1.25rem, 3vw, 2.5rem);
     padding-inline: clamp(1.25rem, 3vw, 2.75rem);
-    padding-block-end: 4rem;
+    padding-block-end: var(--space-5);
 }
 
 .dev-banner {
@@ -512,8 +512,6 @@ a.topbar-avatar:focus-visible {
     }
 
     .sidebar-brand__product,
-    .sidebar-brand__caption,
-    .sidebar-brand__site,
     .sidebar-section-label,
     .sidebar-link__label,
     .sidebar-workspace__copy {
@@ -740,7 +738,14 @@ a.topbar-avatar:focus-visible {
     .app-content {
         padding-block-start: var(--space-5);
         padding-inline: var(--space-4);
+        /* La marge basse de la barre d'onglets est portée par le dernier élément de la
+           colonne : le pied de page quand il est présent. */
+        padding-block-end: var(--space-4);
+    }
+
+    .app-main > .app-footer {
         padding-block-end: calc(6.5rem + env(safe-area-inset-bottom));
+        padding-inline: var(--space-4);
     }
 
     /* Barre d'onglets ancrée en bas : 35 < voile (40) < tiroir latéral (45),

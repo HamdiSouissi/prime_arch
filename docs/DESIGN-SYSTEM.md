@@ -170,13 +170,14 @@ Réutiliser `.card`, `.button`, `.badge`, `.field`, `.progress` et `.data-table`
   d’initiales se réduisent. Aucune action de l’en-tête n’est retirée de l’interface, et le sélecteur de langue reste
   visible de 320 px à 1440 px.
 - **Marque du produit** : `config/brand.php` porte le nom (`Prime Architecture`), l'éditeur
-  (`Prime Vision Solutions`), l'adresse publique (`primevisionsolutions.fr`, lien externe en `rel="noopener
-  noreferrer"`) et les fichiers du logo. La barre latérale affiche le logo et le nom, puis l'éditeur et l'adresse en
-  `0.65rem` sur toute la largeur utile : ces deux lignes ne sont jamais tronquées, ne portent ni ellipse ni
-  `nowrap`, et l'adresse est en `unicode-bidi: isolate` pour garder son sens de lecture en arabe. En rail
-  (761–1100 px) et dans le tiroir mobile, le nom et l'adresse restent accessibles aux lecteurs d'écran (`clip`),
-  seul le logo reste visible. L'écran de connexion reprend les trois niveaux dans le même ordre. Deux liens ne
-  peuvent pas être imbriqués : l'adresse du site est donc un lien frère, sous le bloc de marque.
+  (`Prime Vision Solutions`), l'adresse publique (`primevisionsolutions.fr`) et les fichiers du logo. La barre
+  latérale n'affiche que **le logo et le nom** : l'éditeur, le site et le copyright sont regroupés en pied de page.
+- **Pied de page légal** (`partials/brand-footer.php`, rendu par les deux layouts sous le contenu) : à gauche
+  `© <année> Prime Vision Solutions — Tous droits réservés` (libellé `app.copyright`, millésime pris sur l'horloge du
+  serveur), à droite l'adresse du site en lien externe (`rel="noopener noreferrer"`, `unicode-bidi: isolate` pour
+  l'adresse latine en arabe). Il reste collé au bas de la fenêtre sur une page courte (`.app-content` en
+  `flex: 1 1 auto` dans `.app-main`, `.auth-shell` en colonne pour la connexion) et, sur mobile, porte lui-même la
+  réserve de la barre d'onglets fixe (`calc(6.5rem + env(safe-area-inset-bottom))`).
 - **Sélecteur de langue** : un formulaire POST par langue (`partials/language-switcher.php`), valeur dans un champ
   caché, jamais de bouton désactivé. Il est en `flex: 0 0 auto` et ne peut donc pas être écrasé par la recherche.
 - **Bulle d’initiales** : c’est un lien (`<a class="topbar-avatar">`) vers les réglages accessibles à l’utilisateur
