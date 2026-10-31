@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AuthController;
+use App\Controllers\BackupController;
 use App\Controllers\AuditController;
 use App\Controllers\ClientController;
 use App\Controllers\CustomFieldController;
@@ -130,6 +131,15 @@ return function (Router $router): void {
     $router->post('/settings/modules/install', [ModuleController::class, 'install'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
     $router->post('/settings/modules/{slug}/activate', [ModuleController::class, 'activate'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
     $router->post('/settings/modules/{slug}/deactivate', [ModuleController::class, 'deactivate'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+
+    // Sauvegardes : archives `.zip` privées, réservées aux profils qui administrent les réglages.
+    // Les routes statiques sont déclarées avant `/settings/backups/download/{name}`.
+    $router->post('/settings/backups', [BackupController::class, 'create'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/backups/import', [BackupController::class, 'import'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/backups/download', [BackupController::class, 'downloadSelection'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/backups/delete', [BackupController::class, 'delete'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/settings/backups/restore', [BackupController::class, 'restore'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/settings/backups/download/{name}', [BackupController::class, 'download'], [AuthMiddleware::class, AdminMiddleware::class]);
 
     $router->get('/settings', [SettingsController::class, 'edit'], [AuthMiddleware::class]);
     $router->post('/settings', [SettingsController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);

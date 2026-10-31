@@ -9,6 +9,38 @@ $errors = is_array($errors ?? null) ? $errors : [];
 $governorates = is_array($governorates ?? null) ? $governorates : [];
 $delegations = is_array($delegations ?? null) ? $delegations : [];
 $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '19,13,7,0')));
+$backups = is_array($backups ?? null) ? $backups : [];
+$backupErrors = is_array($backupErrors ?? null) ? $backupErrors : [];
+$canBackup = !empty($canBackup);
+$backupConfirmationWord = (string) ($backupConfirmationWord ?? 'RESTAURER');
+$backupImportLimit = (string) ($backupImportLimit ?? '');
+$backupStoragePath = (string) ($backupStoragePath ?? 'storage/backups/');
+// Les archives sont horodatées en UTC ; l'affichage suit le fuseau de l'application.
+$backupMoment = static function (array $backup): array {
+    $timezone = new DateTimeZone(date_default_timezone_get());
+    try {
+        $moment = is_string($backup['created_at'] ?? null) && $backup['created_at'] !== ''
+            ? new DateTimeImmutable((string) $backup['created_at'])
+            : (new DateTimeImmutable('@' . (int) ($backup['modified_at'] ?? time())));
+    } catch (Throwable) {
+        $moment = new DateTimeImmutable('@' . (int) ($backup['modified_at'] ?? time()));
+    }
+    $moment = $moment->setTimezone($timezone);
+    return ['date' => $moment->format('d/m/Y'), 'time' => $moment->format('H:i'), 'iso' => $moment->format('c')];
+};
+$backupSize = static function (int $bytes): string {
+    if ($bytes >= 1_048_576) {
+        return number_format($bytes / 1_048_576, 1, ',', ' ') . ' Mio';
+    }
+    if ($bytes >= 1024) {
+        return number_format($bytes / 1024, 0, ',', ' ') . ' Kio';
+    }
+    return max(0, $bytes) . ' o';
+};
+$restorableBackups = array_values(array_filter(
+    $backups,
+    static fn (array $backup): bool => !empty($backup['valid'])
+));
 ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => __('settings.title'),
@@ -24,6 +56,24 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
 <?php if (!empty($errors['general'])): ?>
     <p class="form-feedback form-feedback--error" role="alert"><?= e($errors['general']) ?></p>
 <?php endif; ?>
+
+<?php // Sans accès aux sauvegardes, la page reste une simple colonne : aucun onglet isolé. ?>
+<div class="settings-layout<?= $canBackup ? '' : ' settings-layout--single' ?>">
+    <?php if ($canBackup): ?>
+        <nav class="settings-nav" role="tablist" aria-label="<?= e(__('settings.tabs_label')) ?>" data-tab-group data-tab-panels="#settings-panels">
+            <button class="settings-nav__item" type="button" role="tab" id="settings-tab-cabinet" aria-selected="true" aria-controls="settings-panel-cabinet" data-tab-target="settings-panel-cabinet">
+                <svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#building"></use></svg>
+                <?= e(__('settings.tab_cabinet')) ?>
+            </button>
+            <button class="settings-nav__item" type="button" role="tab" id="settings-tab-sauvegardes" aria-selected="false" aria-controls="sauvegardes" data-tab-target="sauvegardes" tabindex="-1">
+                <svg class="icon" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#shield"></use></svg>
+                <?= e(__('settings.tab_backups')) ?>
+            </button>
+        </nav>
+    <?php endif; ?>
+
+    <div class="settings-panels" id="settings-panels">
+        <section class="settings-panel-group" id="settings-panel-cabinet" role="tabpanel" aria-labelledby="settings-tab-cabinet" data-tab-panel>
 
 <form class="foundation-settings" method="post" action="<?= e(url('/settings')) ?>" enctype="multipart/form-data" data-geography-form
       data-delegations-url="<?= e(url('/api/geography/delegations')) ?>"
@@ -175,3 +225,186 @@ $vatRates = array_map('trim', explode(',', (string) ($settings['vat_rates'] ?? '
         <p class="muted text-footnote"><?= e(__('settings.modules_admin_hint')) ?></p>
     </section>
 <?php endif; ?>
+        </section>
+
+        <?php if ($canBackup): ?>
+        <section class="settings-panel-group" id="sauvegardes" role="tabpanel" aria-labelledby="settings-tab-sauvegardes" data-tab-panel hidden>
+            <?php if (!empty($backupNotice)): ?>
+                <p class="form-feedback form-feedback--success" role="status"><?= e((string) $backupNotice) ?></p>
+            <?php endif; ?>
+            <?php foreach ($backupErrors as $backupError): ?>
+                <p class="form-feedback form-feedback--error" role="alert"><?= e((string) $backupError) ?></p>
+            <?php endforeach; ?>
+
+            <section class="card settings-panel" aria-labelledby="settings-backup-create-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="settings-backup-create-title"><?= e(__('backup.create_title')) ?></h2>
+                        <p class="section-heading__note"><?= e(__('backup.create_help')) ?></p>
+                    </div>
+                    <span class="badge badge--neutral">.zip</span>
+                </div>
+                <div class="settings-form">
+                    <form method="post" action="<?= e(url('/settings/backups')) ?>">
+                        <?= csrf_field() ?>
+                        <button class="button button--primary" type="submit">
+                            <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#shield"></use></svg>
+                            <?= e(__('backup.create_action')) ?>
+                        </button>
+                    </form>
+                    <p class="field__hint"><?= e(__('backup.create_note', ['path' => $backupStoragePath])) ?></p>
+                </div>
+            </section>
+
+            <section class="card settings-panel margin-block-start-6" aria-labelledby="settings-backup-import-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="settings-backup-import-title"><?= e(__('backup.import_title')) ?></h2>
+                        <p class="section-heading__note"><?= e(__('backup.import_help', ['size' => $backupImportLimit])) ?></p>
+                    </div>
+                </div>
+                <div class="settings-form">
+                    <form class="backup-import" method="post" action="<?= e(url('/settings/backups/import')) ?>" enctype="multipart/form-data">
+                        <?= csrf_field() ?>
+                        <div class="field">
+                            <label class="field__label" for="backup-archive"><?= e(__('backup.import_label')) ?></label>
+                            <input class="field__control" id="backup-archive" type="file" name="archive" accept=".zip,application/zip" required>
+                        </div>
+                        <button class="button button--secondary" type="submit">
+                            <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#upload"></use></svg>
+                            <?= e(__('backup.import_action')) ?>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="card settings-panel margin-block-start-6" aria-labelledby="settings-backup-list-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="settings-backup-list-title"><?= e(__('backup.list_title')) ?></h2>
+                        <p class="section-heading__note"><?= e(__('backup.list_help')) ?></p>
+                    </div>
+                    <span class="badge badge--neutral"><?= e(__('backup.count', ['count' => (string) count($backups)])) ?></span>
+                </div>
+
+                <?php if ($backups === []): ?>
+                    <p class="empty-state__description"><?= e(__('backup.list_empty')) ?></p>
+                <?php else: ?>
+                    <form class="bulk-form backup-selection" method="post" action="<?= e(url('/settings/backups/download')) ?>"
+                          data-selection-boxes='input[name="names[]"]' data-confirm-selection>
+                        <?= csrf_field() ?>
+                        <div class="bulk-actions">
+                            <span class="bulk-actions__count" data-selection-count data-label="<?= e(__('backup.selected_count')) ?>"><?= e(str_replace(':count', '0', __('backup.selected_count'))) ?></span>
+                            <button class="button button--secondary button--small" type="submit" data-selection-submit disabled
+                                    formaction="<?= e(url('/settings/backups/download')) ?>">
+                                <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#download"></use></svg>
+                                <?= e(__('backup.download_selection')) ?>
+                            </button>
+                            <button class="button button--danger button--small" type="submit" data-selection-submit disabled
+                                    formaction="<?= e(url('/settings/backups/delete')) ?>"
+                                    data-confirm="<?= e(__('backup.delete_confirm', ['count' => ':count'])) ?>">
+                                <svg class="icon icon--small" aria-hidden="true"><use href="<?= e(asset('img/icons.svg')) ?>#trash"></use></svg>
+                                <?= e(__('backup.delete_selection')) ?>
+                            </button>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table class="data-table backup-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="bulk-select">
+                                            <input type="checkbox" data-select-all aria-label="<?= e(__('common.select_all')) ?>">
+                                        </th>
+                                        <th scope="col"><?= e(__('backup.column_name')) ?></th>
+                                        <th scope="col"><?= e(__('backup.column_date')) ?></th>
+                                        <th scope="col"><?= e(__('backup.column_time')) ?></th>
+                                        <th scope="col"><?= e(__('backup.column_size')) ?></th>
+                                        <th scope="col"><?= e(__('backup.column_contents')) ?></th>
+                                        <th scope="col"><?= e(__('backup.column_status')) ?></th>
+                                        <th scope="col"><?= e(__('backup.column_actions')) ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php foreach ($backups as $backup): ?>
+                                    <?php $moment = $backupMoment($backup); ?>
+                                    <tr>
+                                        <td class="bulk-select" data-label="<?= e(__('backup.column_select')) ?>">
+                                            <input type="checkbox" name="names[]" value="<?= e((string) $backup['name']) ?>"
+                                                   aria-label="<?= e(__('backup.select_named', ['name' => (string) $backup['name']])) ?>">
+                                        </td>
+                                        <td data-label="<?= e(__('backup.column_name')) ?>"><code class="backup-table__name"><?= e((string) $backup['name']) ?></code></td>
+                                        <td data-label="<?= e(__('backup.column_date')) ?>"><time datetime="<?= e($moment['iso']) ?>"><?= e($moment['date']) ?></time></td>
+                                        <td data-label="<?= e(__('backup.column_time')) ?>"><?= e($moment['time']) ?></td>
+                                        <td data-label="<?= e(__('backup.column_size')) ?>"><?= e($backupSize((int) $backup['bytes'])) ?></td>
+                                        <td class="text-footnote" data-label="<?= e(__('backup.column_contents')) ?>">
+                                            <?php if (!empty($backup['valid'])): ?>
+                                                <?= e(__('backup.contents', [
+                                                    'tables' => (string) ($backup['tables'] ?? 0),
+                                                    'files' => (string) ($backup['files'] ?? 0),
+                                                ])) ?>
+                                            <?php else: ?>
+                                                <span class="muted"><?= e(__('backup.size_unknown')) ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td data-label="<?= e(__('backup.column_status')) ?>">
+                                            <?php if (!empty($backup['valid'])): ?>
+                                                <span class="badge badge--success"><?= e(__('backup.status_valid')) ?></span>
+                                            <?php else: ?>
+                                                <span class="badge badge--warning"><?= e(__('backup.status_invalid')) ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td data-label="<?= e(__('backup.column_actions')) ?>">
+                                            <a class="button button--ghost button--small"
+                                               href="<?= e(url('/settings/backups/download/' . rawurlencode((string) $backup['name']))) ?>">
+                                                <?= e(__('backup.download')) ?>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="field__hint"><?= e(__('backup.status_invalid_help')) ?></p>
+                    </form>
+                <?php endif; ?>
+            </section>
+
+            <section class="card settings-panel settings-panel--danger margin-block-start-6" aria-labelledby="settings-backup-restore-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="settings-backup-restore-title"><?= e(__('backup.restore_title')) ?></h2>
+                        <p class="section-heading__note"><?= e(__('backup.restore_help')) ?></p>
+                    </div>
+                    <span class="badge badge--error"><?= e(__('backup.restore_badge')) ?></span>
+                </div>
+                <?php if ($restorableBackups === []): ?>
+                    <p class="empty-state__description"><?= e(__('backup.restore_no_archive')) ?></p>
+                <?php else: ?>
+                    <form class="settings-form" method="post" action="<?= e(url('/settings/backups/restore')) ?>"
+                          data-confirm="<?= e(__('backup.restore_confirm_dialog')) ?>">
+                        <?= csrf_field() ?>
+                        <div class="field">
+                            <label class="field__label" for="backup-restore-name"><?= e(__('backup.restore_label')) ?></label>
+                            <select class="field__control" id="backup-restore-name" name="name" required>
+                                <option value=""><?= e(__('backup.restore_choose')) ?></option>
+                                <?php foreach ($restorableBackups as $backup): ?>
+                                    <?php $moment = $backupMoment($backup); ?>
+                                    <option value="<?= e((string) $backup['name']) ?>"><?= e((string) $backup['name']) ?> · <?= e($moment['date'] . ' ' . $moment['time']) ?> · <?= e($backupSize((int) $backup['bytes'])) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label class="field__label" for="backup-restore-confirmation"><?= e(__('backup.restore_confirmation_label', ['word' => $backupConfirmationWord])) ?></label>
+                            <input class="field__control" id="backup-restore-confirmation" name="confirmation" autocomplete="off" autocapitalize="characters" spellcheck="false" required placeholder="<?= e($backupConfirmationWord) ?>">
+                        </div>
+                        <p class="form-feedback form-feedback--warning"><?= e(__('backup.restore_warning')) ?></p>
+                        <div class="form-actions">
+                            <button class="button button--danger" type="submit"><?= e(__('backup.restore_action')) ?></button>
+                        </div>
+                    </form>
+                <?php endif; ?>
+            </section>
+        </section>
+<?php endif; ?>
+    </div>
+</div>

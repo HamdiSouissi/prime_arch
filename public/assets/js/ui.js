@@ -88,6 +88,18 @@ function activateTab(trigger) {
     });
 }
 
+/** Ouvre directement l'onglet ciblé par l'ancre de l'URL (`/settings#sauvegardes`). */
+function initTabsFromLocation() {
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const panel = document.getElementById(hash);
+    if (!panel || !panel.hasAttribute("data-tab-panel")) return;
+    document.querySelectorAll("[data-tab-target]").forEach((trigger) => {
+        if (trigger.dataset.tabTarget === hash) activateTab(trigger);
+    });
+    panel.scrollIntoView({ block: "start", behavior: reduceMotion.matches ? "auto" : "smooth" });
+}
+
 function initTabKeyboard() {
     document.addEventListener("keydown", (event) => {
         const current = event.target.closest?.("[data-tab-target]");
@@ -983,14 +995,29 @@ function initUpload() {
 }
 
 /** Confirmation native avant une action destructive (formulaire portant data-confirm). */
+/**
+ * Cases de sélection d'un formulaire : `data-selection-boxes` permet de viser un autre
+ * nom de champ que la convention `ids[]` (sauvegardes, sélections de fichiers).
+ */
+function selectionBoxes(form) {
+    const selector = form.getAttribute("data-selection-boxes") || 'input[name="ids[]"]';
+    return selector;
+}
+
 function initConfirmForms() {
-    document.querySelectorAll("form[data-confirm]").forEach((form) => {
+    document.querySelectorAll("form[data-confirm], form[data-confirm-selection]").forEach((form) => {
         form.addEventListener("submit", (event) => {
-            let message = form.getAttribute("data-confirm") || "";
+            // Un même formulaire peut proposer plusieurs actions : le message porté par le
+            // bouton envoyé (télécharger, supprimer…) est prioritaire sur celui du formulaire.
+            const submitter = event.submitter;
+            const submitterMessage = submitter instanceof HTMLElement
+                ? submitter.getAttribute("data-confirm") || ""
+                : "";
+            let message = submitterMessage || form.getAttribute("data-confirm") || "";
             // Suppression d'une sélection : le nombre est connu au moment de l'envoi, et une
             // sélection vide ne doit pas partir.
             if (form.hasAttribute("data-confirm-selection")) {
-                const selected = form.querySelectorAll('input[name="ids[]"]:checked').length;
+                const selected = form.querySelectorAll(selectionBoxes(form) + ":checked").length;
                 if (selected === 0) {
                     event.preventDefault();
                     return;
@@ -1008,9 +1035,10 @@ function initConfirmForms() {
  */
 function initSelectionTools() {
     document.querySelectorAll("form.bulk-form").forEach((form) => {
-        const boxes = Array.from(form.querySelectorAll('input[name="ids[]"]'));
+        const boxes = Array.from(form.querySelectorAll(selectionBoxes(form)));
         if (boxes.length === 0) return;
-        const submit = form.querySelector("[data-selection-submit]");
+        // Plusieurs actions peuvent partager la même sélection (télécharger / supprimer).
+        const submits = Array.from(form.querySelectorAll("[data-selection-submit]"));
         const counter = form.querySelector("[data-selection-count]");
         const toggleAll = form.querySelector("[data-select-all]");
         const label = counter?.getAttribute("data-label") || ":count";
@@ -1018,7 +1046,7 @@ function initSelectionTools() {
         const refresh = () => {
             const selected = boxes.filter((box) => box.checked).length;
             if (counter) counter.textContent = label.replace(":count", String(selected));
-            if (submit) submit.disabled = selected === 0;
+            submits.forEach((submit) => { submit.disabled = selected === 0; });
             if (toggleAll) {
                 toggleAll.checked = selected > 0 && selected === boxes.length;
                 toggleAll.indeterminate = selected > 0 && selected < boxes.length;
@@ -1237,6 +1265,7 @@ export function initUI() {
     initShortcutHints();
     initLocalClock();
     initTabKeyboard();
+    initTabsFromLocation();
     initLargeTitles();
     initFilters();
     initViewToggle();

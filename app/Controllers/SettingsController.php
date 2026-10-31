@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Core\View;
 use App\Models\GeographyRepository;
 use App\Services\AuditLogger;
+use App\Services\BackupService;
 use App\Services\CabinetLogoStorage;
 use App\Services\CabinetSettings;
 use App\Services\TunisianPhoneNumber;
@@ -39,6 +40,10 @@ final class SettingsController
             ? (int) $values['governorate_id']
             : 0;
         $context = (new ViewContext())->authenticated(__('settings.title'), 'settings');
+        // Les sauvegardes contiennent toutes les données du cabinet : elles restent
+        // réservées aux profils qui administrent à la fois les réglages et les comptes.
+        $canBackup = Auth::can('settings.manage') && Auth::can('users.manage');
+        $backupErrors = Session::pullFlash('settings.backup_errors', []);
 
         return Response::html(View::render('pages/app/settings', $context + [
             'settings' => $values,
@@ -48,6 +53,13 @@ final class SettingsController
             'delegations' => $governorateId > 0 ? (new GeographyRepository())->delegations($governorateId) : [],
             'canManage' => Auth::can('settings.manage'),
             'logoUrl' => $values['logo'] !== '' ? url('/media/cabinet-logo') : asset('img/logo-placeholder.svg'),
+            'canBackup' => $canBackup,
+            'backups' => $canBackup ? (new BackupService())->list() : [],
+            'backupNotice' => Session::pullFlash('settings.backup_notice'),
+            'backupErrors' => is_array($backupErrors) ? array_values(array_filter($backupErrors, 'is_string')) : [],
+            'backupImportLimit' => self::formatBytes(self::backupUploadLimit()),
+            'backupConfirmationWord' => BackupController::CONFIRMATION_WORD,
+            'backupStoragePath' => 'storage/backups/',
         ]));
     }
 
@@ -201,6 +213,57 @@ final class SettingsController
             }
         }
         return $errors;
+    }
+
+    /**
+     * Taille réellement acceptée pour un import : le minimum entre la limite applicative
+     * (256 Mio) et les limites `upload_max_filesize` / `post_max_size` du php.ini.
+     */
+    public static function backupUploadLimit(): int
+    {
+        $limit = 268_435_456;
+        foreach (['upload_max_filesize', 'post_max_size'] as $key) {
+            $value = self::iniBytes((string) ini_get($key));
+            if ($value > 0) {
+                $limit = min($limit, $value);
+            }
+        }
+
+        return $limit;
+    }
+
+    /** Convertit une valeur `php.ini` (« 32M », « 1G », « 512K ») en octets. */
+    private static function iniBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 0;
+        }
+        if (!preg_match('/^(\d+)\s*([KMG])?$/i', $value, $matches)) {
+            return 0;
+        }
+        $bytes = (int) $matches[1];
+        $unit = strtoupper((string) ($matches[2] ?? ''));
+
+        return match ($unit) {
+            'K' => $bytes * 1024,
+            'M' => $bytes * 1024 * 1024,
+            'G' => $bytes * 1024 * 1024 * 1024,
+            default => $bytes,
+        };
+    }
+
+    /** Libellé lisible d'une taille en octets (Mio, arrondi inférieur). */
+    public static function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1_048_576) {
+            return max(1, intdiv($bytes, 1_048_576)) . ' Mio';
+        }
+        if ($bytes >= 1024) {
+            return max(1, intdiv($bytes, 1024)) . ' Kio';
+        }
+
+        return max(0, $bytes) . ' o';
     }
 
     private static function inputString(Request $request, string $key): string

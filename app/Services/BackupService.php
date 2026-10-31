@@ -11,7 +11,15 @@ use RuntimeException;
 use Throwable;
 use ZipArchive;
 
-/** Sauvegardes privées, vérifiables et restaurables uniquement dans une base vide. */
+/**
+ * Sauvegardes privées (archives `.zip`), vérifiables et restaurables.
+ *
+ * Deux modes de restauration coexistent : `restore()` n'accepte qu'une base et des
+ * dossiers de stockage vides (ligne de commande), tandis que `restoreInPlace()` remplace
+ * l'état de l'instance en service après avoir archivé cet état dans une sauvegarde de
+ * sécurité. Les archives importées ne sont jamais exécutées : seule leur structure est
+ * relue, validée puis rejouée en SQL paramétré.
+ */
 final class BackupService
 {
     private const FORMAT_VERSION = 1;
@@ -20,6 +28,12 @@ final class BackupService
     private const MAX_MANIFEST_BYTES = 2_097_152;
     private const MAX_SCHEMA_BYTES = 16_777_216;
     private const MAX_ROW_BYTES = 67_108_864;
+    /** Taille maximale d'une archive importée depuis l'interface (le php.ini peut être plus strict). */
+    private const MAX_IMPORT_BYTES = 268_435_456;
+    /** Nombre maximal d'archives réunies dans un téléchargement groupé. */
+    private const MAX_BUNDLE_ARCHIVES = 20;
+    /** Plafond d'archives affichées : au-delà, les plus anciennes restent sur le disque. */
+    private const MAX_LISTED_ARCHIVES = 200;
     private const STORAGE_ROOTS = ['uploads', 'pdf', 'modules'];
 
     private ?PDO $pdo;
@@ -240,6 +254,408 @@ final class BackupService
             throw new RuntimeException('L’archive demandée est absente ou inaccessible.');
         }
         return $resolved;
+    }
+
+    /**
+     * Liste les archives locales, de la plus récente à la plus ancienne.
+     *
+     * Seuls les fichiers `.zip` réels placés dans `storage/backups` sont retenus : ni
+     * lien symbolique, ni fichier temporaire `.zip.tmp`. Le manifeste est relu sans
+     * décompresser les données métier, ce qui suffit à qualifier chaque sauvegarde.
+     *
+     * @return list<array{name:string,path:string,bytes:int,modified_at:int,created_at:?string,tables:?int,files:?int,logical_bytes:?int,valid:bool}>
+     */
+    public function list(): array
+    {
+        $backupRoot = BASE_PATH . '/storage/backups';
+        $directory = realpath($backupRoot);
+        if ($directory === false || is_link($backupRoot) || !is_dir($directory)) {
+            return [];
+        }
+
+        $candidates = [];
+        foreach (scandir($directory) ?: [] as $name) {
+            if ($name === '.' || $name === '..' || str_starts_with($name, '.')) {
+                continue;
+            }
+            $path = $directory . '/' . $name;
+            if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'zip' || is_link($path) || !is_file($path)) {
+                continue;
+            }
+            $bytes = filesize($path);
+            $modifiedAt = filemtime($path);
+            if ($bytes === false || $modifiedAt === false) {
+                continue;
+            }
+            $candidates[] = [
+                'name' => $name,
+                'path' => $path,
+                'bytes' => $bytes,
+                'modified_at' => $modifiedAt,
+            ];
+        }
+
+        // Les manifestes ne sont relus que pour les archives réellement affichées.
+        usort($candidates, static fn (array $left, array $right): int
+            => [$right['modified_at'], $right['name']] <=> [$left['modified_at'], $left['name']]);
+        $candidates = array_slice($candidates, 0, self::MAX_LISTED_ARCHIVES);
+
+        $entries = [];
+        foreach ($candidates as $candidate) {
+            $summary = self::describeArchive((string) $candidate['path']);
+            $entries[] = [
+                'name' => $candidate['name'],
+                'path' => 'storage/backups/' . $candidate['name'],
+                'bytes' => $candidate['bytes'],
+                'modified_at' => $candidate['modified_at'],
+                'created_at' => $summary['created_at'] ?? null,
+                'tables' => $summary['tables'] ?? null,
+                'files' => $summary['files'] ?? null,
+                'logical_bytes' => $summary['logical_bytes'] ?? null,
+                'valid' => $summary !== null,
+            ];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Importe une archive `.zip` téléversée puis la vérifie intégralement.
+     *
+     * L'archive prend un nom généré par l'application : le nom d'origine n'est jamais
+     * réutilisé comme chemin. Une archive non conforme au format est supprimée aussitôt.
+     *
+     * @param array<string,mixed> $upload entrée de $_FILES (name, type, tmp_name, error, size)
+     * @return array{name:string,path:string,bytes:int,created_at:string,tables:int,files:int}
+     */
+    public function import(array $upload): array
+    {
+        if (!class_exists(ZipArchive::class)) {
+            throw new RuntimeException(__('backup.import_zip_required'));
+        }
+        $error = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($error === UPLOAD_ERR_NO_FILE) {
+            throw new RuntimeException(__('backup.import_required'));
+        }
+        $temporaryPath = (string) ($upload['tmp_name'] ?? '');
+        $reportedSize = filter_var($upload['size'] ?? null, FILTER_VALIDATE_INT);
+        if ($error !== UPLOAD_ERR_OK || $temporaryPath === '' || !is_uploaded_file($temporaryPath)
+            || $reportedSize === false || $reportedSize < 1
+        ) {
+            throw new RuntimeException(__('backup.import_failed'));
+        }
+        if ($reportedSize > self::MAX_IMPORT_BYTES) {
+            throw new RuntimeException(__('backup.import_too_large', [
+                'size' => (string) intdiv(self::MAX_IMPORT_BYTES, 1_048_576),
+            ]));
+        }
+        $actualSize = filesize($temporaryPath);
+        if (!is_int($actualSize) || $actualSize !== $reportedSize) {
+            throw new RuntimeException(__('backup.import_failed'));
+        }
+        $originalName = (string) ($upload['name'] ?? '');
+        if (strtolower(pathinfo($originalName, PATHINFO_EXTENSION)) !== 'zip') {
+            throw new RuntimeException(__('backup.import_extension'));
+        }
+        $signature = file_get_contents($temporaryPath, false, null, 0, 4);
+        if (!is_string($signature) || !in_array($signature, ["PK\x03\x04", "PK\x05\x06"], true)) {
+            throw new RuntimeException(__('backup.import_not_zip'));
+        }
+
+        $directory = self::ensurePrivateDirectory(BASE_PATH . '/storage/backups');
+        $token = bin2hex(random_bytes(8));
+        $filename = 'prime-arch-import-' . gmdate('Ymd-His') . '-' . $token . '.zip';
+        $destination = $directory . '/' . $filename;
+        if (!move_uploaded_file($temporaryPath, $destination)) {
+            throw new RuntimeException(__('backup.import_failed'));
+        }
+        if (!chmod($destination, 0600)) {
+            @unlink($destination);
+            throw new RuntimeException(__('backup.import_failed'));
+        }
+
+        try {
+            $verified = $this->verifyArchive($destination);
+        } catch (Throwable $error) {
+            @unlink($destination);
+            throw new RuntimeException(__('backup.import_invalid') . ' ' . $error->getMessage(), 0, $error);
+        }
+
+        (new AuditLogger($this->connection()))->record('backup.imported', 'backup', $filename, [
+            'files' => $verified['files'],
+            'tables' => $verified['tables'],
+        ], null);
+
+        return [
+            'name' => $filename,
+            'path' => 'storage/backups/' . $filename,
+            'bytes' => $reportedSize,
+            'created_at' => $verified['created_at'],
+            'tables' => $verified['tables'],
+            'files' => $verified['files'],
+        ];
+    }
+
+    /** Supprime définitivement une archive locale (jamais un fichier hors de `storage/backups`). */
+    public function delete(string $candidate): string
+    {
+        $path = $this->resolveArchivePath($candidate);
+        $name = basename($path);
+        if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'zip') {
+            throw new RuntimeException(__('backup.archive_not_zip'));
+        }
+        if (!unlink($path)) {
+            throw new RuntimeException(__('backup.delete_failed'));
+        }
+        (new AuditLogger($this->connection()))->record('backup.deleted', 'backup', $name, [], null);
+
+        return $name;
+    }
+
+    /**
+     * Réunit plusieurs archives dans une seule `.zip` de transit pour un téléchargement groupé.
+     *
+     * L'archive produite contient les sauvegardes telles quelles : elle n'est pas
+     * elle-même restaurable, elle sert uniquement à récupérer plusieurs fichiers d'un coup.
+     *
+     * @param list<string> $candidates chemins relatifs sous storage/backups
+     * @return array{path:string,filename:string,count:int}
+     */
+    public function bundle(array $candidates): array
+    {
+        $names = [];
+        foreach ($candidates as $candidate) {
+            if (!is_string($candidate) || $candidate === '') {
+                continue;
+            }
+            $names[basename($this->resolveArchivePath($candidate))] = true;
+        }
+        $names = array_keys($names);
+        if ($names === []) {
+            throw new RuntimeException(__('backup.selection_empty'));
+        }
+        if (count($names) > self::MAX_BUNDLE_ARCHIVES) {
+            throw new RuntimeException(__('backup.selection_too_large', [
+                'count' => (string) self::MAX_BUNDLE_ARCHIVES,
+            ]));
+        }
+        if (!class_exists(ZipArchive::class)) {
+            throw new RuntimeException(__('backup.import_zip_required'));
+        }
+
+        $workRoot = self::ensurePrivateDirectory(BASE_PATH . '/storage/tmp');
+        $bundlePath = $workRoot . '/sauvegardes-' . bin2hex(random_bytes(10)) . '.zip';
+        $zip = new ZipArchive();
+        if ($zip->open($bundlePath, ZipArchive::CREATE | ZipArchive::EXCL) !== true) {
+            throw new RuntimeException(__('backup.bundle_failed'));
+        }
+        try {
+            foreach ($names as $name) {
+                if (!$zip->addFile(BASE_PATH . '/storage/backups/' . $name, $name)) {
+                    throw new RuntimeException(__('backup.bundle_failed'));
+                }
+            }
+        } finally {
+            $zip->close();
+        }
+        if (!chmod($bundlePath, 0600)) {
+            @unlink($bundlePath);
+            throw new RuntimeException(__('backup.bundle_failed'));
+        }
+
+        return [
+            'path' => $bundlePath,
+            'filename' => 'prime-arch-sauvegardes-' . gmdate('Ymd-His') . '.zip',
+            'count' => count($names),
+        ];
+    }
+
+    /**
+     * Restaure une archive sur l'instance en service, après sauvegarde de l'état courant.
+     *
+     * La base est vidée puis reconstruite à partir du schéma de l'archive, et les dossiers
+     * `storage/{uploads,pdf,modules}` sont remplacés. Une archive de sécurité de l'état
+     * courant est créée au préalable : elle seule permet de revenir en arrière.
+     *
+     * @return array{tables:int,files:int,safety:string}
+     */
+    public function restoreInPlace(string $candidate, bool $confirm): array
+    {
+        if (!$confirm) {
+            throw new RuntimeException(__('backup.restore_confirm_required'));
+        }
+        if (!class_exists(ZipArchive::class)) {
+            throw new RuntimeException(__('backup.import_zip_required'));
+        }
+
+        $archivePath = $this->resolveArchivePath($candidate);
+        // Validation complète (schéma, colonnes, lignes, manifeste) avant toute destruction.
+        $inspected = self::inspectArchive($archivePath);
+        $orderedTables = self::orderTables($inspected['schema']['tables']);
+        $safety = $this->create();
+
+        $workRoot = self::ensurePrivateDirectory(BASE_PATH . '/storage/tmp');
+        $workDirectory = $workRoot . '/restore-' . bin2hex(random_bytes(12));
+        if (!mkdir($workDirectory, 0700)) {
+            throw new RuntimeException(__('backup.restore_failed'));
+        }
+
+        try {
+            // Les fichiers privés sont extraits avant toute modification de la base.
+            self::extractStoragePayload($archivePath, $inspected['manifest'], $workDirectory);
+            $pdo = $this->connection();
+            $pdo->exec("SET time_zone = '+00:00'");
+            $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+            try {
+                self::dropExistingTables($pdo);
+                foreach ($orderedTables as $table) {
+                    $pdo->exec($table['create_sql']);
+                }
+                $pdo->beginTransaction();
+                try {
+                    foreach ($orderedTables as $table) {
+                        self::restoreTableData($pdo, $archivePath, $table);
+                    }
+                    $pdo->commit();
+                } catch (Throwable $error) {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                    throw $error;
+                }
+            } finally {
+                $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+            }
+            self::purgeStorageTargets();
+            self::installStoragePayload($workDirectory);
+
+            (new AuditLogger($pdo))->record('backup.restored', 'backup', basename($archivePath), [
+                'files' => count($inspected['manifest']['files']),
+                'tables' => count($orderedTables),
+                'mode' => 'in_place',
+                'safety' => basename($safety),
+            ], null);
+
+            return [
+                'tables' => count($orderedTables),
+                'files' => count($inspected['manifest']['files']),
+                'safety' => $safety,
+            ];
+        } finally {
+            self::removeTree($workDirectory);
+        }
+    }
+
+    /** Relit uniquement le manifeste d'une archive : aucune donnée métier n'est décompressée. */
+    private static function describeArchive(string $path): ?array
+    {
+        if (!class_exists(ZipArchive::class)) {
+            return null;
+        }
+        $zip = new ZipArchive();
+        if ($zip->open($path, ZipArchive::RDONLY) !== true) {
+            return null;
+        }
+        try {
+            $stat = $zip->statName('manifest.json');
+            if (!is_array($stat) || (int) ($stat['size'] ?? 0) < 2
+                || (int) ($stat['size'] ?? 0) > self::MAX_MANIFEST_BYTES
+            ) {
+                return null;
+            }
+            $contents = $zip->getFromName('manifest.json', self::MAX_MANIFEST_BYTES);
+            if (!is_string($contents)) {
+                return null;
+            }
+            $manifest = json_decode($contents, true, 64);
+            if (!is_array($manifest) || (int) ($manifest['format'] ?? 0) !== self::FORMAT_VERSION
+                || !is_string($manifest['created_at'] ?? null) || !is_array($manifest['files'] ?? null)
+            ) {
+                return null;
+            }
+            $logicalBytes = 0;
+            foreach ($manifest['files'] as $file) {
+                if (!is_array($file)) {
+                    return null;
+                }
+                $logicalBytes += max(0, (int) ($file['size'] ?? 0));
+            }
+
+            return [
+                'created_at' => (string) $manifest['created_at'],
+                'tables' => (int) ($manifest['tables'] ?? 0),
+                'files' => count($manifest['files']),
+                'logical_bytes' => $logicalBytes,
+            ];
+        } catch (Throwable) {
+            return null;
+        } finally {
+            $zip->close();
+        }
+    }
+
+    /** Vide la base cible : vues puis tables, quel que soit l'ordre des dépendances. */
+    private static function dropExistingTables(PDO $pdo): void
+    {
+        $rows = $pdo->query('SHOW FULL TABLES')->fetchAll(PDO::FETCH_NUM);
+        $views = [];
+        $tables = [];
+        foreach ($rows as $row) {
+            $name = (string) ($row[0] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            if (strtoupper((string) ($row[1] ?? 'BASE TABLE')) === 'VIEW') {
+                $views[] = $name;
+                continue;
+            }
+            $tables[] = $name;
+        }
+        foreach ($views as $view) {
+            $pdo->exec('DROP VIEW IF EXISTS ' . self::quoteIdentifier($view));
+        }
+        if ($tables !== []) {
+            $pdo->exec('DROP TABLE IF EXISTS ' . implode(', ', array_map(
+                static fn (string $table): string => self::quoteIdentifier($table),
+                $tables
+            )));
+        }
+    }
+
+    /** Vide les dossiers de stockage privés en conservant leurs fichiers de garde. */
+    private static function purgeStorageTargets(): void
+    {
+        foreach (self::STORAGE_ROOTS as $rootName) {
+            $root = BASE_PATH . '/storage/' . $rootName;
+            if (is_link($root)) {
+                throw new RuntimeException(__('backup.storage_invalid'));
+            }
+            if (!file_exists($root)) {
+                continue;
+            }
+            if (!is_dir($root)) {
+                throw new RuntimeException(__('backup.storage_invalid'));
+            }
+            foreach (scandir($root) ?: [] as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+                $path = $root . '/' . $entry;
+                if (is_link($path) || !is_dir($path)) {
+                    if (in_array($entry, ['.htaccess', '.gitkeep'], true) && is_file($path) && !is_link($path)) {
+                        continue;
+                    }
+                    if (!@unlink($path) && file_exists($path)) {
+                        throw new RuntimeException(__('backup.storage_invalid'));
+                    }
+                    continue;
+                }
+                self::removeTree($path);
+                if (file_exists($path)) {
+                    throw new RuntimeException(__('backup.storage_invalid'));
+                }
+            }
+        }
     }
 
     private function connection(): PDO

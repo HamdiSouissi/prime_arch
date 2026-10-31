@@ -11,6 +11,12 @@ final class Response
     /** @var array<string,string> */
     private array $headers = [];
 
+    /** Fichier privé à transmettre tel quel, sans le charger entièrement en mémoire. */
+    private ?string $streamPath = null;
+
+    /** Supprime le fichier source une fois la réponse envoyée (archive de transit). */
+    private bool $deleteAfterSend = false;
+
     public function __construct(
         private string $body = '',
         private int $status = 200,
@@ -45,6 +51,17 @@ final class Response
         foreach ($this->headers as $name => $value) {
             header($name . ': ' . $value);
         }
+        if ($this->streamPath !== null) {
+            $handle = @fopen($this->streamPath, 'rb');
+            if ($handle !== false) {
+                fpassthru($handle);
+                fclose($handle);
+            }
+            if ($this->deleteAfterSend) {
+                @unlink($this->streamPath);
+            }
+            return;
+        }
         echo $this->body;
     }
 
@@ -64,5 +81,36 @@ final class Response
             ->header('Content-Length', (string) strlen($contents))
             ->header('X-Content-Type-Options', 'nosniff')
             ->header('Cache-Control', 'private, no-store, max-age=0');
+    }
+
+    /**
+     * Retourne un fichier privé déjà écrit sur disque (archive de sauvegarde).
+     *
+     * Le contenu est transmis par flux : une archive volumineuse n'est jamais chargée
+     * entièrement en mémoire. `$deleteAfterSend` supprime l'archive de transit une fois
+     * la réponse envoyée.
+     */
+    public static function fileDownload(
+        string $path,
+        string $filename,
+        string $contentType = 'application/zip',
+        bool $deleteAfterSend = false
+    ): self {
+        if (!is_file($path) || is_link($path) || !is_readable($path)) {
+            throw new \RuntimeException('Le fichier demandé est absent ou inaccessible.');
+        }
+        $size = filesize($path);
+        $filename = basename(str_replace('\\', '/', $filename));
+        $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $filename) ?: 'download';
+        $response = (new self(''))
+            ->header('Content-Type', $contentType)
+            ->header('Content-Disposition', 'attachment; filename="' . $safeName . '"; filename*=UTF-8\'\'' . rawurlencode($filename))
+            ->header('Content-Length', (string) ($size === false ? 0 : $size))
+            ->header('X-Content-Type-Options', 'nosniff')
+            ->header('Cache-Control', 'private, no-store, max-age=0');
+        $response->streamPath = $path;
+        $response->deleteAfterSend = $deleteAfterSend;
+
+        return $response;
     }
 }

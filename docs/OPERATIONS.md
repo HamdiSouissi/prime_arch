@@ -6,7 +6,8 @@ La mise en ligne sur un hébergement mutualisé (IONOS), le HTTPS, les tâches p
 sauvegarde et les mises à jour sont décrits pas à pas dans **`docs/DEPLOIEMENT-IONOS.md`**.
 Trois commandes accompagnent l'exploitation : `php bin/release.php` (archive de livraison sans
 `.env`, ni tests, ni contenus générés), `php bin/preflight.php` (diagnostic en lecture seule,
-code de sortie 0/1) et `php bin/backup.php` (sauvegarde complète).
+code de sortie 0/1) et `php bin/backup.php` (sauvegarde complète). Les sauvegardes se créent aussi
+depuis **Réglages › Sauvegardes** (onglet réservé à l’administrateur), décrit plus bas.
 
 ## Journal d’audit
 
@@ -159,7 +160,9 @@ sur la base du cabinet. Détail du contenu et procédure de retrait : `docs/DEMO
 
 ## Créer et contrôler une sauvegarde
 
-La sauvegarde s’exécute uniquement en CLI. Elle nécessite PHP 8.2+, `pdo_mysql`, l’extension `zip` (déjà requise par l’application) et les droits de lecture du schéma/données et d’écriture dans `storage/backups` et `storage/tmp`.
+Une sauvegarde se crée en CLI (`php bin/backup.php`) ou depuis **Réglages › Sauvegardes**. Dans les deux
+cas elle nécessite PHP 8.2+, `pdo_mysql`, l’extension `zip` (déjà requise par l’application) et les droits
+de lecture du schéma/données et d’écriture dans `storage/backups` et `storage/tmp`.
 
 ```bash
 php bin/backup.php
@@ -172,9 +175,51 @@ Pour éviter une divergence entre un document et son PDF/logo pendant la copie d
 
 Les archives contiennent des informations sensibles (clients, comptes, documents, fichiers de modules) et ne sont pas chiffrées par l’application. Elles sont créées avec des permissions privées, mais le cabinet doit aussi protéger le disque, limiter les comptes système autorisés, organiser une copie chiffrée hors serveur et définir une rétention. Le manifeste SHA-256 détecte une corruption accidentelle, mais ne signe pas l’archive et ne garantit pas son authenticité. Ne pas stocker les sauvegardes dans Git ni les exposer sur le web.
 
+## Onglet Réglages › Sauvegardes
+
+L’écran des réglages comporte un onglet **Sauvegardes** (`/settings#sauvegardes`). Il est visible et
+utilisable uniquement pour un compte qui cumule `settings.manage` et `users.manage`, c’est-à-dire
+l’administrateur dans les rôles livrés.
+
+| Action | Route | Effet |
+| --- | --- | --- |
+| Créer | `POST /settings/backups` | Archive `.zip` complète, écrite dans `storage/backups/` (0600). |
+| Importer | `POST /settings/backups/import` | Téléversement d’un `.zip`, renommé `prime-arch-import-AAAAMMJJ-HHMMSS-XXXXXXXX.zip`, puis vérifié ; une archive non conforme est supprimée. |
+| Télécharger | `GET /settings/backups/download/{nom}` · `POST /settings/backups/download` | Envoi par flux, sans passer par `public/`. Une sélection de plusieurs archives est regroupée dans une `.zip` de transit supprimée après l’envoi. |
+| Supprimer | `POST /settings/backups/delete` | Suppression définitive d’une ou plusieurs archives sélectionnées. |
+| Restaurer | `POST /settings/backups/restore` | Restauration **en place** : voir ci-dessous. |
+
+L’import n’accepte que
+l’extension `.zip`, une signature ZIP réelle (`PK\x03\x04`), et une taille plafonnée par le plus petit des
+trois réglages : 256 Mio applicatifs, `upload_max_filesize`, `post_max_size`. L’écran affiche la limite
+effective ; relever ces deux valeurs du `php.ini` si les archives du cabinet sont plus volumineuses.
+Chaque ligne de la liste affiche le nom de l’archive, la date, l’heure, la taille, le nombre de tables et
+de fichiers, ainsi qu’un état « Vérifiée » ou « Illisible » (manifeste absent ou format inconnu). La liste
+affiche au plus les 200 archives les plus récentes ; au-delà, les fichiers restent sur le disque mais ne
+sont plus listés, et doivent être archivés puis supprimés à la main.
+Toutes les actions sont journalisées (`backup.created`, `backup.imported`, `backup.downloaded`,
+`backup.deleted`, `backup.restored`).
+
 ## Restaurer et éprouver la reprise
 
-**La restauration est destructive.** Elle refuse toute base qui contient déjà une table/vue et tout dossier de stockage cible contenant des fichiers métier. Elle ne supprime jamais les tables existantes. Pour l’essai, cloner le code dans un environnement isolé, fournir un `.env` de préproduction pointant vers une nouvelle base vide, et utiliser des dossiers `storage/` dédiés.
+Deux chemins de restauration existent et ne s’appliquent pas aux mêmes situations.
+
+1. **Restauration en place depuis Réglages › Sauvegardes** (`BackupService::restoreInPlace()`) : la base
+   et les dossiers `storage/{uploads,pdf,modules}` de l’instance en service sont **remplacés** par ceux de
+   l’archive. L’opérateur doit recopier exactement `RESTAURER` dans le formulaire ; le serveur revérifie
+   le mot, puis l’archive complète (schéma, colonnes, lignes, empreintes) avant toute écriture. Une
+   **sauvegarde de sécurité de l’état courant est créée automatiquement** et son nom est rappelé dans le
+   message de confirmation. La base est ensuite vidée (vues puis tables), recréée à partir du schéma de
+   l’archive, alimentée dans une transaction, puis les fichiers privés sont remplacés. Les DDL MySQL
+   effectuent des commits implicites : une erreur en cours d’import laisse une base partiellement
+   restaurée, et seule la sauvegarde de sécurité permet de revenir en arrière — via `php bin/restore.php`
+   dans une base vide dédiée. Après restauration, les comptes et mots de passe sont ceux de l’archive :
+   se reconnecter, puis vérifier les documents émis et l’ouverture des PDF/logo.
+2. **Restauration vers une cible vide** (`BackupService::restore()`, CLI) : **la restauration est
+   destructive.** Elle refuse toute base qui contient déjà une table/vue et tout dossier de stockage
+   cible contenant des fichiers métier. Elle ne supprime jamais les tables existantes. Pour l’essai,
+   cloner le code dans un environnement isolé, fournir un `.env` de préproduction pointant vers une
+   nouvelle base vide, et utiliser des dossiers `storage/` dédiés.
 
 ```bash
 php bin/backup.php --verify storage/backups/prime-arch-AAAAMMJJ-HHMMSS-XXXXXXXX.zip
@@ -189,7 +234,7 @@ Les modules PHP sauvegardés restent du code exécutable non sandboxé. Restaure
 
 ## Rôles et contrôle d’accès
 
-Les rôles intégrés non-administrateurs énumèrent maintenant leurs permissions individuellement. Seul l’administrateur garde le joker global `*`. Les fonctions de réglages du cabinet (`settings.view`) et le journal d’audit (`audit.view`) sont réservés à l’administrateur, car l’écran des réglages contient notamment des coordonnées bancaires et fiscales. Les taux et coûts restent contrôlés par des permissions financières dédiées, distinctes de `time.*`. Après une mise à jour, exécuter `php bin/seed.php` pour synchroniser les permissions versionnées.
+Les rôles intégrés non-administrateurs énumèrent maintenant leurs permissions individuellement. Seul l’administrateur garde le joker global `*`. Les fonctions de réglages du cabinet (`settings.view`) et le journal d’audit (`audit.view`) sont réservés à l’administrateur, car l’écran des réglages contient notamment des coordonnées bancaires et fiscales. L’onglet **Sauvegardes** exige en plus `users.manage` : il donne accès à l’intégralité des données du cabinet et permet de les remplacer. Les taux et coûts restent contrôlés par des permissions financières dédiées, distinctes de `time.*`. Après une mise à jour, exécuter `php bin/seed.php` pour synchroniser les permissions versionnées.
 
 ## Conformité tunisienne
 
