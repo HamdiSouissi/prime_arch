@@ -1100,4 +1100,19 @@ return [
     'audit.detail.safety' => 'نسخة الأمان',
     'audit.detail.mode' => 'الوضع',
     'audit.detail.archives' => 'عدد الأرشيفات',
+
+    // قيم الحقول المخصصة المعروضة والمُدخلة من البطاقة.
+    'custom_fields.not_filled' => 'غير مُدخل',
+    'custom_fields.none_active' => 'لا يوجد حقل نشط: فعّل حقلًا أدناه أو أنشئه من البطاقة.',
+    'custom_fields.set_value' => 'إدخال',
+    'custom_fields.edit_value' => 'تعديل',
+    'custom_fields.save_value' => 'حفظ القيمة',
+    'custom_fields.value_label' => 'القيمة',
+    'custom_fields.checkbox_checked' => 'نعم، الخيار محدَّد',
+    'custom_fields.value_saved' => 'تم حفظ قيمة الحقل.',
+    'custom_fields.unknown_field' => 'هذا الحقل غير موجود أو لم يعد نشطًا.',
+    'custom_fields.upload_field_not_editable' => 'يُملأ هذا الحقل بالرفع من بطاقته الخاصة.',
+    'audit.event.custom_fields.value_updated' => 'تعديل قيمة حقل مخصص',
+    'audit.detail.field_key' => 'مفتاح الحقل',
+    'audit.detail.record_id' => 'البطاقة',
 ];

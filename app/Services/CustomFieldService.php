@@ -45,79 +45,124 @@ final class CustomFieldService
         $submitted = is_array($submitted) ? $submitted : [];
 
         foreach ($this->fields->all($entityType, true) as $field) {
-            $key = $field['field_key'];
-            if (in_array($field['field_type'], self::UPLOAD_TYPES, true)) {
-                // Les champs à téléversement ont leur propre formulaire sur la fiche projet :
-                // images dans `project_images`, plans AutoCAD dans `project_files`, tous deux
-                // rattachés au champ par sa clé. Aucune valeur n'est donc conservée dans la
-                // colonne JSON, qui resterait une seconde source de vérité désynchronisée.
+            $key = (string) $field['field_key'];
+            $result = self::normalizeValue($field, $submitted[$key] ?? null);
+            if ($result['action'] === 'error') {
+                $errors[$key] = (string) $result['error'];
+                continue;
+            }
+            if ($result['action'] === 'unset') {
                 unset($values[$key]);
                 continue;
             }
-            if ($field['field_type'] === 'checkbox') {
-                $value = in_array($submitted[$key] ?? null, ['1', 1, true, 'on'], true);
-                if ($field['is_required'] && !$value) {
-                    $errors[$key] = __('custom_fields.required');
-                }
-                $values[$key] = $value;
-                continue;
-            }
-
-            $rawValue = $submitted[$key] ?? '';
-            if (!is_scalar($rawValue) && $rawValue !== null) {
-                $errors[$key] = __('custom_fields.invalid_value');
-                continue;
-            }
-            $rawValue = trim((string) ($rawValue ?? ''));
-            if ($rawValue === '') {
-                if ($field['is_required']) {
-                    $errors[$key] = __('custom_fields.required');
-                } else {
-                    unset($values[$key]);
-                }
-                continue;
-            }
-
-            switch ($field['field_type']) {
-                case 'text':
-                    if (mb_strlen($rawValue, 'UTF-8') > 2000) {
-                        $errors[$key] = __('custom_fields.invalid_value');
-                    } else {
-                        $values[$key] = $rawValue;
-                    }
-                    break;
-                case 'number':
-                    $number = filter_var($rawValue, FILTER_VALIDATE_FLOAT);
-                    if ($number === false || !is_finite((float) $number)) {
-                        $errors[$key] = __('custom_fields.invalid_value');
-                    } else {
-                        $values[$key] = (float) $number;
-                    }
-                    break;
-                case 'date':
-                    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $rawValue);
-                    $dateErrors = DateTimeImmutable::getLastErrors();
-                    if ($date === false || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
-                        || $date->format('Y-m-d') !== $rawValue
-                    ) {
-                        $errors[$key] = __('custom_fields.invalid_value');
-                    } else {
-                        $values[$key] = $rawValue;
-                    }
-                    break;
-                case 'select':
-                    if (!in_array($rawValue, $field['options'], true)) {
-                        $errors[$key] = __('custom_fields.invalid_value');
-                    } else {
-                        $values[$key] = $rawValue;
-                    }
-                    break;
-                default:
-                    $errors[$key] = __('custom_fields.invalid_value');
-            }
+            $values[$key] = $result['value'];
         }
 
         return ['values' => $values, 'errors' => $errors];
+    }
+
+    /**
+     * Valide la valeur d'un seul champ actif, sans exiger celles des autres.
+     *
+     * La fiche projet ou client propose de renseigner un champ directement dans son bloc
+     * « Champs personnalisés » : ce formulaire ne transporte qu'une valeur, et un champ
+     * obligatoire laissé vide ailleurs ne doit pas bloquer cette saisie isolée.
+     *
+     * @param array<string,mixed> $existing valeurs déjà enregistrées sur la fiche
+     * @return array{values:array<string,mixed>,errors:array<string,string>}
+     */
+    public function validateFieldValue(string $entityType, string $fieldKey, mixed $submitted, array $existing = []): array
+    {
+        $values = $existing;
+        $field = null;
+        foreach ($this->fields->all($entityType, true) as $candidate) {
+            if ((string) $candidate['field_key'] === $fieldKey) {
+                $field = $candidate;
+                break;
+            }
+        }
+        if ($field === null) {
+            return ['values' => $values, 'errors' => ['field' => __('custom_fields.unknown_field')]];
+        }
+        if (in_array((string) $field['field_type'], self::UPLOAD_TYPES, true)) {
+            return ['values' => $values, 'errors' => ['field' => __('custom_fields.upload_field_not_editable')]];
+        }
+
+        $result = self::normalizeValue($field, $submitted);
+        if ($result['action'] === 'error') {
+            return ['values' => $values, 'errors' => [$fieldKey => (string) $result['error']]];
+        }
+        if ($result['action'] === 'unset') {
+            unset($values[$fieldKey]);
+
+            return ['values' => $values, 'errors' => []];
+        }
+        $values[$fieldKey] = $result['value'];
+
+        return ['values' => $values, 'errors' => []];
+    }
+
+    /**
+     * Normalise la valeur soumise pour une définition.
+     *
+     * Un champ à téléversement n'a jamais de valeur JSON : les fichiers vivent dans
+     * `project_images` / `project_files`, rattachés au champ par sa clé. Un champ obligatoire
+     * vide produit une erreur ; un champ facultatif vide est retiré des valeurs.
+     *
+     * @param array<string,mixed> $field définition normalisée (clé `field_type`, `options`…)
+     * @return array{action:string,value:mixed,error:?string} action : set, unset ou error
+     */
+    private static function normalizeValue(array $field, mixed $rawValue): array
+    {
+        if (in_array((string) $field['field_type'], self::UPLOAD_TYPES, true)) {
+            return ['action' => 'unset', 'value' => null, 'error' => null];
+        }
+        if ($field['field_type'] === 'checkbox') {
+            $value = in_array($rawValue, ['1', 1, true, 'on'], true);
+            if ($field['is_required'] && !$value) {
+                return ['action' => 'error', 'value' => null, 'error' => __('custom_fields.required')];
+            }
+
+            return ['action' => 'set', 'value' => $value, 'error' => null];
+        }
+
+        if (!is_scalar($rawValue) && $rawValue !== null) {
+            return ['action' => 'error', 'value' => null, 'error' => __('custom_fields.invalid_value')];
+        }
+        $rawValue = trim((string) ($rawValue ?? ''));
+        if ($rawValue === '') {
+            return $field['is_required']
+                ? ['action' => 'error', 'value' => null, 'error' => __('custom_fields.required')]
+                : ['action' => 'unset', 'value' => null, 'error' => null];
+        }
+
+        switch ($field['field_type']) {
+            case 'text':
+                return mb_strlen($rawValue, 'UTF-8') > 2000
+                    ? ['action' => 'error', 'value' => null, 'error' => __('custom_fields.invalid_value')]
+                    : ['action' => 'set', 'value' => $rawValue, 'error' => null];
+            case 'number':
+                $number = filter_var($rawValue, FILTER_VALIDATE_FLOAT);
+                return $number === false || !is_finite((float) $number)
+                    ? ['action' => 'error', 'value' => null, 'error' => __('custom_fields.invalid_value')]
+                    : ['action' => 'set', 'value' => (float) $number, 'error' => null];
+            case 'date':
+                $date = DateTimeImmutable::createFromFormat('!Y-m-d', $rawValue);
+                $dateErrors = DateTimeImmutable::getLastErrors();
+                $valid = $date !== false
+                    && !($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+                    && $date->format('Y-m-d') === $rawValue;
+                return $valid
+                    ? ['action' => 'set', 'value' => $rawValue, 'error' => null]
+                    : ['action' => 'error', 'value' => null, 'error' => __('custom_fields.invalid_value')];
+            case 'select':
+                return in_array($rawValue, $field['options'], true)
+                    ? ['action' => 'set', 'value' => $rawValue, 'error' => null]
+                    : ['action' => 'error', 'value' => null, 'error' => __('custom_fields.invalid_value')];
+            default:
+                // Type inconnu du code (base antérieure à la migration 0015) : jamais deviné.
+                return ['action' => 'error', 'value' => null, 'error' => __('custom_fields.invalid_value')];
+        }
     }
 
     /** Le type est-il connu du code (et non seulement de la base) ? */

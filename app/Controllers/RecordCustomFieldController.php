@@ -86,6 +86,89 @@ final class RecordCustomFieldController
         return $this->activate('project', $fieldId, $projectId);
     }
 
+    /** Renseigne la valeur d'un champ depuis la fiche client, sans passer par le formulaire complet. */
+    public function saveValueClient(Request $request, string $id, string $field): Response
+    {
+        if (!Auth::can('clients.manage')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $clientId = self::existingClientId($id);
+        if ($clientId === null) {
+            return self::notFound();
+        }
+        $client = (new ClientRepository())->findById($clientId);
+        if ($client === null) {
+            return self::notFound();
+        }
+
+        return $this->saveValue($request, 'client', $clientId, $field, (array) ($client['custom_fields'] ?? []));
+    }
+
+    /** Renseigne la valeur d'un champ depuis la fiche projet. */
+    public function saveValueProject(Request $request, string $id, string $field): Response
+    {
+        if (!Auth::can('projects.manage')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $projectId = self::existingProjectId($id);
+        if ($projectId === null) {
+            return self::notFound();
+        }
+        $project = (new ProjectRepository())->findById($projectId);
+        if ($project === null) {
+            return self::notFound();
+        }
+
+        return $this->saveValue($request, 'project', $projectId, $field, (array) ($project['custom_fields'] ?? []));
+    }
+
+    /**
+     * Enregistre une valeur isolée, validée par le même service que le formulaire complet.
+     *
+     * Une seule définition est contrôlée : un autre champ obligatoire resté vide ne bloque pas
+     * cette saisie. Le type « image » et le type « fichier » se remplissent par téléversement et
+     * sont refusés ici.
+     *
+     * @param array<string,mixed> $existingValues valeurs déjà enregistrées sur la fiche
+     */
+    private function saveValue(
+        Request $request,
+        string $entityType,
+        int $recordId,
+        string $field,
+        array $existingValues
+    ): Response {
+        $key = trim($field);
+        if ($key === '' || preg_match('/^[a-z][a-z0-9_]{1,79}$/', $key) !== 1) {
+            return self::notFound();
+        }
+        $result = (new CustomFieldService())->validateFieldValue(
+            $entityType,
+            $key,
+            $request->input('value', ''),
+            $existingValues
+        );
+        if ($result['errors'] !== []) {
+            return self::backToRecord($entityType, $recordId, null, array_values($result['errors']));
+        }
+        try {
+            $entityType === 'client'
+                ? (new ClientRepository())->updateCustomFields($recordId, $result['values'])
+                : (new ProjectRepository())->updateCustomFields($recordId, $result['values']);
+        } catch (Throwable $error) {
+            error_log((string) $error);
+
+            return self::backToRecord($entityType, $recordId, null, [__('custom_fields.save_failed')]);
+        }
+        (new AuditLogger())->record('custom_fields.value_updated', 'custom_field', null, [
+            'entity_type' => $entityType,
+            'field_key' => $key,
+            'record_id' => $recordId,
+        ], Auth::id());
+
+        return self::backToRecord($entityType, $recordId, __('custom_fields.value_saved'), [], 'custom-field-' . $key);
+    }
+
     /**
      * Création rapide : seuls le libellé, le type et les options sont demandés.
      *
@@ -151,7 +234,7 @@ final class RecordCustomFieldController
 
         return self::backToRecord($entityType, $recordId, __('custom_fields.quick_added', [
             'label' => (string) $validated['data']['label'],
-        ]), []);
+        ]), [], 'custom-field-' . (string) $validated['data']['field_key']);
     }
 
     /** Réactive une définition : contrôles d'appartenance, de droits, journalisation et retour. */
@@ -255,9 +338,19 @@ final class RecordCustomFieldController
         return min($max + 10, 9999);
     }
 
-    /** Retour sur la fiche, au bloc des champs personnalisés, avec le message éventuel. */
-    private static function backToRecord(string $entityType, int $recordId, ?string $notice, array $errors): Response
-    {
+    /**
+     * Retour sur la fiche, au bloc des champs personnalisés, avec le message éventuel.
+     *
+     * `$anchor` cible une ligne précise : après une création rapide, la fiche s'ouvre sur le
+     * nouveau champ, qui apparaît même sans valeur.
+     */
+    private static function backToRecord(
+        string $entityType,
+        int $recordId,
+        ?string $notice,
+        array $errors,
+        ?string $anchor = null
+    ): Response {
         $prefix = $entityType === 'client' ? 'clients' : 'projects';
         if ($notice !== null) {
             Session::flash($prefix . '.custom_field_notice', $notice);
@@ -265,7 +358,7 @@ final class RecordCustomFieldController
         if ($errors !== []) {
             Session::flash($prefix . '.custom_field_errors', $errors);
         }
-        $anchor = $entityType === 'client' ? 'client-custom-title' : 'project-custom-title';
+        $anchor ??= $entityType === 'client' ? 'client-custom-title' : 'project-custom-title';
         $path = $entityType === 'client' ? '/clients/' : '/projects/';
 
         return Response::redirect(url($path . $recordId) . '#' . $anchor);

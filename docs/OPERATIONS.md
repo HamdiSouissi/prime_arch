@@ -125,6 +125,26 @@ réglages ne disparaît donc plus du terrain : il reste visible là où on en a 
 - Le bloc apparaît même quand aucun champ n'est encore défini, pour les profils qui peuvent
   configurer : c'est le chemin le plus court vers un premier champ.
 
+### Valeurs affichées et saisies sur place
+
+Tous les champs **actifs** apparaissent sur la fiche, y compris ceux qui n'ont pas encore de
+valeur : une ligne affiche le libellé et « Non renseigné » plutôt que de masquer le champ. Un
+champ créé depuis la fiche est donc visible immédiatement, et la création rapide ramène la page
+directement sur sa ligne (`#custom-field-<clé>`).
+
+- **Renseigner / Modifier** ouvre un formulaire réduit sous la valeur, adapté au type (texte,
+  nombre, date, liste de choix, case à cocher) : `POST /projects/{id}/custom-fields/{clé}/value`
+  ou `POST /clients/{id}/custom-fields/{clé}/value`, avec jeton CSRF.
+- Seules la colonne JSON `custom_fields` et la date de modification de la fiche changent : les
+  autres champs du projet ou du client ne sont pas réécrits.
+- La valeur est validée par le même service que le formulaire complet, mais **pour ce champ
+  uniquement** : un autre champ obligatoire resté vide ailleurs ne bloque pas cette saisie.
+  Une clé absente ou inactive répond « Ce champ n'existe plus ou n'est plus actif ».
+- Les droits sont ceux de la fiche (`projects.manage` / `clients.manage`) ; un profil en lecture
+  seule voit la valeur sans formulaire. Les champs « image » et « fichier » ne se saisissent pas
+  ici : ils gardent leurs cartes de téléversement. L'enregistrement est journalisé
+  (`custom_fields.value_updated`, avec la clé du champ et la fiche, jamais la valeur).
+
 ## Supprimer un client ou un projet
 
 Deux chemins, un seul jeu de règles : cocher des fiches dans la liste (`/clients`, `/projects`)

@@ -105,9 +105,12 @@ final class CustomFieldPickerTest extends TestCase
         }
 
         $controller = self::file('/app/Controllers/RecordCustomFieldController.php');
-        // Une action par type de fiche, chacune derrière le droit du schéma correspondant.
-        self::assertSame(2, substr_count($controller, "Auth::can('clients.manage')"));
+        // Création, activation et saisie d'une valeur, chacune derrière le droit correspondant :
+        // le schéma (`*configure`) pour créer ou activer, la modification de la fiche
+        // (`*.manage`) pour enregistrer une valeur.
+        self::assertSame(3, substr_count($controller, "Auth::can('clients.manage')"));
         self::assertSame(2, substr_count($controller, "Auth::can('projects.configure')"));
+        self::assertSame(1, substr_count($controller, "Auth::can('projects.manage')"));
         // Une définition d'un autre type de fiche est traitée comme introuvable.
         self::assertStringContainsString("(string) \$field['entity_type'] !== \$entityType", $controller);
         self::assertStringContainsString('existingClientId($id)', $controller);

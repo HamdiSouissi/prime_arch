@@ -1100,4 +1100,19 @@ return [
     'audit.detail.safety' => 'Sauvegarde de sécurité',
     'audit.detail.mode' => 'Mode',
     'audit.detail.archives' => 'Archives',
+
+    // Valeurs des champs personnalisés affichées et renseignées sur la fiche.
+    'custom_fields.not_filled' => 'Non renseigné',
+    'custom_fields.none_active' => 'Aucun champ actif : activez-en un ci-dessous ou créez-le depuis la fiche.',
+    'custom_fields.set_value' => 'Renseigner',
+    'custom_fields.edit_value' => 'Modifier',
+    'custom_fields.save_value' => 'Enregistrer la valeur',
+    'custom_fields.value_label' => 'Valeur',
+    'custom_fields.checkbox_checked' => 'Oui, la case est cochée',
+    'custom_fields.value_saved' => 'Valeur du champ enregistrée.',
+    'custom_fields.unknown_field' => 'Ce champ n’existe plus ou n’est plus actif.',
+    'custom_fields.upload_field_not_editable' => 'Ce champ se remplit par téléversement, depuis sa propre carte.',
+    'audit.event.custom_fields.value_updated' => 'Valeur d’un champ personnalisé modifiée',
+    'audit.detail.field_key' => 'Clé du champ',
+    'audit.detail.record_id' => 'Fiche',
 ];

@@ -63,6 +63,8 @@ return function (Router $router): void {
     // Champs personnalisés pilotés depuis la fiche client : création rapide et réactivation.
     $router->post('/clients/{id}/custom-fields', [RecordCustomFieldController::class, 'storeClient'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/clients/{id}/custom-fields/{fieldId}/activate', [RecordCustomFieldController::class, 'activateClient'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    // Valeur d'un champ renseignée depuis la fiche, sans repasser par le formulaire complet.
+    $router->post('/clients/{id}/custom-fields/{field}/value', [RecordCustomFieldController::class, 'saveValueClient'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/clients/{id}', [ClientController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/projects', [ProjectController::class, 'index'], [AuthMiddleware::class]);
@@ -92,6 +94,7 @@ return function (Router $router): void {
     // Champs personnalisés pilotés depuis la fiche projet : création rapide et réactivation.
     $router->post('/projects/{id}/custom-fields', [RecordCustomFieldController::class, 'storeProject'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/custom-fields/{fieldId}/activate', [RecordCustomFieldController::class, 'activateProject'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/custom-fields/{field}/value', [RecordCustomFieldController::class, 'saveValueProject'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/documents', [DocumentController::class, 'index'], [AuthMiddleware::class]);

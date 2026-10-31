@@ -276,12 +276,14 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                     <p class="form-feedback form-feedback--error" role="alert"><?= e(__('custom_fields.type_invalid_field', ['label' => $invalidField['label']])) ?></p>
                 <?php endforeach; ?>
                 <?php if ($valueFields !== []): ?>
-                    <dl class="detail-list">
-                    <?php foreach ($valueFields as $field): ?>
-                        <?php $value = $project['custom_fields'][$field['field_key']] ?? null; ?>
-                        <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
-                    <?php endforeach; ?>
-                    </dl>
+                    <?php View::partial('partials/record-custom-fields', [
+                        'entityType' => 'project',
+                        'recordId' => (int) ($project['id'] ?? 0),
+                        'fields' => $valueFields,
+                        'values' => (array) ($project['custom_fields'] ?? []),
+                        // Renseigner une valeur relève de la modification du projet, pas du schéma.
+                        'canEdit' => !empty($canManage),
+                    ]) ?>
                 <?php endif; ?>
                 <?php if (!empty($canConfigure)): ?>
                     <?php View::partial('partials/custom-field-picker', [

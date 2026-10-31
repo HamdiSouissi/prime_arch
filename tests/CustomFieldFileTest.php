@@ -95,7 +95,7 @@ final class CustomFieldFileTest extends TestCase
     {
         $service = self::file('/app/Services/CustomFieldService.php');
         self::assertStringContainsString("public const UPLOAD_TYPES = ['image', 'file'];", $service);
-        self::assertStringContainsString("in_array(\$field['field_type'], self::UPLOAD_TYPES, true)", $service);
+        self::assertStringContainsString("in_array((string) \$field['field_type'], self::UPLOAD_TYPES, true)", $service);
         self::assertStringContainsString('unset($values[$key]);', $service);
         self::assertStringContainsString('FILE_MAX_PER_UPLOAD', $service);
         self::assertStringContainsString('FILE_MAX_PER_FIELD', $service);

@@ -1782,3 +1782,34 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
     .backup-table__name { max-inline-size: 14rem; text-align: end; }
     .backup-table td .badge { margin-inline-start: auto; }
 }
+
+/* Champs personnalisés sur la fiche : valeur affichée et saisie sur place. */
+.custom-value dd { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+.custom-value__display { font-weight: 500; }
+.custom-value__edit { flex: 1 1 100%; }
+.custom-value__summary {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2rem;
+    color: var(--color-primary-strong);
+    font-size: var(--font-size-caption);
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+.custom-value__summary::-webkit-details-marker { display: none; }
+.custom-value__summary:hover { text-decoration: underline; }
+.custom-value__edit[open] > .custom-value__summary { margin-block-end: var(--space-2); }
+.custom-value__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-raised);
+}
+.custom-value__form .field__label { flex: 1 1 100%; }
+.custom-value__form .field__control { flex: 1 1 12rem; min-inline-size: 0; }
+.custom-value__form .check-label { flex: 1 1 100%; }

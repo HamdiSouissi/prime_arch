@@ -200,6 +200,22 @@ final class ClientRepository
         return $statement->rowCount() > 0 || $this->findById($id) !== null;
     }
 
+    /**
+     * Remplace uniquement les valeurs des champs personnalisés d'un client.
+     *
+     * @param array<string,mixed> $values
+     */
+    public function updateCustomFields(int $id, array $values): bool
+    {
+        $statement = $this->pdo->prepare('UPDATE clients SET custom_fields = :custom_fields WHERE id = :id');
+        $statement->execute([
+            'custom_fields' => json_encode((object) $values, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'id' => $id,
+        ]);
+
+        return $statement->rowCount() > 0;
+    }
+
     /** @param array{full_name:string,job_title:?string,email:?string,phone:?string,is_primary:bool} $contact */
     public function createContact(int $clientId, array $contact): int
     {

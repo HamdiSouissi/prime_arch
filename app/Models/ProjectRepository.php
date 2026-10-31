@@ -350,6 +350,26 @@ final class ProjectRepository
         return $statement->rowCount() > 0 || $this->findById($id) !== null;
     }
 
+    /**
+     * Remplace uniquement les valeurs des champs personnalisés d'un projet.
+     *
+     * La fiche projet propose de renseigner un champ sans repasser par le formulaire complet :
+     * seules la colonne JSON et la date de modification sont touchées, les autres champs du
+     * projet restant inchangés.
+     *
+     * @param array<string,mixed> $values
+     */
+    public function updateCustomFields(int $id, array $values): bool
+    {
+        $statement = $this->pdo->prepare('UPDATE projects SET custom_fields = :custom_fields WHERE id = :id');
+        $statement->execute([
+            'custom_fields' => json_encode((object) $values, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'id' => $id,
+        ]);
+
+        return $statement->rowCount() > 0;
+    }
+
     /** @return string updated|missing|previous_incomplete|active_exists|invalid */
     public function updatePhaseStatus(int $projectId, int $assignmentId, string $action): string
     {

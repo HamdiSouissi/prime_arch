@@ -88,7 +88,7 @@ final class CustomFieldImageTest extends TestCase
 
         // Le bloc à téléversement écarte la clé de la colonne JSON au lieu d'attendre une valeur
         // texte : les images et les plans AutoCAD n'y ont jamais de valeur.
-        self::assertStringContainsString("in_array(\$field['field_type'], self::UPLOAD_TYPES, true)", $service);
+        self::assertStringContainsString("in_array((string) \$field['field_type'], self::UPLOAD_TYPES, true)", $service);
         self::assertStringContainsString("public const UPLOAD_TYPES = ['image', 'file'];", $service);
         self::assertStringContainsString('unset($values[$key]);', $service);
         self::assertStringContainsString('$values = $existing;', $service);
