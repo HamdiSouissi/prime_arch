@@ -40,6 +40,21 @@ Le script `create-admin.php` demande le nom, le courriel et un mot de passe de 1
 
 En production, définir `APP_ENV=production`, `APP_DEBUG=false`, une clé `APP_KEY` aléatoire, `APP_URL` en HTTPS, et placer uniquement `public/` derrière le serveur web.
 
+## Mise en ligne
+
+Le déploiement pas à pas sur un hébergement IONOS (sous-domaine, PHP 8.2+, base MySQL,
+HTTPS, sauvegardes) est décrit dans **`docs/DEPLOIEMENT-IONOS.md`**. Trois commandes
+accompagnent la mise en service :
+
+```bash
+php bin/release.php   # construit l'archive à téléverser (sans .git, tests ni .env)
+php bin/preflight.php # contrôle PHP, .env, droits, base, migrations, administrateur
+php bin/backup.php    # sauvegarde complète (à planifier)
+```
+
+`bin/preflight.php` est en lecture seule et renvoie `0` si l'installation est prête (`1` sinon),
+ce qui permet de l'enchaîner à `bin/migrate.php` dans une procédure de mise à jour.
+
 ## Phases livrées pour validation
 
 ### Phase 1 — Fondation

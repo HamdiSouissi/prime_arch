@@ -1,5 +1,13 @@
 # Exploitation, audit et sauvegardes
 
+## Déploiement
+
+La mise en ligne sur un hébergement mutualisé (IONOS), le HTTPS, les tâches planifiées de
+sauvegarde et les mises à jour sont décrits pas à pas dans **`docs/DEPLOIEMENT-IONOS.md`**.
+Trois commandes accompagnent l'exploitation : `php bin/release.php` (archive de livraison sans
+`.env`, ni tests, ni contenus générés), `php bin/preflight.php` (diagnostic en lecture seule,
+code de sortie 0/1) et `php bin/backup.php` (sauvegarde complète).
+
 ## Journal d’audit
 
 Après déploiement, appliquer les migrations (`php bin/migrate.php`) avant d’utiliser l’application : `0011_create_audit_logs.sql` crée `audit_logs`, `0012_create_auth_throttle_markers.sql` déduplique atomiquement les événements de limitation et `0013_create_project_images.sql` crée les métadonnées des images de projet. Le journal suit les connexions réussies/échouées/limitées, les changements de comptes et rôles, les fiches et contacts clients, les projets, phases et images, les champs personnalisés, les modèles de documents et les taux horaires (sans les montants), le cycle de vie des brouillons et documents émis, les règlements, les saisies de temps, les réglages du cabinet, les modules et les commandes de sauvegarde/restauration.
