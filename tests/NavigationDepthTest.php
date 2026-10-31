@@ -202,8 +202,12 @@ final class NavigationDepthTest extends TestCase
      *
      * @return array<int,string>
      */
-    private static function links(string $view): array
+    private static function links(string $view, array $visited = []): array
     {
+        if (in_array($view, $visited, true)) {
+            return [];
+        }
+        $visited[] = $view;
         $file = BASE_PATH . '/app/Views/' . $view . '.php';
         if (!is_file($file)) {
             return [];
@@ -220,6 +224,15 @@ final class NavigationDepthTest extends TestCase
         preg_match_all('/href="(\/[^"<]*)"/', $source, $hrefs);
         foreach ($hrefs[1] as $href) {
             $patterns[$href] = true;
+        }
+        // Un bloc rendu par `View::partial()` fait partie de la page : ses liens comptent aussi
+        // (galeries, plans AutoCAD, listes de valeurs). Sans cela, une destination accessible en
+        // deux clics depuis la fiche paraîtrait inatteignable.
+        preg_match_all("/View::partial\('([^']+)'/", $source, $partials);
+        foreach (array_unique($partials[1]) as $partial) {
+            foreach (self::links((string) $partial, $visited) as $pattern) {
+                $patterns[$pattern] = true;
+            }
         }
 
         return array_keys($patterns);

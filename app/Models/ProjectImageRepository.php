@@ -5,11 +5,14 @@ namespace App\Models;
 
 use App\Core\Database;
 use PDO;
+use PDOException;
 
 /** Accès préparé aux images privées associées aux projets. */
 final class ProjectImageRepository
 {
     private PDO $pdo;
+    /** Évite de répéter l'avertissement de schéma non migré à chaque requête. */
+    private static bool $schemaWarningLogged = false;
 
     public function __construct(?PDO $pdo = null)
     {
@@ -26,16 +29,47 @@ final class ProjectImageRepository
      */
     public function forProject(int $projectId): array
     {
-        $statement = $this->pdo->prepare(
-            'SELECT i.id, i.project_id, i.original_name, i.stored_name, i.mime_type,
-                    i.file_size, i.width, i.height, i.created_at, i.custom_field_key,
-                    uploader.name AS uploaded_by_name
-             FROM project_images i
-             LEFT JOIN users uploader ON uploader.id = i.uploaded_by
-             WHERE i.project_id = :project_id AND i.custom_field_key IS NULL
-             ORDER BY i.created_at DESC, i.id DESC'
-        );
+        try {
+            return $this->images($projectId, 'general');
+        } catch (PDOException $error) {
+            // Colonne `custom_field_key` (migration 0014) ou table `project_images` absente :
+            // la fiche projet doit rester consultable pendant une mise à jour. On retombe sur
+            // la requête historique, sans distinction de champ.
+            self::warnSchemaGap($error);
+            try {
+                return $this->images($projectId, 'legacy');
+            } catch (PDOException) {
+                return [];
+            }
+        }
+    }
+
+    /**
+     * Images d'un projet, filtrées par rattachement.
+     *
+     * @param string $scope « general » (aucun champ), « custom » (un champ) ou « legacy »
+     *                      (base antérieure à la migration 0014)
+     * @return array<int,array<string,mixed>>
+     */
+    private function images(int $projectId, string $scope): array
+    {
+        $hasField = $scope !== 'legacy';
+        $sql = 'SELECT i.id, i.project_id, i.original_name, i.stored_name, i.mime_type,
+                       i.file_size, i.width, i.height, i.created_at'
+            . ($hasField ? ', i.custom_field_key' : '') . ',
+                       uploader.name AS uploaded_by_name
+                FROM project_images i
+                LEFT JOIN users uploader ON uploader.id = i.uploaded_by
+                WHERE i.project_id = :project_id';
+        if ($scope === 'general') {
+            $sql .= ' AND i.custom_field_key IS NULL';
+        } elseif ($scope === 'custom') {
+            $sql .= ' AND i.custom_field_key IS NOT NULL';
+        }
+        $sql .= ' ORDER BY i.created_at DESC, i.id DESC';
+        $statement = $this->pdo->prepare($sql);
         $statement->execute(['project_id' => $projectId]);
+
         return array_map(self::normalize(...), $statement->fetchAll());
     }
 
@@ -46,19 +80,15 @@ final class ProjectImageRepository
      */
     public function groupedByCustomField(int $projectId): array
     {
-        $statement = $this->pdo->prepare(
-            'SELECT i.id, i.project_id, i.original_name, i.stored_name, i.mime_type,
-                    i.file_size, i.width, i.height, i.created_at, i.custom_field_key,
-                    uploader.name AS uploaded_by_name
-             FROM project_images i
-             LEFT JOIN users uploader ON uploader.id = i.uploaded_by
-             WHERE i.project_id = :project_id AND i.custom_field_key IS NOT NULL
-             ORDER BY i.created_at DESC, i.id DESC'
-        );
-        $statement->execute(['project_id' => $projectId]);
+        try {
+            $rows = $this->images($projectId, 'custom');
+        } catch (PDOException $error) {
+            self::warnSchemaGap($error);
+
+            return [];
+        }
         $grouped = [];
-        foreach ($statement->fetchAll() as $row) {
-            $image = self::normalize($row);
+        foreach ($rows as $image) {
             $grouped[$image['custom_field_key']][] = $image;
         }
 
@@ -160,5 +190,20 @@ final class ProjectImageRepository
             ? (string) $row['custom_field_key']
             : null;
         return $row;
+    }
+
+    /**
+     * Signale une fois par requête que le schéma des images de projet est incomplet.
+     *
+     * Le message vise l'exploitant : la correction consiste à rejouer `php bin/migrate.php`
+     * (migrations 0013 et 0014), ce que `php bin/preflight.php` rappelle également.
+     */
+    private static function warnSchemaGap(PDOException $error): void
+    {
+        if (self::$schemaWarningLogged) {
+            return;
+        }
+        self::$schemaWarningLogged = true;
+        error_log('project_images : schéma non migré (0013/0014) — fiche projet dégradée : ' . $error->getMessage());
     }
 }

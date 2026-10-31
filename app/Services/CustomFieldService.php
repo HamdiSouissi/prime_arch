@@ -11,11 +11,22 @@ use DateTimeImmutable;
  */
 final class CustomFieldService
 {
-    /** Types proposés dans les réglages. « image » n'existe que pour les fiches projets. */
-    public const TYPES = ['text', 'number', 'date', 'select', 'checkbox', 'image'];
+    /**
+     * Types proposés dans les réglages.
+     *
+     * « image » (photos de chantier, plans scannés) et « file » (plans AutoCAD .dwg/.dxf)
+     * n'existent que pour les fiches projets : les fichiers vivent dans l'espace privé du
+     * projet et suivent sa suppression.
+     */
+    public const TYPES = ['text', 'number', 'date', 'select', 'checkbox', 'image', 'file'];
+    /** Types alimentés par téléversement : aucune valeur n'est stockée dans la colonne JSON. */
+    public const UPLOAD_TYPES = ['image', 'file'];
     /** Un champ « image » accepte plusieurs fichiers : bornes appliquées côté serveur. */
     public const IMAGE_MAX_PER_UPLOAD = 10;
     public const IMAGE_MAX_PER_FIELD = 20;
+    /** Un champ « fichier » accepte un plan par envoi, dans la limite du champ. */
+    public const FILE_MAX_PER_UPLOAD = 5;
+    public const FILE_MAX_PER_FIELD = 50;
 
     public function __construct(private ?CustomFieldRepository $fields = null)
     {
@@ -33,11 +44,11 @@ final class CustomFieldService
 
         foreach ($this->fields->all($entityType, true) as $field) {
             $key = $field['field_key'];
-            if ($field['field_type'] === 'image') {
-                // Les fichiers image ont leur propre formulaire sur la fiche projet : ils sont
-                // stockés dans `project_images` et rattachés au champ par sa clé. Aucune valeur
-                // n'est donc conservée dans la colonne JSON, qui resterait une seconde source
-                // de vérité toujours désynchronisée.
+            if (in_array($field['field_type'], self::UPLOAD_TYPES, true)) {
+                // Les champs à téléversement ont leur propre formulaire sur la fiche projet :
+                // images dans `project_images`, plans AutoCAD dans `project_files`, tous deux
+                // rattachés au champ par sa clé. Aucune valeur n'est donc conservée dans la
+                // colonne JSON, qui resterait une seconde source de vérité désynchronisée.
                 unset($values[$key]);
                 continue;
             }
@@ -132,13 +143,15 @@ final class CustomFieldService
         }
         if (!in_array($fieldType, self::TYPES, true)) {
             $errors['field_type'] = __('custom_fields.invalid');
-        } elseif ($fieldType === 'image' && $entityType !== 'project') {
-            // Un téléversement d'images n'a de sens que sur une fiche projet : les images sont
-            // stockées dans l'espace privé du projet et suivent sa suppression.
-            $errors['field_type'] = __('custom_fields.image_projects_only');
+        } elseif (in_array($fieldType, self::UPLOAD_TYPES, true) && $entityType !== 'project') {
+            // Un téléversement n'a de sens que sur une fiche projet : les fichiers sont stockés
+            // dans l'espace privé du projet et suivent sa suppression.
+            $errors['field_type'] = $fieldType === 'file'
+                ? __('custom_fields.file_projects_only')
+                : __('custom_fields.image_projects_only');
         }
-        if ($fieldType === 'image') {
-            // Les images s'ajoutent une fois le projet créé : rendre le champ obligatoire
+        if (in_array($fieldType, self::UPLOAD_TYPES, true)) {
+            // Les fichiers s'ajoutent une fois le projet créé : rendre le champ obligatoire
             // bloquerait toute création de projet. Le libellé reste informatif.
             $required = false;
         }

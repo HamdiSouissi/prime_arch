@@ -47,6 +47,32 @@ Choix d'implémentation et conséquences :
   `projects.image.deleted`) avec l'identifiant du projet et la clé du champ, jamais le contenu ni
   le nom du fichier.
 
+## Champs personnalisés de type fichier (plans AutoCAD)
+
+Un administrateur peut créer un champ de type **Fichiers AutoCAD** (`/settings/custom-fields`,
+fiche concernée : projets). Sur la fiche du projet, le bloc du champ permet de téléverser,
+télécharger et retirer des plans **DWG ou DXF** — trois actions au plus, sans quitter la page.
+
+Choix d'implémentation et conséquences :
+
+- Le format est reconnu à partir de la **signature** du fichier (en-tête DWG `AC10xx`, DXF texte
+  `0` / `SECTION`, DXF binaire `AutoCAD Binary DXF`), puis confronté à l'extension reçue : un
+  exécutable ou une archive renommée en `.dwg` est refusé avant toute écriture.
+- 25 Mio par fichier, 5 fichiers par envoi, 50 par champ. Configurer PHP avec
+  `upload_max_filesize=25M` et `post_max_size=28M` au minimum.
+- Les fichiers sont stockés sous `storage/uploads/projects/<id>/` (chmod `0640`), hors de
+  `public/`, et déclarés dans `project_files` avec leur clé de champ (migration `0015`). Aucune
+  valeur n'est conservée dans la colonne JSON `custom_fields` ; le nom d'origine, l'extension, la
+  taille et l'empreinte SHA-256 sont mémorisés à côté du nom aléatoire du fichier stocké.
+- Le téléchargement passe par une route authentifiée (`projects.view`) qui sert toujours le
+  fichier en pièce jointe `application/octet-stream`, après vérification de l'empreinte. Aucun
+  accès direct au dossier de stockage n'est possible.
+- Envoi et retrait exigent `projects.manage` : aucune permission nouvelle. Les fichiers sont
+  exclus de l'export CSV, comme les images.
+- Chaque envoi et chaque retrait est journalisé (`projects.file.uploaded`,
+  `projects.file.deleted`) avec l'identifiant du projet, la clé du champ et l'extension, jamais le
+  nom ni le contenu.
+
 ## Base de démonstration
 
 Une base de démonstration se prépare avec `php bin/migrate.php` puis `php bin/seed-demo.php`. Le script

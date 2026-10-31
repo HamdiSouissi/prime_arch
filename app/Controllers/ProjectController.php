@@ -12,6 +12,7 @@ use App\Core\View;
 use App\Models\ClientRepository;
 use App\Models\CustomFieldRepository;
 use App\Models\GeographyRepository;
+use App\Models\ProjectFileRepository;
 use App\Models\ProjectImageRepository;
 use App\Models\ProjectRepository;
 use App\Models\TimeEntryRepository;
@@ -20,6 +21,7 @@ use App\Services\CsvDataTransferService;
 use App\Services\ProjectPlanService;
 use App\Services\ProjectService;
 use App\Services\ViewContext;
+use PDOException;
 use RuntimeException;
 use Throwable;
 
@@ -184,6 +186,22 @@ final class ProjectController
         $canViewTime = Auth::can('time.view') || Auth::can('time.manage')
             || Auth::can('time.view_all') || Auth::can('time.manage_all');
         $timeRepository = new TimeEntryRepository();
+        // Les récapitulatifs de temps dépendent des colonnes ajoutées par la migration 0008
+        // (poids, budget et avancement des phases). Sur une base incomplètement migrée, la
+        // fiche projet doit rester consultable : on dégrade ces deux blocs, et
+        // `php bin/preflight.php` nomme la migration manquante.
+        try {
+            $phaseSummaries = ($canViewCosts || $canViewTime)
+                ? $timeRepository->projectPhaseSummaries((int) $project['id'], $canViewCosts)
+                : [];
+            $timeSummary = ($canViewCosts || $canViewTime)
+                ? $timeRepository->projectSummary((int) $project['id'], $canViewCosts)
+                : null;
+        } catch (PDOException $error) {
+            error_log('Fiche projet : récapitulatif de temps indisponible (migration 0008 ?) — ' . $error->getMessage());
+            $phaseSummaries = [];
+            $timeSummary = null;
+        }
         // Passerelles vers les modules qui traitent de ce projet : chaque module décide de sa
         // propre visibilité et vérifie ses droits, le noyau ne fait que rendre la liste.
         $sections = HookManager::applyFilters('project.detail.sections', [], $project);
@@ -198,13 +216,13 @@ final class ProjectController
             'customImages' => (new ProjectImageRepository())->groupedByCustomField((int) $project['id']),
             'customImageNotices' => Session::pullFlash('projects.custom_image_notices', []),
             'customImageErrors' => Session::pullFlash('projects.custom_image_errors', []),
+            // Champs personnalisés de type « fichier » : plans AutoCAD privés du projet.
+            'customFiles' => (new ProjectFileRepository())->groupedByCustomField((int) $project['id']),
+            'customFileNotices' => Session::pullFlash('projects.custom_file_notices', []),
+            'customFileErrors' => Session::pullFlash('projects.custom_file_errors', []),
             'phases' => $repository->phaseAssignments((int) $project['id']),
-            'phaseSummaries' => ($canViewCosts || $canViewTime)
-                ? $timeRepository->projectPhaseSummaries((int) $project['id'], $canViewCosts)
-                : [],
-            'timeSummary' => ($canViewCosts || $canViewTime)
-                ? $timeRepository->projectSummary((int) $project['id'], $canViewCosts)
-                : null,
+            'phaseSummaries' => $phaseSummaries,
+            'timeSummary' => $timeSummary,
             'customFields' => (new CustomFieldRepository())->all('project', true),
             'errors' => Session::pullFlash('projects.errors', []),
             'planValues' => Session::pullFlash('projects.plan_values', []),

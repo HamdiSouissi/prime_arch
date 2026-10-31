@@ -17,6 +17,7 @@ use App\Controllers\MediaController;
 use App\Controllers\ModuleAssetController;
 use App\Controllers\ModuleController;
 use App\Controllers\ProjectController;
+use App\Controllers\ProjectFileController;
 use App\Controllers\ProjectImageController;
 use App\Controllers\TimeEntryController;
 use App\Controllers\ProjectPhaseController;
@@ -71,6 +72,11 @@ return function (Router $router): void {
     // Images d'un champ personnalisé de type « image » : formulaire propre à la fiche projet.
     $router->post('/projects/{id}/custom-fields/{field}/images', [ProjectImageController::class, 'uploadForField'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/custom-fields/{field}/images/{imageId}/delete', [ProjectImageController::class, 'deleteForField'], [AuthMiddleware::class, CsrfMiddleware::class]);
+
+    // Plans AutoCAD des champs personnalisés « fichier » : envoi, retrait, téléchargement privé.
+    $router->post('/projects/{id}/custom-fields/{field}/files', [ProjectFileController::class, 'upload'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/custom-fields/{field}/files/{fileId}/delete', [ProjectFileController::class, 'delete'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->get('/projects/{id}/files/{fileId}', [ProjectFileController::class, 'download'], [AuthMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/documents', [DocumentController::class, 'index'], [AuthMiddleware::class]);

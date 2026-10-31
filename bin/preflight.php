@@ -22,6 +22,7 @@ define('BASE_PATH', $root);
 use App\Core\Config;
 use App\Core\Database;
 use App\Core\Env;
+use PDO;
 
 Env::load($root . '/.env');
 Config::load($root . '/config');
@@ -175,6 +176,70 @@ try {
             $pending === [] ? 'OK' : 'ATTENTION',
             'Migrations du cœur',
             $pending === [] ? count($applied) . ' appliquée(s)' : count($pending) . ' en attente : ' . implode(', ', $pending)
+        );
+
+        // Le registre `migrations` peut être en avance sur le schéma réel (import partiel,
+        // restauration de sauvegarde, ALTER interrompu). La fiche projet interroge les
+        // colonnes ci-dessous : un écart se traduirait par une page d'erreur.
+        $schemaGaps = [];
+        $hasColumn = static function (PDO $pdo, string $table, string $column): bool {
+            $statement = $pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name AND COLUMN_NAME = :column_name'
+            );
+            $statement->execute(['table_name' => $table, 'column_name' => $column]);
+
+            return (int) $statement->fetchColumn() > 0;
+        };
+        $hasTable = static function (PDO $pdo, string $table): bool {
+            $statement = $pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.TABLES
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name'
+            );
+            $statement->execute(['table_name' => $table]);
+
+            return (int) $statement->fetchColumn() > 0;
+        };
+        if ($hasTable($pdo, 'projects')) {
+            if (!$hasColumn($pdo, 'projects', 'budget_hours')) {
+                $schemaGaps[] = 'projects.budget_hours (migration 0008)';
+            }
+            if ($hasTable($pdo, 'project_phase_assignments')) {
+                foreach (['weight_percent', 'budget_hours', 'progress_percent'] as $column) {
+                    if (!$hasColumn($pdo, 'project_phase_assignments', $column)) {
+                        $schemaGaps[] = 'project_phase_assignments.' . $column . ' (migration 0008)';
+                    }
+                }
+            }
+        }
+        if (!$hasTable($pdo, 'project_images')) {
+            $schemaGaps[] = 'table project_images (migration 0013)';
+        } elseif (!$hasColumn($pdo, 'project_images', 'custom_field_key')) {
+            $schemaGaps[] = 'project_images.custom_field_key (migration 0014)';
+        }
+        if (!$hasTable($pdo, 'project_files')) {
+            $schemaGaps[] = 'table project_files (migration 0015)';
+        }
+        if ($hasTable($pdo, 'custom_field_definitions')) {
+            $fieldType = $pdo->query(
+                "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'custom_field_definitions'
+                   AND COLUMN_NAME = 'field_type'"
+            )->fetchColumn();
+            $fieldType = is_string($fieldType) ? $fieldType : '';
+            foreach (['image' => '0015', 'file' => '0015'] as $type => $migration) {
+                if (!str_contains($fieldType, "'" . $type . "'")) {
+                    $schemaGaps[] = 'custom_field_definitions.field_type « ' . $type . ' » (migration ' . $migration . ')';
+                }
+            }
+        }
+        check(
+            $schemaGaps === [] ? 'OK' : 'ERREUR',
+            'Schéma de la fiche projet',
+            $schemaGaps === []
+                ? 'projects, project_images, project_files et champs personnalisés à jour'
+                : count($schemaGaps) . ' élément(s) manquant(s) : ' . implode(' · ', $schemaGaps)
+                    . ' — exécuter php bin/migrate.php'
         );
 
         $enabled = (int) $pdo->query("SELECT COUNT(*) FROM modules WHERE is_enabled = 1")->fetchColumn();

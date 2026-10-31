@@ -86,8 +86,10 @@ final class CustomFieldImageTest extends TestCase
     {
         $service = self::file('/app/Services/CustomFieldService.php');
 
-        // Le bloc image écarte la clé de la colonne JSON au lieu d'attendre une valeur texte.
-        self::assertStringContainsString("if (\$field['field_type'] === 'image') {", $service);
+        // Le bloc à téléversement écarte la clé de la colonne JSON au lieu d'attendre une valeur
+        // texte : les images et les plans AutoCAD n'y ont jamais de valeur.
+        self::assertStringContainsString("in_array(\$field['field_type'], self::UPLOAD_TYPES, true)", $service);
+        self::assertStringContainsString("public const UPLOAD_TYPES = ['image', 'file'];", $service);
         self::assertStringContainsString('unset($values[$key]);', $service);
         self::assertStringContainsString('$values = $existing;', $service);
         // La borne haute et le type sont exposés par le service, pas dupliqués dans les vues.
@@ -168,8 +170,8 @@ final class CustomFieldImageTest extends TestCase
 
         // Le formulaire de la fiche explique où ajouter les images, sans input fichier.
         $inputs = self::file('/app/Views/partials/custom-field-inputs.php');
-        self::assertStringContainsString("=== 'image'", $inputs);
-        self::assertStringContainsString("custom_fields.images_after_save", $inputs);
+        self::assertStringContainsString("['image', 'file']", $inputs);
+        self::assertStringContainsString("custom_fields.' . (\$isFileField ? 'files_after_save' : 'images_after_save')", $inputs);
         self::assertStringNotContainsString('type="file"', $inputs);
     }
 
@@ -179,8 +181,9 @@ final class CustomFieldImageTest extends TestCase
         $settings = self::file('/app/Views/pages/settings/custom-fields.php');
         self::assertStringContainsString('CustomFieldService::TYPES', $settings);
         self::assertStringContainsString("custom_fields.type.", $settings);
-        self::assertStringContainsString('custom_fields.images_after_save', $settings);
-        self::assertStringContainsString('custom_fields.image_not_required', $settings);
+        // Le rappel est construit à partir du type : images ou plans AutoCAD.
+        self::assertStringContainsString("=== 'file' ? 'files' : 'images') . '_after_save'", $settings);
+        self::assertStringContainsString("=== 'file' ? 'file' : 'image') . '_not_required'", $settings);
     }
 
     /** Un CSV ne transporte pas de binaire : les champs image en sont écartés. */
@@ -188,8 +191,8 @@ final class CustomFieldImageTest extends TestCase
     {
         $csv = self::file('/app/Services/CsvDataTransferService.php');
         self::assertStringContainsString('array_filter(', $csv);
-        self::assertStringContainsString("!== 'image'", $csv, 'Les champs image ne partent pas en CSV.');
-        self::assertStringContainsString('ne peut pas être importée', $csv);
+        self::assertStringContainsString("['image', 'file']", $csv, 'Les champs à téléversement ne partent pas en CSV.');
+        self::assertStringContainsString('ne peut pas être importé', $csv);
     }
 
     /** Les deux langues couvrent le nouveau type et ses messages. */

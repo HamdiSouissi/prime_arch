@@ -5,6 +5,7 @@ namespace App\Models;
 
 use App\Core\Database;
 use PDO;
+use PDOException;
 use Throwable;
 
 /**
@@ -13,6 +14,8 @@ use Throwable;
 final class ProjectRepository
 {
     private PDO $pdo;
+    /** Évite de répéter le même avertissement de schéma à chaque requête. */
+    private static array $schemaWarnings = [];
 
     public function __construct(?PDO $pdo = null)
     {
@@ -116,12 +119,43 @@ final class ProjectRepository
     /** @return array<int,array<string,mixed>> */
     public function phaseAssignments(int $projectId): array
     {
-        $statement = $this->pdo->prepare(
-            'SELECT id, project_id, project_phase_id, phase_name, sort_order, status, started_at, completed_at,
-                    weight_percent, budget_hours, progress_percent
-             FROM project_phase_assignments WHERE project_id = :project_id ORDER BY sort_order, id'
-        );
-        $statement->execute(['project_id' => $projectId]);
+        try {
+            $statement = $this->pdo->prepare(
+                'SELECT id, project_id, project_phase_id, phase_name, sort_order, status, started_at, completed_at,
+                        weight_percent, budget_hours, progress_percent
+                 FROM project_phase_assignments WHERE project_id = :project_id ORDER BY sort_order, id'
+            );
+            $statement->execute(['project_id' => $projectId]);
+        } catch (PDOException $error) {
+            // Base antérieure à la migration 0008 (poids, budget et avancement) : la fiche
+            // projet reste consultable, avec des phases à 0 %, plutôt qu'une page d'erreur.
+            // `php bin/preflight.php` signale la migration manquante.
+            self::warnSchemaGap('project_phase_assignments', $error);
+            $statement = $this->pdo->prepare(
+                'SELECT id, project_id, project_phase_id, phase_name, sort_order, status, started_at, completed_at
+                 FROM project_phase_assignments WHERE project_id = :project_id ORDER BY sort_order, id'
+            );
+            $statement->execute(['project_id' => $projectId]);
+            $rows = $statement->fetchAll();
+            foreach ($rows as $index => $row) {
+                $rows[$index]['weight_percent'] = '0.00';
+                $rows[$index]['budget_hours'] = null;
+                $rows[$index]['progress_percent'] = $row['status'] === 'completed' ? '100.00' : '0.00';
+            }
+            return array_map(static fn (array $row): array => [
+                'id' => (int) $row['id'],
+                'project_id' => (int) $row['project_id'],
+                'project_phase_id' => (int) $row['project_phase_id'],
+                'phase_name' => (string) $row['phase_name'],
+                'sort_order' => (int) $row['sort_order'],
+                'status' => (string) $row['status'],
+                'started_at' => (string) ($row['started_at'] ?? ''),
+                'completed_at' => (string) ($row['completed_at'] ?? ''),
+                'weight_percent' => '0.00',
+                'budget_hours' => null,
+                'progress_percent' => (string) $row['progress_percent'],
+            ], $rows);
+        }
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
             'project_id' => (int) $row['project_id'],
@@ -596,5 +630,20 @@ final class ProjectRepository
         }
         $row['custom_fields'] = is_array($customFields) ? $customFields : [];
         return $row;
+    }
+
+    /**
+     * Trace une fois par requête l'écart de schéma rencontré, pour l'exploitant.
+     *
+     * Les pages concernées continuent de s'afficher : la correction consiste à rejouer
+     * `php bin/migrate.php`, puis à vérifier avec `php bin/preflight.php`.
+     */
+    private static function warnSchemaGap(string $table, PDOException $error): void
+    {
+        if (isset(self::$schemaWarnings[$table])) {
+            return;
+        }
+        self::$schemaWarnings[$table] = true;
+        error_log($table . ' : schéma incomplet (migration en attente ?) — requête dégradée : ' . $error->getMessage());
     }
 }

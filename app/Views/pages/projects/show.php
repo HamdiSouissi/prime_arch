@@ -13,19 +13,27 @@ $phaseSummaries = is_array($phaseSummaries ?? null) ? $phaseSummaries : [];
 $projectImages = is_array($projectImages ?? null) ? $projectImages : [];
 $imageErrors = is_array($imageErrors ?? null) ? $imageErrors : [];
 $customFields = is_array($customFields ?? null) ? $customFields : [];
-// Un champ « image » possède sa propre carte (galerie + envoi) : il ne s'affiche pas dans la
-// liste de valeurs, où il n'aurait qu'une case vide faute de valeur JSON.
+// Un champ « image » possède sa propre carte (galerie + envoi), un champ « fichier » sa propre
+// liste de plans AutoCAD : aucun des deux n'apparaît dans la liste de valeurs, où il n'aurait
+// qu'une case vide faute de valeur JSON.
 $imageFields = array_values(array_filter(
     $customFields,
     static fn (array $field): bool => ($field['field_type'] ?? '') === 'image'
 ));
+$fileFields = array_values(array_filter(
+    $customFields,
+    static fn (array $field): bool => ($field['field_type'] ?? '') === 'file'
+));
 $valueFields = array_values(array_filter(
     $customFields,
-    static fn (array $field): bool => ($field['field_type'] ?? '') !== 'image'
+    static fn (array $field): bool => !in_array($field['field_type'] ?? '', ['image', 'file'], true)
 ));
 $customImages = is_array($customImages ?? null) ? $customImages : [];
 $customImageNotices = is_array($customImageNotices ?? null) ? $customImageNotices : [];
 $customImageErrors = is_array($customImageErrors ?? null) ? $customImageErrors : [];
+$customFiles = is_array($customFiles ?? null) ? $customFiles : [];
+$customFileNotices = is_array($customFileNotices ?? null) ? $customFileNotices : [];
+$customFileErrors = is_array($customFileErrors ?? null) ? $customFileErrors : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $timeSummary = is_array($timeSummary ?? null) ? $timeSummary : null;
 $planValues = is_array($planValues ?? null) ? $planValues : [];
@@ -150,6 +158,17 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                 'customImages' => $customImages,
                 'customImageNotices' => $customImageNotices,
                 'customImageErrors' => $customImageErrors,
+                'canManage' => !empty($canManage),
+            ]) ?>
+        <?php endif; ?>
+
+        <?php if ($fileFields !== []): ?>
+            <?php View::partial('partials/project-custom-files', [
+                'project' => $project,
+                'fileFields' => $fileFields,
+                'customFiles' => $customFiles,
+                'customFileNotices' => $customFileNotices,
+                'customFileErrors' => $customFileErrors,
                 'canManage' => !empty($canManage),
             ]) ?>
         <?php endif; ?>
