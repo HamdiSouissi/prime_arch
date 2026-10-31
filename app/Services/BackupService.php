@@ -241,6 +241,7 @@ final class BackupService
         if ($backupDirectory === false || is_link($backupRoot) || $candidate === '' || str_contains($candidate, "\0")) {
             throw new RuntimeException('Chemin d’archive invalide.');
         }
+        $candidate = self::normalizeArchiveCandidate($candidate);
         $path = str_starts_with($candidate, DIRECTORY_SEPARATOR)
             ? $candidate
             : BASE_PATH . '/' . ltrim($candidate, '/');
@@ -254,6 +255,24 @@ final class BackupService
             throw new RuntimeException('L’archive demandée est absente ou inaccessible.');
         }
         return $resolved;
+    }
+
+    /**
+     * Résout un nom d'archive seul dans `storage/backups`.
+     *
+     * Les liens de téléchargement et les formulaires ne transportent que le nom du
+     * fichier (`prime-arch-….zip`) : sans cette normalisation, l'archive était cherchée
+     * à la racine du dépôt et refusée. Un chemin relatif complet reste accepté, et un
+     * nom contenant un séparateur ou une remontée de dossier n'est jamais réécrit.
+     */
+    private static function normalizeArchiveCandidate(string $candidate): string
+    {
+        $candidate = trim($candidate);
+        if (preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,180}$/', $candidate) === 1) {
+            return 'storage/backups/' . $candidate;
+        }
+
+        return $candidate;
     }
 
     /**

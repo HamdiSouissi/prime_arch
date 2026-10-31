@@ -80,6 +80,45 @@ final class BackupManagementTest extends TestCase
         self::assertStringContainsString('@unlink($destination)', $service);
     }
 
+    /**
+     * L'interface ne transmet que le nom de l'archive : il doit être résolu dans
+     * `storage/backups`, sinon téléchargement et suppression répondaient
+     * « L'archive doit se trouver dans storage/backups ».
+     */
+    public function testBareArchiveNameIsResolvedInsidePrivateStorage(): void
+    {
+        $root = BASE_PATH . '/storage/backups';
+        if (!is_dir($root) && !mkdir($root, 0700, true) && !is_dir($root)) {
+            self::markTestSkipped('Dossier storage/backups non créable dans cet environnement.');
+        }
+        $name = 'prime-arch-20260101-120000-0a1b2c3d.zip';
+        $file = $root . '/' . $name;
+        file_put_contents($file, "PK\x05\x06" . str_repeat("\0", 18));
+
+        try {
+            $service = new BackupService();
+            $normalized = static fn (string $path): string => str_replace('\\', '/', $path);
+            self::assertStringEndsWith('/storage/backups/' . $name, $normalized($service->resolveArchivePath($name)));
+            self::assertStringEndsWith(
+                '/storage/backups/' . $name,
+                $normalized($service->resolveArchivePath('storage/backups/' . $name)),
+                'Un chemin relatif complet reste accepté.'
+            );
+
+            foreach (['../' . $name, 'storage/backups/../backups/' . $name . '/x', '/etc/passwd', $name . "/..", '.htaccess'] as $forbidden) {
+                $refused = false;
+                try {
+                    $service->resolveArchivePath($forbidden);
+                } catch (RuntimeException) {
+                    $refused = true;
+                }
+                self::assertTrue($refused, 'Chemin refusé attendu : ' . $forbidden);
+            }
+        } finally {
+            @unlink($file);
+        }
+    }
+
     public function testImportedArchiveGetsAGeneratedName(): void
     {
         $service = self::file('/app/Services/BackupService.php');
