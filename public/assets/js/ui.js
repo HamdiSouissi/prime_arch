@@ -986,9 +986,51 @@ function initUpload() {
 function initConfirmForms() {
     document.querySelectorAll("form[data-confirm]").forEach((form) => {
         form.addEventListener("submit", (event) => {
-            const message = form.getAttribute("data-confirm") || "";
+            let message = form.getAttribute("data-confirm") || "";
+            // Suppression d'une sélection : le nombre est connu au moment de l'envoi, et une
+            // sélection vide ne doit pas partir.
+            if (form.hasAttribute("data-confirm-selection")) {
+                const selected = form.querySelectorAll('input[name="ids[]"]:checked').length;
+                if (selected === 0) {
+                    event.preventDefault();
+                    return;
+                }
+                message = message.replace(":count", String(selected));
+            }
             if (message !== "" && !window.confirm(message)) event.preventDefault();
         });
+    });
+}
+
+/**
+ * Sélection multiple des listes : tout sélectionner, compteur lisible et bouton d'action
+ * désactivé tant que rien n'est coché.
+ */
+function initSelectionTools() {
+    document.querySelectorAll("form.bulk-form").forEach((form) => {
+        const boxes = Array.from(form.querySelectorAll('input[name="ids[]"]'));
+        if (boxes.length === 0) return;
+        const submit = form.querySelector("[data-selection-submit]");
+        const counter = form.querySelector("[data-selection-count]");
+        const toggleAll = form.querySelector("[data-select-all]");
+        const label = counter?.getAttribute("data-label") || ":count";
+
+        const refresh = () => {
+            const selected = boxes.filter((box) => box.checked).length;
+            if (counter) counter.textContent = label.replace(":count", String(selected));
+            if (submit) submit.disabled = selected === 0;
+            if (toggleAll) {
+                toggleAll.checked = selected > 0 && selected === boxes.length;
+                toggleAll.indeterminate = selected > 0 && selected < boxes.length;
+            }
+        };
+
+        boxes.forEach((box) => box.addEventListener("change", refresh));
+        toggleAll?.addEventListener("change", () => {
+            boxes.forEach((box) => { box.checked = Boolean(toggleAll.checked); });
+            refresh();
+        });
+        refresh();
     });
 }
 
@@ -1209,4 +1251,5 @@ export function initUI() {
     initPrintButtons();
     initCopyButtons();
     initConfirmForms();
+    initSelectionTools();
 }

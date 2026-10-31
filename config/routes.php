@@ -50,6 +50,10 @@ return function (Router $router): void {
     $router->post('/clients/import', [ClientController::class, 'importCsv'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/clients/new', [ClientController::class, 'createForm'], [AuthMiddleware::class]);
     $router->post('/clients', [ClientController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    // Suppression : sélection multiple depuis la liste, puis fiche par fiche. Déclarées avant
+    // `/clients/{id}` pour que « delete » ne soit pas lu comme un identifiant.
+    $router->post('/clients/delete', [ClientController::class, 'deleteMany'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/clients/{id}/delete', [ClientController::class, 'destroy'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/clients/{id}/edit', [ClientController::class, 'edit'], [AuthMiddleware::class]);
     $router->post('/clients/{id}', [ClientController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/clients/{id}/contacts', [ClientController::class, 'createContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
@@ -66,6 +70,9 @@ return function (Router $router): void {
     $router->post('/projects/import', [ProjectController::class, 'importCsv'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/new', [ProjectController::class, 'createForm'], [AuthMiddleware::class]);
     $router->post('/projects', [ProjectController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    // Suppression : sélection multiple puis fiche par fiche, avant `/projects/{id}`.
+    $router->post('/projects/delete', [ProjectController::class, 'deleteMany'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/delete', [ProjectController::class, 'destroy'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}/edit', [ProjectController::class, 'edit'], [AuthMiddleware::class]);
     $router->post('/projects/{id}', [ProjectController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/plan', [ProjectController::class, 'savePlan'], [AuthMiddleware::class, CsrfMiddleware::class]);

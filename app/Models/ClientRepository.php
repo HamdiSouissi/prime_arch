@@ -288,6 +288,56 @@ final class ClientRepository
         }
     }
 
+    /** Nombre de projets rattachés : un client qui en porte n'est jamais supprimé en silence. */
+    public function countProjects(int $clientId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM projects WHERE client_id = :client_id');
+        $statement->execute(['client_id' => $clientId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /** Nombre de contacts (le carnet d'adresses part avec la fiche). */
+    public function countContacts(int $clientId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM client_contacts WHERE client_id = :client_id');
+        $statement->execute(['client_id' => $clientId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /**
+     * Supprime une fiche client et son carnet de contacts.
+     *
+     * Les projets et les documents ne sont pas traités ici : le service de suppression vérifie
+     * leur absence avant d'appeler cette méthode, car une facture ou un devis ne doit jamais
+     * disparaître avec une fiche par simple effet de bord.
+     */
+    public function delete(int $clientId): bool
+    {
+        $ownsTransaction = !$this->pdo->inTransaction();
+        try {
+            if ($ownsTransaction) {
+                $this->pdo->beginTransaction();
+            }
+            $contacts = $this->pdo->prepare('DELETE FROM client_contacts WHERE client_id = :client_id');
+            $contacts->execute(['client_id' => $clientId]);
+            $statement = $this->pdo->prepare('DELETE FROM clients WHERE id = :id');
+            $statement->execute(['id' => $clientId]);
+            $deleted = $statement->rowCount() > 0;
+            if ($ownsTransaction) {
+                $this->pdo->commit();
+            }
+
+            return $deleted;
+        } catch (Throwable $error) {
+            if ($ownsTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $error;
+        }
+    }
+
     public function deleteContact(int $clientId, int $contactId): bool
     {
         $statement = $this->pdo->prepare('DELETE FROM client_contacts WHERE id = :id AND client_id = :client_id');

@@ -171,6 +171,41 @@ final class ProjectRepository
         ], $statement->fetchAll());
     }
 
+    /** Nombre de phases affectées : elles partent avec le projet. */
+    public function countAssignments(int $projectId): int
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM project_phase_assignments WHERE project_id = :project_id'
+        );
+        $statement->execute(['project_id' => $projectId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    public function deleteAssignments(int $projectId): int
+    {
+        $statement = $this->pdo->prepare(
+            'DELETE FROM project_phase_assignments WHERE project_id = :project_id'
+        );
+        $statement->execute(['project_id' => $projectId]);
+
+        return $statement->rowCount();
+    }
+
+    /**
+     * Supprime la ligne du projet.
+     *
+     * Les dépendances (phases affectées, temps saisi, images, plans) sont retirées avant par le
+     * service de suppression, dans sa transaction : cette méthode ne touche qu'à `projects`.
+     */
+    public function delete(int $projectId): bool
+    {
+        $statement = $this->pdo->prepare('DELETE FROM projects WHERE id = :id');
+        $statement->execute(['id' => $projectId]);
+
+        return $statement->rowCount() > 0;
+    }
+
     /** @return array<int,array<string,mixed>> */
     public function timeTrackingOptions(): array
     {

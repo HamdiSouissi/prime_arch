@@ -124,6 +124,30 @@ réglages ne disparaît donc plus du terrain : il reste visible là où on en a 
 - Le bloc apparaît même quand aucun champ n'est encore défini, pour les profils qui peuvent
   configurer : c'est le chemin le plus court vers un premier champ.
 
+## Supprimer un client ou un projet
+
+Deux chemins, un seul jeu de règles : cocher des fiches dans la liste (`/clients`, `/projects`)
+puis « Supprimer la sélection », ou utiliser la **zone de danger** de la fiche concernée. Il
+faut trois clics au plus (sélection, suppression, confirmation).
+
+- **Droits** : `clients.delete` et `projects.delete`, détenus par l'administrateur (joker `*`) et
+  l'architecte. Les autres rôles ne voient ni les cases à cocher, ni la zone de danger ; le
+  serveur répond 403 même sur un envoi forgé.
+- **Migration 0016** : ajoute ces deux permissions au rôle `architect` des bases déjà installées,
+  sans doublon (`php bin/migrate.php`).
+- **Fiches protégées** : un client qui porte des projets ou des documents, un projet auquel des
+  documents (devis, factures) sont rattachés, ne sont **pas** supprimables. Le refus donne les
+  compteurs et renvoie vers l'écran à traiter ; le bouton reste désactivé côté fiche. Un document
+  émis garde ainsi son numéro et sa valeur comptable.
+- **Ce qui part avec la fiche** : pour un projet, les images privées, les plans techniques
+  (fichiers du disque retirés avant leurs métadonnées), les phases affectées et le temps saisi ;
+  pour un client, le carnet de contacts. Les lignes sont supprimées dans une transaction.
+- **Suppression par lot** : chaque fiche est traitée séparément. Une fiche protégée n'annule pas
+  les suppressions déjà faites ; le message final distingue « N supprimé(s) » et « M conservé(s) ».
+  La sélection est bornée à 200 identifiants et dédoublonnée.
+- Chaque suppression est journalisée (`clients.deleted`, `projects.deleted`) avec les compteurs
+  du contenu retiré et, pour un lot, `source = selection`.
+
 ## Base de démonstration
 
 Une base de démonstration se prépare avec `php bin/migrate.php` puis `php bin/seed-demo.php`. Le script

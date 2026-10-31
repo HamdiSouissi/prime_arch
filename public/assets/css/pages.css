@@ -1242,6 +1242,41 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
     gap: var(--space-3);
 }
 
+/* Sélection multiple des listes : cases à cocher, compteur et action groupée. */
+.bulk-select { inline-size: 2.75rem; }
+.bulk-select input[type="checkbox"] {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+.bulk-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-end: var(--space-3);
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.5);
+}
+.bulk-actions__count { color: var(--color-ink-secondary); font-size: var(--font-size-footnote); font-weight: 600; }
+.bulk-actions .button[disabled] { cursor: not-allowed; opacity: 0.55; }
+
+/* Zone de danger d'une fiche : la seule action destructive de la page. */
+.danger-zone {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-start: var(--space-4);
+    border-color: rgba(180, 35, 74, 0.35);
+}
+.danger-zone .card-header__title { color: var(--color-error); }
+.danger-zone__form { display: grid; gap: var(--space-2); justify-items: start; }
+.danger-zone__form .button[disabled] { cursor: not-allowed; opacity: 0.55; }
+
 .field__control--display { display: flex; align-items: center; color: var(--color-ink-secondary); }
 .field--align-end { align-self: end; }
 

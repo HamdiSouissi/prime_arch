@@ -205,6 +205,8 @@
     .custom-definition,
     .custom-picker__item,
     .custom-quick-add,
+    .bulk-actions,
+    .danger-zone,
     .document-summary-grid > div {
         border-color: var(--color-border);
         color: var(--color-ink);
@@ -310,6 +312,7 @@
         .custom-definition,
         .custom-picker__item,
         .custom-quick-add,
+        .bulk-actions,
         .document-summary-grid > div,
         .page-header,
         .toast,

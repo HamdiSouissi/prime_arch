@@ -14,6 +14,10 @@ $errors = is_array($errors ?? null) ? $errors : [];
 $availableFields = is_array($availableFields ?? null) ? $availableFields : [];
 $customFieldNotice = is_string($customFieldNotice ?? null) ? $customFieldNotice : '';
 $customFieldErrors = is_array($customFieldErrors ?? null) ? $customFieldErrors : [];
+// Suppression : la zone de danger n'existe que pour les profils habilités, et annonce ce qui
+// sera retiré avec la fiche (carnet de contacts) ou ce qui bloque l'opération.
+$canDelete = !empty($canDelete);
+$deleteImpact = is_array($deleteImpact ?? null) ? $deleteImpact : ['projects' => 0, 'documents' => 0, 'contacts' => 0, 'blocked' => false];
 $contactValues = is_array($contactValues ?? null) ? $contactValues : [];
 $contactErrors = is_array($errors['contact'] ?? null) ? $errors['contact'] : [];
 $contactErrorId = (int) ($errors['contact_id'] ?? 0);
@@ -150,6 +154,31 @@ $addressParts = array_filter([
                     </section>
                 <?php endif; ?>
         </div>
+
+        <?php if ($canDelete): ?>
+            <section class="card danger-zone" aria-labelledby="client-danger-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="client-danger-title"><?= e(__('records.danger_zone')) ?></h2>
+                        <p class="section-heading__note"><?= e(__('clients.delete_help')) ?></p>
+                    </div>
+                </div>
+                <?php if (!empty($deleteImpact['blocked'])): ?>
+                    <p class="form-feedback form-feedback--error" role="alert"><?= e(__('clients.delete_blocked', [
+                        'projects' => (string) ($deleteImpact['projects'] ?? 0),
+                        'documents' => (string) ($deleteImpact['documents'] ?? 0),
+                    ])) ?></p>
+                <?php endif; ?>
+                <form class="danger-zone__form" method="post" action="<?= e(url('/clients/' . (int) ($client['id'] ?? 0) . '/delete')) ?>" data-confirm="<?= e(__('clients.delete_confirm', [
+                    'name' => (string) ($client['display_name'] ?? ''),
+                    'contacts' => (string) ($deleteImpact['contacts'] ?? 0),
+                ])) ?>">
+                    <?= csrf_field() ?>
+                    <p class="field__hint"><?= e(__('clients.delete_scope', ['contacts' => (string) ($deleteImpact['contacts'] ?? 0)])) ?></p>
+                    <button class="button button--danger" type="submit" <?= !empty($deleteImpact['blocked']) ? 'disabled' : '' ?>><?= e(__('clients.delete')) ?></button>
+                </form>
+            </section>
+        <?php endif; ?>
     </div>
 
     <aside class="client-record-side" aria-label="<?= e(__('clients.coordinates_and_contacts')) ?>">

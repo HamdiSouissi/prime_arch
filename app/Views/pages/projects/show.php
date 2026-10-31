@@ -19,6 +19,12 @@ $customFields = is_array($customFields ?? null) ? $customFields : [];
 $availableFields = is_array($availableFields ?? null) ? $availableFields : [];
 $customFieldNotice = is_string($customFieldNotice ?? null) ? $customFieldNotice : '';
 $customFieldErrors = is_array($customFieldErrors ?? null) ? $customFieldErrors : [];
+// Suppression : la zone de danger n'existe que pour les profils habilités, et annonce le
+// contenu du projet (images, plans, temps saisi) ou les documents qui bloquent l'opération.
+$canDelete = !empty($canDelete);
+$deleteImpact = is_array($deleteImpact ?? null)
+    ? $deleteImpact
+    : ['documents' => 0, 'images' => 0, 'files' => 0, 'entries' => 0, 'hours' => '0', 'blocked' => false];
 // Un champ « image » possède sa propre carte (galerie + envoi), un champ « fichier » sa propre
 // liste de plans AutoCAD : aucun des deux n'apparaît dans la liste de valeurs, où il n'aurait
 // qu'une case vide faute de valeur JSON.
@@ -288,6 +294,37 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                         'activeCount' => count($customFields),
                     ]) ?>
                 <?php endif; ?>
+            </section>
+        <?php endif; ?>
+
+        <?php if ($canDelete): ?>
+            <section class="card danger-zone" aria-labelledby="project-danger-title">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-header__title" id="project-danger-title"><?= e(__('records.danger_zone')) ?></h2>
+                        <p class="section-heading__note"><?= e(__('projects.delete_help')) ?></p>
+                    </div>
+                </div>
+                <?php if (!empty($deleteImpact['blocked'])): ?>
+                    <p class="form-feedback form-feedback--error" role="alert"><?= e(__('projects.delete_blocked', [
+                        'documents' => (string) ($deleteImpact['documents'] ?? 0),
+                    ])) ?></p>
+                <?php endif; ?>
+                <form class="danger-zone__form" method="post" action="<?= e(url('/projects/' . (int) ($project['id'] ?? 0) . '/delete')) ?>" data-confirm="<?= e(__('projects.delete_confirm', [
+                    'name' => (string) ($project['name'] ?? ''),
+                    'images' => (string) ($deleteImpact['images'] ?? 0),
+                    'files' => (string) ($deleteImpact['files'] ?? 0),
+                    'entries' => (string) ($deleteImpact['entries'] ?? 0),
+                ])) ?>">
+                    <?= csrf_field() ?>
+                    <p class="field__hint"><?= e(__('projects.delete_scope', [
+                        'images' => (string) ($deleteImpact['images'] ?? 0),
+                        'files' => (string) ($deleteImpact['files'] ?? 0),
+                        'entries' => (string) ($deleteImpact['entries'] ?? 0),
+                        'hours' => (string) ($deleteImpact['hours'] ?? '0'),
+                    ])) ?></p>
+                    <button class="button button--danger" type="submit" <?= !empty($deleteImpact['blocked']) ? 'disabled' : '' ?>><?= e(__('projects.delete')) ?></button>
+                </form>
             </section>
         <?php endif; ?>
     </aside>

@@ -62,6 +62,41 @@ final class ProjectFileRepository
         return $grouped;
     }
 
+    /**
+     * Tous les fichiers privés du projet : la suppression de la fiche les retire du disque avec
+     * leurs métadonnées.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function allForProject(int $projectId): array
+    {
+        try {
+            $statement = $this->pdo->prepare(
+                'SELECT f.id, f.project_id, f.custom_field_key, f.original_name, f.stored_name,
+                        f.extension, f.mime_type, f.file_size, f.checksum, f.created_at
+                 FROM project_files f
+                 WHERE f.project_id = :project_id
+                 ORDER BY f.id'
+            );
+            $statement->execute(['project_id' => $projectId]);
+        } catch (PDOException $error) {
+            self::warnSchemaGap($error);
+
+            return [];
+        }
+
+        return array_map(self::normalize(...), $statement->fetchAll());
+    }
+
+    /** Retire les métadonnées de tous les fichiers d'un projet ; renvoie le nombre de lignes. */
+    public function deleteForProject(int $projectId): int
+    {
+        $statement = $this->pdo->prepare('DELETE FROM project_files WHERE project_id = :project_id');
+        $statement->execute(['project_id' => $projectId]);
+
+        return $statement->rowCount();
+    }
+
     /** Nombre de fichiers déjà rattachés à un champ pour ce projet. */
     public function countForCustomField(int $projectId, string $fieldKey): int
     {

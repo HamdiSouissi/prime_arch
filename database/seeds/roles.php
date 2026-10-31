@@ -10,8 +10,8 @@ return [
     ['slug' => 'administrator', 'label' => 'Administrateur', 'permissions' => ['*']],
     ['slug' => 'architect', 'label' => 'Architecte', 'permissions' => [
         'dashboard.view',
-        'clients.view', 'clients.manage',
-        'projects.view', 'projects.manage', 'projects.configure',
+        'clients.view', 'clients.manage', 'clients.delete',
+        'projects.view', 'projects.manage', 'projects.configure', 'projects.delete',
         'time.view', 'time.view_all', 'time.manage', 'time.manage_all',
         'documents.view', 'documents.create', 'documents.manage', 'documents.issue',
         'documents.payments.manage', 'documents.templates.manage',

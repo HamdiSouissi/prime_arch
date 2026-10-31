@@ -16,6 +16,7 @@ use App\Models\GeographyRepository;
 use App\Services\AuditLogger;
 use App\Services\ClientService;
 use App\Services\CsvDataTransferService;
+use App\Services\RecordDeletionService;
 use App\Services\TunisianPhoneNumber;
 use App\Services\ViewContext;
 use Throwable;
@@ -54,8 +55,13 @@ final class ClientController
             'filters' => ['q' => $search, 'status' => $status, 'type' => $type],
             'canViewProjects' => Auth::can('projects.view'),
             'canManage' => Auth::can('clients.manage'),
+            // La sélection multiple n'est proposée qu'aux profils autorisés à supprimer.
+            'canDelete' => Auth::can('clients.delete'),
             'importResult' => Session::pullFlash('clients.import_result'),
             'importFileError' => Session::pullFlash('clients.import_file_error', ''),
+            // Retour des suppressions (une fiche ou une sélection) : message ou motif de refus.
+            'notice' => Session::pullFlash('clients.notice'),
+            'errors' => Session::pullFlash('clients.errors', []),
         ]));
     }
 
@@ -174,6 +180,11 @@ final class ClientController
             // qu'on puisse les activer ou en créer un sans passer par les réglages.
             'customFields' => array_values(array_filter($clientFields, static fn (array $field): bool => (bool) $field['is_active'])),
             'availableFields' => array_values(array_filter($clientFields, static fn (array $field): bool => !$field['is_active'])),
+            'canDelete' => Auth::can('clients.delete'),
+            // Contenu de la fiche : la zone de danger l'annonce et explique un éventuel refus.
+            'deleteImpact' => Auth::can('clients.delete')
+                ? (new RecordDeletionService())->clientImpact((int) $client['id'])
+                : null,
             'customFieldNotice' => Session::pullFlash('clients.custom_field_notice'),
             'customFieldErrors' => Session::pullFlash('clients.custom_field_errors', []),
             'errors' => Session::pullFlash('clients.errors', []),
@@ -237,6 +248,108 @@ final class ClientController
         (new AuditLogger())->record('clients.updated', 'client', (int) $clientId, [], Auth::id());
         Session::flash('clients.notice', __('clients.updated'));
         return Response::redirect(url('/clients/' . $clientId));
+    }
+
+    /**
+     * Supprime une fiche client depuis sa page.
+     *
+     * La suppression est refusée tant que le client porte des projets ou des documents : ces
+     * objets ont leur propre cycle de vie (facturation, historique) et ne doivent pas
+     * disparaître par effet de bord.
+     */
+    public function destroy(Request $request, string $id): Response
+    {
+        if (!Auth::can('clients.delete')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $clientId = filter_var($id, FILTER_VALIDATE_INT);
+        $client = $clientId !== false && $clientId > 0
+            ? (new ClientRepository())->findById((int) $clientId)
+            : null;
+        if ($client === null) {
+            return Response::html(View::render('pages/404', [], 'layouts/app'), 404);
+        }
+
+        try {
+            $impact = (new RecordDeletionService())->deleteClient((int) $client['id']);
+        } catch (Throwable $error) {
+            error_log((string) $error);
+            Session::flash('clients.errors', ['general' => __('clients.delete_failed')]);
+            return Response::redirect(url('/clients/' . (int) $client['id']));
+        }
+        if (!$impact['deleted']) {
+            Session::flash('clients.errors', ['general' => __('clients.delete_blocked', [
+                'projects' => (string) $impact['projects'],
+                'documents' => (string) $impact['documents'],
+            ])]);
+            return Response::redirect(url('/clients/' . (int) $client['id']));
+        }
+
+        (new AuditLogger())->record('clients.deleted', 'client', (int) $client['id'], [
+            'reference' => (string) ($client['reference'] ?? ''),
+            'contacts_deleted' => $impact['contacts'],
+        ], Auth::id());
+        Session::flash('clients.notice', __('clients.deleted', [
+            'name' => (string) ($client['display_name'] ?? ''),
+            'contacts' => (string) $impact['contacts'],
+        ]));
+
+        return Response::redirect(url('/clients'));
+    }
+
+    /**
+     * Supprime les clients sélectionnés dans la liste, en un seul envoi.
+     *
+     * Chaque fiche est traitée séparément : une fiche protégée n'annule pas les suppressions
+     * déjà faites, et le message final indique ce qui a été conservé et pourquoi.
+     */
+    public function deleteMany(Request $request): Response
+    {
+        if (!Auth::can('clients.delete')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $ids = self::selectedIds($request->input('ids'));
+        if ($ids === []) {
+            Session::flash('clients.errors', ['general' => __('clients.delete_none')]);
+            return Response::redirect(url('/clients'));
+        }
+
+        $service = new RecordDeletionService();
+        $logger = new AuditLogger();
+        $deleted = 0;
+        $blocked = 0;
+        foreach ($ids as $id) {
+            try {
+                $impact = $service->deleteClient($id);
+            } catch (Throwable $error) {
+                error_log((string) $error);
+                continue;
+            }
+            if (!$impact['deleted']) {
+                $blocked++;
+                continue;
+            }
+            $deleted++;
+            $logger->record('clients.deleted', 'client', $id, [
+                'contacts_deleted' => $impact['contacts'],
+                'source' => 'selection',
+            ], Auth::id());
+        }
+
+        if ($deleted > 0 && $blocked === 0) {
+            Session::flash('clients.notice', __('clients.deleted_count', ['count' => (string) $deleted]));
+        } elseif ($deleted > 0) {
+            Session::flash('clients.notice', __('clients.delete_partial', [
+                'deleted' => (string) $deleted,
+                'blocked' => (string) $blocked,
+            ]));
+        } else {
+            Session::flash('clients.errors', ['general' => __('clients.delete_all_blocked', [
+                'count' => (string) $blocked,
+            ])]);
+        }
+
+        return Response::redirect(url('/clients'));
     }
 
     public function createContact(Request $request, string $id): Response
@@ -424,6 +537,33 @@ final class ClientController
     {
         $value = $request->input($key, '');
         return is_string($value) || is_int($value) ? trim((string) $value) : '';
+    }
+
+    /**
+     * Identifiants cochés dans la liste, bornés et dédoublonnés.
+     *
+     * Le plafond évite qu'un envoi forgé ne déclenche des milliers de suppressions ; l'ordre du
+     * formulaire est conservé, ce qui rend les journaux lisibles.
+     *
+     * @return array<int,int>
+     */
+    private static function selectedIds(mixed $raw, int $limit = 200): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $ids = [];
+        foreach ($raw as $value) {
+            $id = filter_var(is_scalar($value) ? (string) $value : '', FILTER_VALIDATE_INT);
+            if ($id !== false && $id > 0 && !in_array((int) $id, $ids, true)) {
+                $ids[] = (int) $id;
+            }
+            if (count($ids) >= $limit) {
+                break;
+            }
+        }
+
+        return $ids;
     }
 
     private static function queryString(Request $request, string $key): string

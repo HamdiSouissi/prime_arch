@@ -93,6 +93,34 @@ final class TimeEntryRepository
     /** @param array<string,string> $filters
      *  @return array{hours:string,billable_hours:string,entry_count:int,cost:string|null}
      */
+    /** Nombre de saisies de temps d'un projet : elles partent avec lui. */
+    public function countForProject(int $projectId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM time_entries WHERE project_id = :project_id');
+        $statement->execute(['project_id' => $projectId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /** Heures déjà saisies sur un projet, pour l'annoncer avant suppression. */
+    public function hoursForProject(int $projectId): string
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT COALESCE(SUM(duration_hours), 0) FROM time_entries WHERE project_id = :project_id'
+        );
+        $statement->execute(['project_id' => $projectId]);
+
+        return (string) $statement->fetchColumn();
+    }
+
+    public function deleteForProject(int $projectId): int
+    {
+        $statement = $this->pdo->prepare('DELETE FROM time_entries WHERE project_id = :project_id');
+        $statement->execute(['project_id' => $projectId]);
+
+        return $statement->rowCount();
+    }
+
     public function summary(array $filters, ?int $ownerUserId = null, bool $includeCosts = false): array
     {
         [$where, $parameters] = $this->conditions($filters, $ownerUserId);

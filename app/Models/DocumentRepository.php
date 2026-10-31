@@ -147,6 +147,24 @@ final class DocumentRepository
         ], $statement->fetchAll());
     }
 
+    /** Documents rattachés à une fiche client : ils empêchent sa suppression. */
+    public function countForClient(int $clientId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM documents WHERE client_id = :client_id');
+        $statement->execute(['client_id' => $clientId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /** Documents rattachés à un projet : ils empêchent sa suppression. */
+    public function countForProject(int $projectId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM documents WHERE project_id = :project_id');
+        $statement->execute(['project_id' => $projectId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     /** @return array<int,array<string,mixed>> */
     public function lines(int $documentId): array
     {

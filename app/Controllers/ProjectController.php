@@ -20,6 +20,7 @@ use App\Services\AuditLogger;
 use App\Services\CsvDataTransferService;
 use App\Services\ProjectPlanService;
 use App\Services\ProjectService;
+use App\Services\RecordDeletionService;
 use App\Services\ViewContext;
 use PDOException;
 use RuntimeException;
@@ -63,10 +64,15 @@ final class ProjectController
             'clients' => Auth::can('clients.view') ? (new ClientRepository())->forSelect() : [],
             'canManage' => Auth::can('projects.manage'),
             'canConfigure' => Auth::can('projects.configure'),
+            // Sélection multiple réservée aux profils habilités à supprimer des projets.
+            'canDelete' => Auth::can('projects.delete'),
             'canViewCosts' => $canViewCosts,
             'canViewTime' => $canViewTime,
             'importResult' => Session::pullFlash('projects.import_result'),
             'importFileError' => Session::pullFlash('projects.import_file_error', ''),
+            // Retour des suppressions (une fiche ou une sélection) : message ou motif de refus.
+            'notice' => Session::pullFlash('projects.notice'),
+            'errors' => Session::pullFlash('projects.errors', []),
         ]));
     }
 
@@ -227,6 +233,11 @@ final class ProjectController
             // Définitions actives sur la fiche, et celles créées puis désactivées : la fiche
             // rappelle les secondes pour qu'on puisse les activer sans passer par les réglages.
             'customFields' => array_values(array_filter($projectFields, static fn (array $field): bool => (bool) $field['is_active'])),
+            'canDelete' => Auth::can('projects.delete'),
+            // Contenu du projet : la zone de danger l'annonce et explique un éventuel refus.
+            'deleteImpact' => Auth::can('projects.delete')
+                ? (new RecordDeletionService())->projectImpact((int) $project['id'])
+                : null,
             'availableFields' => array_values(array_filter($projectFields, static fn (array $field): bool => !$field['is_active'])),
             'customFieldNotice' => Session::pullFlash('projects.custom_field_notice'),
             'customFieldErrors' => Session::pullFlash('projects.custom_field_errors', []),
@@ -264,6 +275,114 @@ final class ProjectController
         $items[] = ['label' => (string) ($project['name'] ?? '')];
 
         return $items;
+    }
+
+    /**
+     * Supprime un projet depuis sa page, avec ses images, ses plans et son temps saisi.
+     *
+     * La suppression est refusée si des documents (devis, factures) sont rattachés au projet :
+     * un document émis garde sa valeur comptable et se retire par son propre écran.
+     */
+    public function destroy(Request $request, string $id): Response
+    {
+        if (!Auth::can('projects.delete')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $projectId = filter_var($id, FILTER_VALIDATE_INT);
+        $project = $projectId !== false && $projectId > 0
+            ? (new ProjectRepository())->findById((int) $projectId)
+            : null;
+        if ($project === null) {
+            return Response::html(View::render('pages/404', [], 'layouts/app'), 404);
+        }
+
+        try {
+            $impact = (new RecordDeletionService())->deleteProject((int) $project['id']);
+        } catch (Throwable $error) {
+            error_log((string) $error);
+            Session::flash('projects.errors', ['general' => __('projects.delete_failed')]);
+            return Response::redirect(url('/projects/' . (int) $project['id']));
+        }
+        if (!$impact['deleted']) {
+            Session::flash('projects.errors', ['general' => __('projects.delete_blocked', [
+                'documents' => (string) $impact['documents'],
+            ])]);
+            return Response::redirect(url('/projects/' . (int) $project['id']));
+        }
+
+        (new AuditLogger())->record('projects.deleted', 'project', (int) $project['id'], [
+            'reference' => (string) ($project['reference'] ?? ''),
+            'client_id' => (int) ($project['client_id'] ?? 0),
+            'images_deleted' => $impact['images'],
+            'files_deleted' => $impact['files'],
+            'time_entries_deleted' => $impact['entries'],
+            'phases_deleted' => $impact['assignments'],
+        ], Auth::id());
+        Session::flash('projects.notice', __('projects.deleted', [
+            'name' => (string) ($project['name'] ?? ''),
+            'images' => (string) $impact['images'],
+            'files' => (string) $impact['files'],
+            'entries' => (string) $impact['entries'],
+        ]));
+
+        return Response::redirect(url('/projects'));
+    }
+
+    /**
+     * Supprime les projets sélectionnés dans la liste.
+     *
+     * Chaque fiche est traitée séparément : un projet porteur de documents est conservé sans
+     * annuler les suppressions déjà faites, et le message final distingue les deux cas.
+     */
+    public function deleteMany(Request $request): Response
+    {
+        if (!Auth::can('projects.delete')) {
+            return Response::html(__('common.forbidden'), 403);
+        }
+        $ids = self::selectedIds($request->input('ids'));
+        if ($ids === []) {
+            Session::flash('projects.errors', ['general' => __('projects.delete_none')]);
+            return Response::redirect(url('/projects'));
+        }
+
+        $service = new RecordDeletionService();
+        $logger = new AuditLogger();
+        $deleted = 0;
+        $blocked = 0;
+        foreach ($ids as $id) {
+            try {
+                $impact = $service->deleteProject($id);
+            } catch (Throwable $error) {
+                error_log((string) $error);
+                continue;
+            }
+            if (!$impact['deleted']) {
+                $blocked++;
+                continue;
+            }
+            $deleted++;
+            $logger->record('projects.deleted', 'project', $id, [
+                'images_deleted' => $impact['images'],
+                'files_deleted' => $impact['files'],
+                'time_entries_deleted' => $impact['entries'],
+                'source' => 'selection',
+            ], Auth::id());
+        }
+
+        if ($deleted > 0 && $blocked === 0) {
+            Session::flash('projects.notice', __('projects.deleted_count', ['count' => (string) $deleted]));
+        } elseif ($deleted > 0) {
+            Session::flash('projects.notice', __('projects.delete_partial', [
+                'deleted' => (string) $deleted,
+                'blocked' => (string) $blocked,
+            ]));
+        } else {
+            Session::flash('projects.errors', ['general' => __('projects.delete_all_blocked', [
+                'count' => (string) $blocked,
+            ])]);
+        }
+
+        return Response::redirect(url('/projects'));
     }
 
     public function edit(Request $request, string $id): Response
@@ -522,6 +641,30 @@ final class ProjectController
     {
         $value = $request->input($key, '');
         return is_string($value) || is_int($value) ? trim((string) $value) : '';
+    }
+
+    /**
+     * Identifiants cochés dans la liste, bornés et dédoublonnés.
+     *
+     * @return array<int,int>
+     */
+    private static function selectedIds(mixed $raw, int $limit = 200): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $ids = [];
+        foreach ($raw as $value) {
+            $id = filter_var(is_scalar($value) ? (string) $value : '', FILTER_VALIDATE_INT);
+            if ($id !== false && $id > 0 && !in_array((int) $id, $ids, true)) {
+                $ids[] = (int) $id;
+            }
+            if (count($ids) >= $limit) {
+                break;
+            }
+        }
+
+        return $ids;
     }
 
     private static function queryString(Request $request, string $key): string

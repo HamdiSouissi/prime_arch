@@ -9,6 +9,12 @@ $filters = is_array($filters ?? null) ? $filters : ['q' => '', 'status' => '', '
 $clients = is_array($clients ?? null) ? $clients : [];
 $page = max(1, (int) ($page ?? 1));
 $pageCount = max(1, (int) ($pageCount ?? 1));
+// Suppression : la sélection multiple n'apparaît qu'avec le droit `projects.delete`.
+$canDelete = !empty($canDelete);
+$notice = is_string($notice ?? null) ? $notice : '';
+$errors = is_array($errors ?? null) ? $errors : [];
+$selectionLabel = __('common.selection_count');
+$bulkConfirm = __('projects.delete_selection_confirm', ['count' => ':count']);
 ?>
 <?php View::partial('partials/page-header', [
     'pageTitle' => __('projects.title'),
@@ -17,6 +23,13 @@ $pageCount = max(1, (int) ($pageCount ?? 1));
     'secondaryAction' => !empty($canConfigure) ? ['label' => __('project_phases.manage'), 'icon' => 'settings', 'url' => url('/settings/project-phases')] : null,
     'primaryAction' => !empty($canManage) ? ['label' => __('projects.create'), 'icon' => 'plus', 'url' => url('/projects/new')] : null,
 ]) ?>
+
+<?php if ($notice !== ''): ?>
+    <p class="form-feedback form-feedback--success" role="status"><?= e($notice) ?></p>
+<?php endif; ?>
+<?php foreach ($errors as $error): ?>
+    <?php if (is_string($error)): ?><p class="form-feedback form-feedback--error" role="alert"><?= e($error) ?></p><?php endif; ?>
+<?php endforeach; ?>
 
 <section class="card stack-md" aria-label="<?= e(__('projects.title')) ?>">
     <form class="filter-row" method="get" action="<?= e(url('/projects')) ?>">
@@ -43,11 +56,20 @@ $pageCount = max(1, (int) ($pageCount ?? 1));
             'actionUrl' => !empty($canManage) && $filters['q'] === '' && $filters['status'] === '' && $filters['client_id'] === '' ? url('/projects/new') : null,
         ]) ?>
     <?php else: ?>
+        <?php if ($canDelete): ?>
+            <form class="bulk-form" method="post" action="<?= e(url('/projects/delete')) ?>" data-confirm="<?= e($bulkConfirm) ?>" data-confirm-selection>
+                <?= csrf_field() ?>
+            <div class="bulk-actions">
+                <span class="bulk-actions__count" data-selection-count data-label="<?= e($selectionLabel) ?>"><?= e(str_replace(':count', '0', $selectionLabel)) ?></span>
+                <button class="button button--small button--danger" type="submit" data-selection-submit disabled><?= e(__('common.delete_selection')) ?></button>
+            </div>
+        <?php endif; ?>
         <div class="table-wrap"><table class="data-table">
-            <thead><tr><th scope="col"><?= e(__('projects.name')) ?></th><th scope="col"><?= e(__('clients.client')) ?></th><th scope="col"><?= e(__('projects.location')) ?></th><th scope="col"><?= e(__('project_phases.current')) ?></th><th scope="col"><?= e(__('projects.weighted_progress')) ?></th><?php if (!empty($canViewTime) || !empty($canViewCosts)): ?><th scope="col"><?= e(__('projects.actual_hours')) ?></th><?php endif; ?><?php if (!empty($canViewCosts)): ?><th scope="col"><?= e(__('projects.actual_cost')) ?></th><?php endif; ?><th scope="col"><?= e(__('projects.dates')) ?></th><th scope="col"><?= e(__('projects.status.label')) ?></th></tr></thead>
+            <thead><tr><?php if ($canDelete): ?><th scope="col" class="bulk-select"><input type="checkbox" data-select-all aria-label="<?= e(__('common.select_all')) ?>"></th><?php endif; ?><th scope="col"><?= e(__('projects.name')) ?></th><th scope="col"><?= e(__('clients.client')) ?></th><th scope="col"><?= e(__('projects.location')) ?></th><th scope="col"><?= e(__('project_phases.current')) ?></th><th scope="col"><?= e(__('projects.weighted_progress')) ?></th><?php if (!empty($canViewTime) || !empty($canViewCosts)): ?><th scope="col"><?= e(__('projects.actual_hours')) ?></th><?php endif; ?><?php if (!empty($canViewCosts)): ?><th scope="col"><?= e(__('projects.actual_cost')) ?></th><?php endif; ?><th scope="col"><?= e(__('projects.dates')) ?></th><th scope="col"><?= e(__('projects.status.label')) ?></th></tr></thead>
             <tbody>
                 <?php foreach ($projects as $project): ?>
                     <tr>
+                        <?php if ($canDelete): ?><td class="bulk-select"><input type="checkbox" name="ids[]" value="<?= (int) $project['id'] ?>" aria-label="<?= e(__('projects.select_record', ['name' => $project['name']])) ?>"></td><?php endif; ?>
                         <td><a class="table-primary" href="<?= e(url('/projects/' . (int) $project['id'])) ?>"><span class="table-primary__text"><strong class="table-primary__name"><?= e($project['name']) ?></strong><span class="table-primary__meta"><?= e($project['reference'] ?? '') ?><?= !empty($project['project_type']) ? ' · ' . e($project['project_type']) : '' ?></span></span></a></td>
                         <td><?php if (Auth::can('clients.view')): ?><a href="<?= e(url('/clients/' . (int) $project['client_id'])) ?>"><?= e($project['client_name']) ?></a><?php else: ?><?= e($project['client_name']) ?><?php endif; ?></td>
                         <td><?= e(implode(', ', array_filter([(string) ($project['city'] ?? ''), (string) ($project['postal_code'] ?? '')]))) ?: '—' ?></td>
@@ -62,5 +84,8 @@ $pageCount = max(1, (int) ($pageCount ?? 1));
             </tbody>
         </table></div>
         <div class="table-footer"><span><?= e(__('common.results', ['count' => (string) ($total ?? 0)])) ?></span><?php if ($pageCount > 1): ?><div class="cluster"><a class="button button--small button--secondary<?= $page <= 1 ? ' is-disabled' : '' ?>" href="<?= e(url('/projects?' . http_build_query($filters + ['page' => max(1, $page - 1)]))) ?>" <?= $page <= 1 ? 'aria-disabled="true"' : '' ?>><?= e(__('common.previous')) ?></a><span class="muted"><?= e(__('common.page', ['current' => (string) $page, 'total' => (string) $pageCount])) ?></span><a class="button button--small button--secondary<?= $page >= $pageCount ? ' is-disabled' : '' ?>" href="<?= e(url('/projects?' . http_build_query($filters + ['page' => min($pageCount, $page + 1)]))) ?>" <?= $page >= $pageCount ? 'aria-disabled="true"' : '' ?>><?= e(__('common.next')) ?></a></div><?php endif; ?></div>
+        <?php if ($canDelete): ?>
+            </form>
+        <?php endif; ?>
     <?php endif; ?>
 </section>

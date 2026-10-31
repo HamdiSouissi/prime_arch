@@ -74,6 +74,37 @@ final class ProjectImageRepository
     }
 
     /**
+     * Toutes les images du projet, champs personnalisés compris.
+     *
+     * La suppression d'un projet doit connaître chaque fichier du disque, y compris ceux des
+     * galeries rattachées à un champ : `forProject()` les exclut volontairement.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function allForProject(int $projectId): array
+    {
+        try {
+            return $this->images($projectId, 'all');
+        } catch (PDOException $error) {
+            self::warnSchemaGap($error);
+            try {
+                return $this->images($projectId, 'legacy');
+            } catch (PDOException) {
+                return [];
+            }
+        }
+    }
+
+    /** Retire les métadonnées de toutes les images d'un projet ; renvoie le nombre de lignes. */
+    public function deleteForProject(int $projectId): int
+    {
+        $statement = $this->pdo->prepare('DELETE FROM project_images WHERE project_id = :project_id');
+        $statement->execute(['project_id' => $projectId]);
+
+        return $statement->rowCount();
+    }
+
+    /**
      * Images rattachées aux champs personnalisés, regroupées par clé de champ.
      *
      * @return array<string,array<int,array<string,mixed>>>
