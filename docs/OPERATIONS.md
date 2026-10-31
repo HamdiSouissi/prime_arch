@@ -47,19 +47,22 @@ Choix d'implémentation et conséquences :
   `projects.image.deleted`) avec l'identifiant du projet et la clé du champ, jamais le contenu ni
   le nom du fichier.
 
-## Champs personnalisés de type fichier (plans AutoCAD)
+## Champs personnalisés de type fichier (plans AutoCAD, DWF, PDF)
 
-Un administrateur peut créer un champ de type **Fichiers AutoCAD** (`/settings/custom-fields`,
+Un administrateur peut créer un champ de type **Fichiers techniques** (`/settings/custom-fields`,
 fiche concernée : projets). Sur la fiche du projet, le bloc du champ permet de téléverser,
-télécharger et retirer des plans **DWG ou DXF** — trois actions au plus, sans quitter la page.
+télécharger et retirer des fichiers **DWG, DXF, DWT, DWS, BAK, SV$, DWF, DWFX ou PDF** — trois
+actions au plus, sans quitter la page.
 
 Choix d'implémentation et conséquences :
 
-- Le format est reconnu à partir de la **signature** du fichier (en-tête DWG `AC10xx`, DXF texte
-  `0` / `SECTION`, DXF binaire `AutoCAD Binary DXF`), puis confronté à l'extension reçue : un
-  exécutable ou une archive renommée en `.dwg` est refusé avant toute écriture.
-- 25 Mio par fichier, 5 fichiers par envoi, 50 par champ. Configurer PHP avec
-  `upload_max_filesize=25M` et `post_max_size=28M` au minimum.
+- Le contenu est reconnu à partir de sa **signature**, puis confronté à l'extension reçue. Quatre
+  familles : `acad` (DWG, DWT, DWS, BAK et SV$ partagent l'en-tête binaire `AC10xx`), `dxf`
+  (texte `0` / `SECTION` ou binaire `AutoCAD Binary DXF`), `dwf` (conteneur ZIP depuis DWF 6 et
+  pour DWFX, binaire `(DWF V…` avant) et `pdf` (`%PDF-`). Un exécutable, un texte ou un PDF
+  renommé en `.dwg` est refusé avant toute écriture.
+- 32 Mio par fichier, 5 fichiers par envoi, 50 par champ. Configurer PHP avec
+  `upload_max_filesize=32M` et `post_max_size=36M` au minimum.
 - Les fichiers sont stockés sous `storage/uploads/projects/<id>/` (chmod `0640`), hors de
   `public/`, et déclarés dans `project_files` avec leur clé de champ (migration `0015`). Aucune
   valeur n'est conservée dans la colonne JSON `custom_fields` ; le nom d'origine, l'extension, la

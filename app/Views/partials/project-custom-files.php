@@ -5,9 +5,9 @@ use App\Services\CustomFieldService;
 use App\Services\ProjectFileStorage;
 
 /**
- * Blocs « fichier » (plans AutoCAD) des champs personnalisés d'un projet.
+ * Blocs « fichier » (plans AutoCAD, DWF, PDF) des champs personnalisés d'un projet.
  *
- * Un champ de type fichier affiche la liste de ses plans et son formulaire d'envoi. Les
+ * Un champ de type fichier affiche la liste de ses fichiers et son formulaire d'envoi. Les
  * fichiers vivent dans l'espace privé du projet : chaque ligne ne propose qu'un lien de
  * téléchargement authentifié, jamais une URL publique.
  *

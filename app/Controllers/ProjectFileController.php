@@ -18,7 +18,8 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * Plans AutoCAD privés rattachés à un champ personnalisé de type « fichier ».
+ * Fichiers techniques privés (plans AutoCAD, DWF, PDF) rattachés à un champ personnalisé
+ * de type « fichier ».
  *
  * Le champ est créé dans Réglages › Champs personnalisés, puis alimenté depuis la fiche
  * projet : un envoi, un téléchargement, une suppression. Aucun fichier n'est placé sous
@@ -127,8 +128,8 @@ final class ProjectFileController
     /**
      * Téléchargement du plan.
      *
-     * Le fichier est toujours servi en pièce jointe (`application/octet-stream`) : un DWG ne
-     * doit jamais être interprété par le navigateur, et le nom d'origine est repris tel quel.
+     * Le fichier est toujours servi en pièce jointe (`application/octet-stream`) : un DWG ou un
+     * PDF ne doit jamais être interprété par le navigateur, et le nom d'origine est repris tel quel.
      */
     public function download(Request $request, string $id, string $fileId): Response
     {

@@ -12,8 +12,8 @@ use ReflectionClass;
  * Champ personnalisé « fichiers AutoCAD » des fiches projets.
  *
  * Un tel champ se crée dans Réglages › Champs personnalisés, puis s'alimente depuis la fiche
- * projet : envoi, téléchargement et retrait d'un plan DWG ou DXF, sans jamais plus de trois
- * actions. Les fichiers ne sont pas stockés dans la colonne JSON des champs personnalisés ni
+ * projet : envoi, téléchargement et retrait d'un fichier DWG, DXF, DWT, DWS, BAK, SV$, DWF,
+ * DWFX ou PDF, sans jamais plus de trois actions. Les fichiers ne sont pas stockés dans la colonne JSON des champs personnalisés ni
  * sous `public/` : ils vivent dans `storage/uploads/projects`, référencés par `project_files`
  * et servis uniquement par une route authentifiée.
  *
@@ -104,13 +104,17 @@ final class CustomFieldFileTest extends TestCase
         self::assertStringContainsString("['image', 'file']", $csv, 'Un CSV ne transporte pas de fichier binaire.');
     }
 
-    /** L'en-tête du fichier décide du format : une extension seule ne suffit pas. */
+    /** L'en-tête du fichier décide de la famille de contenu : une extension seule ne suffit pas. */
     public function testFormatIsDetectedFromFileSignature(): void
     {
-        // DWG : en-tête binaire « AC10xx » (AutoCAD 2000 à 2018 et suivants).
-        $dwg = self::fixture("AC1027\x00\x00\x00\x00\x0d\x0a" . str_repeat("\x00", 120));
-        self::assertSame('dwg', ProjectFileStorage::detectFormat($dwg), 'En-tête DWG reconnu.');
-        @unlink($dwg);
+        // DWG et ses variantes : tous les fichiers AutoCAD binaires portent « AC10xx ».
+        foreach (['dwg' => 'plan.dwg', 'dwt' => 'gabarit.dwt', 'dws' => 'normes.dws',
+            'bak' => 'plan.bak', 'sv$' => 'plan_1_2_3456.sv$'] as $extension => $name) {
+            $file = self::fixture("AC1027\x00\x00\x00\x00\x0d\x0a" . str_repeat("\x00", 120));
+            self::assertSame('acad', ProjectFileStorage::detectFormat($file), 'En-tête AutoCAD reconnu : ' . $name);
+            self::assertSame('acad', ProjectFileStorage::familyOf($extension), 'Famille attendue pour .' . $extension);
+            @unlink($file);
+        }
 
         // DXF texte : deux premières lignes utiles « 0 » puis « SECTION ».
         $dxf = self::fixture("0\r\nSECTION\r\n2\r\nHEADER\r\n0\r\nENDSEC\r\n0\r\nEOF\r\n");
@@ -122,28 +126,53 @@ final class CustomFieldFileTest extends TestCase
         self::assertSame('dxf', ProjectFileStorage::detectFormat($binaryDxf), 'DXF binaire reconnu.');
         @unlink($binaryDxf);
 
-        // Un binaire quelconque, une archive ou un exécutable ne sont jamais pris pour un plan.
-        $zip = self::fixture("PK\x03\x04" . str_repeat("\x00", 64));
-        self::assertNull(ProjectFileStorage::detectFormat($zip), 'Une archive renommée est refusée.');
-        @unlink($zip);
+        // DWF 6+ et DWFX sont des conteneurs ZIP ; DWF 5 et antérieurs sont binaires.
+        $dwf = self::fixture("PK\x03\x04" . str_repeat("\x00", 64));
+        self::assertSame('dwf', ProjectFileStorage::detectFormat($dwf), 'DWF/DWFX (ZIP) reconnu.');
+        self::assertSame('dwf', ProjectFileStorage::familyOf('dwfx'));
+        @unlink($dwf);
 
+        $legacyDwf = self::fixture('(DWF V06.00)P' . str_repeat('\x00', 32));
+        self::assertSame('dwf', ProjectFileStorage::detectFormat($legacyDwf), 'DWF binaire historique reconnu.');
+        @unlink($legacyDwf);
+
+        // PDF : signature « %PDF- ».
+        $pdf = self::fixture("%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n");
+        self::assertSame('pdf', ProjectFileStorage::detectFormat($pdf), 'PDF reconnu.');
+        self::assertSame('pdf', ProjectFileStorage::familyOf('pdf'));
+        @unlink($pdf);
+
+        // Un exécutable, un fichier vide ou un texte quelconque restent refusés.
         $executable = self::fixture("MZ\x90\x00" . str_repeat("\x00", 64));
         self::assertNull(ProjectFileStorage::detectFormat($executable), 'Un exécutable renommé est refusé.');
         @unlink($executable);
 
+        $text = self::fixture("Bonjour, ceci n'est pas un plan.\n" . str_repeat('ligne\n', 20));
+        self::assertNull(ProjectFileStorage::detectFormat($text), 'Un texte quelconque est refusé.');
+        @unlink($text);
+
         $empty = self::fixture('');
         self::assertNull(ProjectFileStorage::detectFormat($empty), 'Un fichier vide est refusé.');
         @unlink($empty);
+
+        // Une extension acceptée sans famille connue ne peut jamais correspondre à un contenu.
+        self::assertNull(ProjectFileStorage::familyOf('exe'));
     }
 
     /** Extensions autorisées et bornes de taille sont explicites, côté service. */
     public function testStorageLimitsAreExplicit(): void
     {
-        self::assertSame(['dwg', 'dxf'], ProjectFileStorage::EXTENSIONS);
-        self::assertSame(26_214_400, ProjectFileStorage::MAX_BYTES, '25 Mo par fichier.');
+        self::assertSame(
+            ['dwg', 'dxf', 'dwt', 'dws', 'bak', 'dwf', 'dwfx', 'pdf', 'sv$'],
+            ProjectFileStorage::EXTENSIONS,
+            'Plans AutoCAD, gabarits, normes, sauvegardes, DWF/DWFX et PDF.'
+        );
+        self::assertSame(33_554_432, ProjectFileStorage::MAX_BYTES, '32 Mio par fichier.');
         self::assertSame('application/octet-stream', ProjectFileStorage::DOWNLOAD_MIME);
         self::assertSame('dwg', ProjectFileStorage::extensionOf('Plan RDC.DWG'));
         self::assertSame('dxf', ProjectFileStorage::extensionOf('chemin/facade.dxf'));
+        self::assertSame('sv$', ProjectFileStorage::extensionOf('plan_1_2_3456.SV$'), 'Le dollar fait partie de l’extension AutoCAD.');
+        self::assertSame('dwt', ProjectFileStorage::extensionOf('gabarit.dwt'));
         self::assertSame('', ProjectFileStorage::extensionOf('plan'));
         // Seule la liste blanche décide : une extension inconnue ne passe jamais la validation.
         self::assertSame('exe', ProjectFileStorage::extensionOf('plan.dwg.exe'));
@@ -153,6 +182,8 @@ final class CustomFieldFileTest extends TestCase
         self::assertStringContainsString('is_uploaded_file', $storage, 'Seul un envoi HTTP est accepté.');
         self::assertStringContainsString('filesize', $storage, 'La taille réelle est vérifiée, pas celle annoncée.');
         self::assertStringContainsString('random_bytes(16)', $storage, 'Le nom stocké est aléatoire.');
+        self::assertStringContainsString('self::familyOf($extension)', $storage, 'Le contenu doit appartenir à la famille de l’extension.');
+        self::assertStringContainsString('private const FAMILIES', $storage);
         self::assertStringContainsString('chmod($destination, 0640)', $storage, 'Lecture réservée au serveur.');
         self::assertStringContainsString("BASE_PATH . '/storage/uploads/projects'", $storage);
         self::assertStringNotContainsString('/public/', $storage, 'Aucun fichier n’est écrit dans la racine publique.');

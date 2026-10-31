@@ -14,9 +14,9 @@ final class CustomFieldService
     /**
      * Types proposés dans les réglages.
      *
-     * « image » (photos de chantier, plans scannés) et « file » (plans AutoCAD .dwg/.dxf)
-     * n'existent que pour les fiches projets : les fichiers vivent dans l'espace privé du
-     * projet et suivent sa suppression.
+     * « image » (photos de chantier, plans scannés) et « file » (plans AutoCAD DWG/DXF/DWT/DWS,
+     * sauvegardes BAK/SV$, DWF/DWFX, PDF) n'existent que pour les fiches projets : les fichiers
+     * vivent dans l'espace privé du projet et suivent sa suppression.
      */
     public const TYPES = ['text', 'number', 'date', 'select', 'checkbox', 'image', 'file'];
     /** Types alimentés par téléversement : aucune valeur n'est stockée dans la colonne JSON. */

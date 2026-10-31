@@ -7,27 +7,54 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Stockage privé des fichiers AutoCAD rattachés aux champs personnalisés des projets.
+ * Stockage privé des fichiers techniques rattachés aux champs personnalisés des projets.
  *
- * Un plan `.dwg` ou `.dxf` n'est pas une image : ni `getimagesize()` ni le type MIME déclaré
- * par le navigateur ne permettent de le valider. Le format est donc reconnu à partir de la
- * signature du fichier (en-tête DWG « AC10xx », en-tête DXF texte ou binaire), puis confronté
- * à l'extension réellement reçue. Le contenu reste hors de la racine publique : la seule voie
- * d'accès est la route authentifiée de téléchargement.
+ * Un plan AutoCAD ou un PDF n'est pas une image : ni `getimagesize()` ni le type MIME déclaré
+ * par le navigateur ne permettent de le valider. Le contenu est donc reconnu à partir de sa
+ * signature, puis confronté à l'extension réellement reçue. Une même famille couvre plusieurs
+ * extensions :
+ *
+ * - `acad` : DWG, DWT (gabarit), DWS (normes), BAK (sauvegarde) et SV$ (enregistrement
+ *   automatique d'AutoCAD) sont tous des fichiers au format DWG — en-tête binaire « AC10xx » ;
+ * - `dxf`  : échange texte ou binaire (« 0 / SECTION » ou « AutoCAD Binary DXF ») ;
+ * - `dwf`  : DWF et DWFX — conteneur ZIP depuis DWF 6 (et DWFX), binaire « (DWF V… » avant ;
+ * - `pdf`  : en-tête « %PDF- ».
+ *
+ * Le contenu reste hors de la racine publique : la seule voie d'accès est la route authentifiée
+ * de téléchargement, qui sert toujours le fichier en pièce jointe.
  */
 final class ProjectFileStorage
 {
-    /** 25 Mo : au-delà, un plan DWG n'est plus un livrable de cabinet mais une archive. */
-    public const MAX_BYTES = 26_214_400;
+    /** 32 Mio : un plan DWG ou un PDF de plans scannés reste un livrable de cabinet. */
+    public const MAX_BYTES = 33_554_432;
     /** Extensions acceptées, dans l'ordre d'affichage du formulaire. */
-    public const EXTENSIONS = ['dwg', 'dxf'];
+    public const EXTENSIONS = ['dwg', 'dxf', 'dwt', 'dws', 'bak', 'dwf', 'dwfx', 'pdf', 'sv$'];
     /** Type MIME servi au téléchargement : jamais interprété par le navigateur. */
     public const DOWNLOAD_MIME = 'application/octet-stream';
+
+    /**
+     * Famille de contenu attendue pour chaque extension.
+     *
+     * @var array<string,string>
+     */
+    private const FAMILIES = [
+        'dwg' => 'acad',
+        'dwt' => 'acad',
+        'dws' => 'acad',
+        'bak' => 'acad',
+        'sv$' => 'acad',
+        'dxf' => 'dxf',
+        'dwf' => 'dwf',
+        'dwfx' => 'dwf',
+        'pdf' => 'pdf',
+    ];
 
     /** En-têtes DWG connus (AC1009 à AC1032) : AutoCAD, BricsCAD et compatibles. */
     private const DWG_VERSION = '/^AC10(?:09|12|14|15|18|21|24|27|32)/';
     /** En-tête d'un DXF binaire (« AutoCAD Binary DXF » suivi de \r\n\x1a\0). */
     private const DXF_BINARY = "AutoCAD Binary DXF\r\n\x1a";
+    /** En-tête des DWF binaires antérieurs à DWF 6 : « (DWF V06.00)P... ». */
+    private const DWF_BINARY_HEADER = '/^\(DWF V\d{2}\.\d{2}\)/';
 
     /**
      * Enregistre un fichier téléversé dans l'espace privé du projet.
@@ -64,13 +91,13 @@ final class ProjectFileStorage
         if ($extension === '' || !in_array($extension, self::EXTENSIONS, true)) {
             throw new InvalidArgumentException(__('projects.file_format_invalid'));
         }
-        // L'extension annoncée doit correspondre au contenu réellement reçu : un exécutable
-        // renommé en .dwg est refusé ici, avant toute écriture sur le disque.
+        // L'extension annoncée doit correspondre au contenu réellement reçu : un exécutable,
+        // une archive quelconque ou un PDF renommé en .dwg sont refusés avant toute écriture.
         $detected = self::detectFormat($temporaryPath);
         if ($detected === null) {
             throw new InvalidArgumentException(__('projects.file_format_invalid'));
         }
-        if ($detected !== $extension) {
+        if ($detected !== self::familyOf($extension)) {
             throw new InvalidArgumentException(__('projects.file_extension_mismatch'));
         }
 
@@ -129,7 +156,7 @@ final class ProjectFileStorage
             return null;
         }
         $extension = strtolower((string) pathinfo($realPath, PATHINFO_EXTENSION));
-        if (!in_array($extension, self::EXTENSIONS, true) || self::detectFormat($realPath) !== $extension) {
+        if (!in_array($extension, self::EXTENSIONS, true) || self::detectFormat($realPath) !== self::familyOf($extension)) {
             return null;
         }
         if ($expectedChecksum !== '' && !hash_equals($expectedChecksum, (string) hash_file('sha256', $realPath))) {
@@ -162,11 +189,9 @@ final class ProjectFileStorage
     }
 
     /**
-     * Format reconnu d'après la signature du fichier : « dwg », « dxf » ou null.
+     * Famille de contenu reconnue d'après la signature du fichier, ou null.
      *
-     * DWG : en-tête binaire « AC10xx » (R11 à 2018 et versions suivantes).
-     * DXF : soit « AutoCAD Binary DXF » (binaire), soit la première section texte
-     *       « 0 / SECTION » (les espaces et retours chariot initiaux sont tolérés).
+     * @return string|null « acad », « dxf », « dwf », « pdf » ou null si inconnu
      */
     public static function detectFormat(string $path): ?string
     {
@@ -179,13 +204,24 @@ final class ProjectFileStorage
         if ($head === '') {
             return null;
         }
+        // DWG et ses variantes (gabarit, normes, sauvegarde, enregistrement automatique).
         if (preg_match(self::DWG_VERSION, $head) === 1) {
-            return 'dwg';
+            return 'acad';
         }
         if (str_starts_with($head, self::DXF_BINARY)) {
             return 'dxf';
         }
-        // Un binaire quelconque (archive ZIP renommée, exécutable) contient des octets nuls.
+        if (str_starts_with($head, '%PDF-')) {
+            return 'pdf';
+        }
+        // DWF et DWFX : conteneur ZIP (DWF 6+, DWFX/OPC) ou binaire historique.
+        if (str_starts_with($head, "PK\x03\x04") || str_starts_with($head, "PK\x05\x06")) {
+            return 'dwf';
+        }
+        if (preg_match(self::DWF_BINARY_HEADER, $head) === 1) {
+            return 'dwf';
+        }
+        // Un binaire quelconque (exécutable, archive d'un autre type) contient des octets nuls.
         if (str_contains($head, "\0")) {
             return null;
         }
@@ -206,13 +242,19 @@ final class ProjectFileStorage
         return null;
     }
 
+    /** Famille de contenu attendue pour une extension, ou null si elle n'est pas acceptée. */
+    public static function familyOf(string $extension): ?string
+    {
+        return self::FAMILIES[strtolower($extension)] ?? null;
+    }
+
     /** Extension normalisée d'un nom de fichier, ou chaîne vide. */
     public static function extensionOf(string $filename): string
     {
         $name = basename(str_replace('\\', '/', $filename));
         $extension = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
-
-        return preg_match('/^[a-z0-9]{2,10}$/', $extension) === 1 ? $extension : '';
+        // « sv$ » est une extension légitime d'AutoCAD : le dollar fait partie du jeu autorisé.
+        return preg_match('/^[a-z0-9$]{2,10}$/', $extension) === 1 ? $extension : '';
     }
 
     private function projectDirectory(int $projectId): string
@@ -248,7 +290,7 @@ final class ProjectFileStorage
 
     private static function isStoredName(string $filename): bool
     {
-        return preg_match('/^project-file-[a-f0-9]{32}\.(?:dwg|dxf)$/', $filename) === 1;
+        return preg_match('/^project-file-[a-f0-9]{32}\.(?:dwg|dxf|dwt|dws|bak|dwf|dwfx|pdf|sv\$)$/', $filename) === 1;
     }
 
     private static function safeOriginalName(string $name, string $extension): string
