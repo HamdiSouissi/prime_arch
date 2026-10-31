@@ -72,6 +72,11 @@ Choix d'implémentation et conséquences :
   accès direct au dossier de stockage n'est possible.
 - Envoi et retrait exigent `projects.manage` : aucune permission nouvelle. Les fichiers sont
   exclus de l'export CSV, comme les images.
+- Avant d'enregistrer une définition, l'application compare son type aux valeurs acceptées par
+  l'ENUM `field_type` : sur une base non migrée, la création est refusée avec la marche à suivre
+  plutôt que d'enregistrer un type vide, qui afficherait le champ comme une simple zone de texte.
+  Une définition déjà enregistrée de cette façon peut être réparée depuis les réglages (champ
+  « Type de valeur » proposé sur la carte du champ).
 - Chaque envoi et chaque retrait est journalisé (`projects.file.uploaded`,
   `projects.file.deleted`) avec l'identifiant du projet, la clé du champ et l'extension, jamais le
   nom ni le contenu.

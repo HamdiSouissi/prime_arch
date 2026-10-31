@@ -474,6 +474,7 @@ cohérente. Détail des garanties et limites : `docs/OPERATIONS.md`.
 | Migration interrompue | dépassement de temps ou verrou | relancer `php bin/migrate.php` (idempotent) |
 | Fiche projet en erreur, ou galerie / fichiers vides | migrations `0013`, `0014` ou `0015` en attente : `project_images`, `custom_field_key`, `project_files` ou l'ENUM `field_type` manquent | `php bin/migrate.php` puis `php bin/preflight.php` (la ligne « Schéma de la fiche projet » nomme l'objet absent) |
 | « Data truncated for column 'field_type' » en créant un champ | base antérieure à la migration `0015` : l'ENUM n'accepte pas `image`/`file` | `php bin/migrate.php`, puis recréer le champ |
+| Champ personnalisé affiché comme une zone de texte au lieu d'un téléversement | définition créée avant `0015` : l'ENUM a enregistré un type vide | `php bin/migrate.php`, puis choisir le type du champ dans Réglages › Champs personnalisés |
 | Tâche planifiée sans effet | `/usr/bin/php` (4.x) ou chemin relatif | chemin absolu + `php8.2`, sortie redirigée vers un fichier de log |
 
 Journal serveur : `storage/logs/php-error.log` (écrit par l'application). Journaux Apache/PHP

@@ -21,6 +21,8 @@ final class CustomFieldService
     public const TYPES = ['text', 'number', 'date', 'select', 'checkbox', 'image', 'file'];
     /** Types alimentés par téléversement : aucune valeur n'est stockée dans la colonne JSON. */
     public const UPLOAD_TYPES = ['image', 'file'];
+    /** Types saisis directement dans le formulaire de la fiche, comme valeur texte. */
+    public const VALUE_TYPES = ['text', 'number', 'date', 'select', 'checkbox'];
     /** Un champ « image » accepte plusieurs fichiers : bornes appliquées côté serveur. */
     public const IMAGE_MAX_PER_UPLOAD = 10;
     public const IMAGE_MAX_PER_FIELD = 20;
@@ -116,6 +118,18 @@ final class CustomFieldService
         }
 
         return ['values' => $values, 'errors' => $errors];
+    }
+
+    /** Le type est-il connu du code (et non seulement de la base) ? */
+    public static function isKnownType(string $type): bool
+    {
+        return in_array($type, self::TYPES, true);
+    }
+
+    /** Le type désigne-t-il un téléversement (image ou fichier) ? */
+    public static function isUploadType(string $type): bool
+    {
+        return in_array($type, self::UPLOAD_TYPES, true);
     }
 
     /** @param array<string,mixed> $input

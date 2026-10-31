@@ -5,6 +5,7 @@ namespace App\Models;
 
 use App\Core\Database;
 use PDO;
+use PDOException;
 
 /**
  * Définitions des champs personnalisés des fiches clients et projets.
@@ -88,6 +89,47 @@ final class CustomFieldRepository
             'id' => $id,
         ]);
         return $statement->rowCount() > 0 || $this->findById($id) !== null;
+    }
+
+    /**
+     * Valeurs acceptées par l'ENUM `field_type`, ou null si la colonne est absente.
+     *
+     * Une base antérieure à la migration 0015 n'accepte ni « image » ni « file » : MySQL
+     * tronque alors la valeur en chaîne vide (mode non strict), et le champ apparaît comme une
+     * simple zone de texte sur les formulaires. Le contrôleur s'appuie sur cette liste pour
+     * refuser la création avant d'écrire une définition inutilisable.
+     *
+     * @return array<int,string>|null
+     */
+    public function acceptedTypes(): ?array
+    {
+        try {
+            $statement = $this->pdo->prepare(
+                "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'custom_field_definitions'
+                   AND COLUMN_NAME = 'field_type' LIMIT 1"
+            );
+            $statement->execute();
+        } catch (PDOException) {
+            return null;
+        }
+        $columnType = $statement->fetchColumn();
+        if (!is_string($columnType) || preg_match_all("/'([a-z_]+)'/i", $columnType, $matches) < 1) {
+            return null;
+        }
+
+        return array_values(array_unique(array_map('strtolower', $matches[1])));
+    }
+
+    /** Corrige le type d'une définition créée avant la migration 0015 (type vide). */
+    public function updateType(int $id, string $type): bool
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE custom_field_definitions SET field_type = :field_type WHERE id = :id'
+        );
+        $statement->execute(['field_type' => $type, 'id' => $id]);
+
+        return $statement->rowCount() > 0;
     }
 
     public function setActive(int $id, bool $active): bool

@@ -260,7 +260,7 @@ final class CustomFieldFileTest extends TestCase
         $show = self::file('/app/Views/pages/projects/show.php');
         self::assertStringContainsString('partials/project-custom-files', $show);
         self::assertStringContainsString('$fileFields', $show);
-        self::assertStringContainsString("['image', 'file']", $show, 'Un champ fichier n’est pas rendu comme une valeur texte.');
+        self::assertStringContainsString('CustomFieldService::VALUE_TYPES', $show, 'Un champ fichier n’est pas rendu comme une valeur texte.');
 
         $partial = self::file('/app/Views/partials/project-custom-files.php');
         self::assertStringContainsString('enctype="multipart/form-data"', $partial);
@@ -339,6 +339,10 @@ final class CustomFieldFileTest extends TestCase
             'projects.file_size_mb',
             'audit.event.projects.file.uploaded',
             'audit.event.projects.file.deleted',
+            'custom_fields.type_requires_migration',
+            'custom_fields.type_invalid',
+            'custom_fields.type_invalid_hint',
+            'custom_fields.type_invalid_field',
         ];
         foreach (['fr', 'ar'] as $locale) {
             $file = self::file('/lang/' . $locale . '.php');
@@ -346,5 +350,53 @@ final class CustomFieldFileTest extends TestCase
                 self::assertStringContainsString("'" . $key . "' =>", $file, $locale . ' : ' . $key);
             }
         }
+    }
+
+    /** Une base non migrée ne peut pas fabriquer un champ au type vide (zone de texte). */
+    public function testTypeIsCheckedAgainstTheSchemaBeforeCreation(): void
+    {
+        $repository = self::file('/app/Models/CustomFieldRepository.php');
+        self::assertStringContainsString('function acceptedTypes', $repository);
+        self::assertStringContainsString("information_schema.COLUMNS", $repository);
+        self::assertStringContainsString('function updateType', $repository, 'Un type vide peut être corrigé.');
+        self::assertStringContainsString("UPDATE custom_field_definitions SET field_type = :field_type", $repository);
+
+        $controller = self::file('/app/Controllers/CustomFieldController.php');
+        self::assertStringContainsString('->acceptedTypes()', $controller);
+        self::assertStringContainsString("custom_fields.type_requires_migration", $controller);
+        // Le contrôle a lieu avant l'écriture : aucun champ inutilisable n'est créé.
+        $guard = strpos($controller, 'acceptedTypes()');
+        $insert = strpos($controller, '->create($validated');
+        self::assertTrue($guard !== false && $insert !== false && $guard < $insert, 'Le contrôle précède l’insertion.');
+
+        $service = self::file('/app/Services/CustomFieldService.php');
+        self::assertStringContainsString('public const VALUE_TYPES', $service);
+        self::assertStringContainsString('function isKnownType', $service);
+        self::assertStringContainsString('function isUploadType', $service);
+    }
+
+    /** Un type inconnu n'est jamais rendu comme une zone de texte. */
+    public function testUnknownTypeNeverRendersAsTextInput(): void
+    {
+        $inputs = self::file('/app/Views/partials/custom-field-inputs.php');
+        self::assertStringContainsString('CustomFieldService::VALUE_TYPES', $inputs, 'Seuls les types saisis produisent un champ.');
+        self::assertStringContainsString('custom_fields.type_invalid_hint', $inputs);
+        // L'input typé n'est atteint que par la branche des types saisis : la garde précède.
+        $guard = strpos($inputs, 'CustomFieldService::VALUE_TYPES');
+        $typedInput = strpos($inputs, "type=\"<?= e(\$field['field_type']) ?>\"");
+        self::assertTrue($guard !== false && $typedInput !== false && $guard < $typedInput, 'La garde des types précède l’input.');
+
+        $show = self::file('/app/Views/pages/projects/show.php');
+        self::assertStringContainsString('CustomFieldService::VALUE_TYPES', $show);
+        self::assertStringContainsString('$invalidFieldTypes', $show, 'Les définitions cassées sont signalées.');
+
+        $settings = self::file('/app/Views/pages/settings/custom-fields.php');
+        self::assertStringContainsString('CustomFieldService::isKnownType', $settings);
+        self::assertStringContainsString('custom_fields.type_invalid', $settings);
+        self::assertStringContainsString('name="field_type"', $settings, 'Le type peut être corrigé depuis les réglages.');
+
+        $preflight = self::file('/bin/preflight.php');
+        self::assertStringContainsString("'Champs personnalisés'", $preflight, 'Le diagnostic liste les champs cassés.');
+        self::assertStringContainsString("field_type NOT IN ('text', 'number', 'date', 'select', 'checkbox', 'image', 'file')", $preflight);
     }
 }

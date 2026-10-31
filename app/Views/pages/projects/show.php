@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Core\Auth;
 use App\Core\Translator;
 use App\Core\View;
+use App\Services\CustomFieldService;
 
 $project = is_array($project ?? null) ? $project : [];
 $projectImages = is_array($projectImages ?? null) ? $projectImages : [];
@@ -26,7 +27,13 @@ $fileFields = array_values(array_filter(
 ));
 $valueFields = array_values(array_filter(
     $customFields,
-    static fn (array $field): bool => !in_array($field['field_type'] ?? '', ['image', 'file'], true)
+    static fn (array $field): bool => in_array($field['field_type'] ?? '', CustomFieldService::VALUE_TYPES, true)
+));
+// Définitions au type vide ou inconnu (base antérieure à la migration 0015) : signalées une
+// fois, plutôt que rendues comme une valeur texte vide qui laisserait croire à une saisie.
+$invalidFieldTypes = array_values(array_filter(
+    $customFields,
+    static fn (array $field): bool => !CustomFieldService::isKnownType((string) ($field['field_type'] ?? ''))
 ));
 $customImages = is_array($customImages ?? null) ? $customImages : [];
 $customImageNotices = is_array($customImageNotices ?? null) ? $customImageNotices : [];
@@ -252,8 +259,12 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                 <p class="field__hint"><?= e(__('finance.profitability')) ?></p>
             </section>
         <?php endif; ?>
-        <?php if ($valueFields !== []): ?>
-            <section class="card" aria-labelledby="project-custom-title"><div class="card-header"><h2 class="card-header__title" id="project-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canConfigure)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div><dl class="detail-list">
+        <?php if ($valueFields !== [] || $invalidFieldTypes !== []): ?>
+            <section class="card" aria-labelledby="project-custom-title"><div class="card-header"><h2 class="card-header__title" id="project-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canConfigure)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div>
+                <?php foreach ($invalidFieldTypes as $invalidField): ?>
+                    <p class="form-feedback form-feedback--error" role="alert"><?= e(__('custom_fields.type_invalid_field', ['label' => $invalidField['label']])) ?></p>
+                <?php endforeach; ?>
+                <dl class="detail-list">
                 <?php foreach ($valueFields as $field): ?>
                     <?php $value = $project['custom_fields'][$field['field_key']] ?? null; ?>
                     <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>

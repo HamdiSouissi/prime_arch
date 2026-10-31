@@ -1144,6 +1144,9 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 .custom-definition__edit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(6rem, 0.45fr); align-items: end; gap: var(--space-3); }
 .custom-definition__actions { display: flex; grid-column: 1 / -1; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .custom-definition__toggle { display: flex; justify-content: flex-end; }
+/* Avertissement d'un champ au type invalide : pleine largeur, au-dessus des actions. */
+.custom-definition__edit > .field__hint,
+.custom-definition__edit > .custom-definition__repair { grid-column: 1 / -1; }
 .field__control--display { display: flex; align-items: center; color: var(--color-ink-secondary); }
 .field--align-end { align-self: end; }
 

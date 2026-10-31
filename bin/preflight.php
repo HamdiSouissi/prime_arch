@@ -242,6 +242,28 @@ try {
                     . ' — exécuter php bin/migrate.php'
         );
 
+        // Définitions au type vide ou inconnu : créées sur une base non migrée, elles
+        // s'afficheraient comme de simples zones de texte. La correction passe par les réglages
+        // (choisir le type) une fois la migration 0015 appliquée.
+        if ($hasTable($pdo, 'custom_field_definitions')) {
+            $invalidFields = $pdo->query(
+                "SELECT entity_type, field_key FROM custom_field_definitions
+                 WHERE field_type NOT IN ('text', 'number', 'date', 'select', 'checkbox', 'image', 'file')
+                 ORDER BY id LIMIT 10"
+            )->fetchAll(PDO::FETCH_ASSOC);
+            $invalidFields = is_array($invalidFields) ? $invalidFields : [];
+            check(
+                $invalidFields === [] ? 'OK' : 'ATTENTION',
+                'Champs personnalisés',
+                $invalidFields === []
+                    ? 'types de champs valides'
+                    : count($invalidFields) . ' champ(s) au type vide ou inconnu : ' . implode(', ', array_map(
+                        static fn (array $field): string => (string) $field['entity_type'] . '.' . (string) $field['field_key'],
+                        $invalidFields
+                    )) . ' — appliquer php bin/migrate.php puis choisir leur type dans Réglages › Champs personnalisés'
+            );
+        }
+
         $enabled = (int) $pdo->query("SELECT COUNT(*) FROM modules WHERE is_enabled = 1")->fetchColumn();
         check('OK', 'Modules activés', (string) $enabled);
 

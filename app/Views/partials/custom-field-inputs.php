@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use App\Services\CustomFieldService;
+
 /** @var array<int,array<string,mixed>> $customFields */
 /** @var array<string,mixed> $values */
 /** @var array<string,mixed> $errors */
@@ -31,6 +33,12 @@ $customProjectId = (int) ($customProjectId ?? 0);
                             <a href="<?= e(url('/projects/' . $customProjectId) . '#custom-field-' . $key) ?>"><?= e(__('custom_fields.' . ($isFileField ? 'files_open_project' : 'images_open_project'))) ?></a>
                         <?php endif; ?>
                     </p>
+                <?php elseif (!in_array($field['field_type'] ?? '', CustomFieldService::VALUE_TYPES, true)): ?>
+                    <?php // Type inconnu (base antérieure à la migration 0015) : jamais rendu comme une
+                          // zone de texte, qui ferait croire à une saisie alors qu'aucun fichier n'est
+                          // possible. L'administrateur corrige le type dans les réglages. ?>
+                    <span class="field__label"><?= e($field['label']) ?></span>
+                    <p class="field__hint field__hint--error"><?= e(__('custom_fields.type_invalid_hint')) ?></p>
                 <?php elseif ($field['field_type'] === 'checkbox'): ?>
                     <label class="check-label" for="<?= e($fieldId) ?>">
                         <input id="<?= e($fieldId) ?>" type="checkbox" name="custom_fields[<?= e($key) ?>]" value="1" <?= !empty($value) ? 'checked' : '' ?> <?= $field['is_required'] ? 'required' : '' ?>>

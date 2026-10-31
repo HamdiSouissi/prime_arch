@@ -52,8 +52,20 @@ final class CustomFieldController
             Session::flash('custom_fields.values', $input);
             return Response::redirect(url('/settings/custom-fields'));
         }
+        $repository = new CustomFieldRepository();
+        // Une base antérieure à la migration 0015 n'accepte ni « image » ni « file » : MySQL
+        // enregistrerait un type vide et le champ s'afficherait comme une zone de texte. On
+        // refuse la création tant que le schéma n'est pas à jour, avec la marche à suivre.
+        $acceptedTypes = $repository->acceptedTypes();
+        if ($acceptedTypes !== null
+            && !in_array((string) $validated['data']['field_type'], $acceptedTypes, true)
+        ) {
+            Session::flash('custom_fields.errors', ['field_type' => __('custom_fields.type_requires_migration')]);
+            Session::flash('custom_fields.values', $input);
+            return Response::redirect(url('/settings/custom-fields'));
+        }
         try {
-            $fieldId = (new CustomFieldRepository())->create($validated['data']);
+            $fieldId = $repository->create($validated['data']);
         } catch (PDOException $error) {
             if ($error->getCode() === '23000') {
                 Session::flash('custom_fields.errors', ['field_key' => __('custom_fields.key_exists')]);
@@ -90,6 +102,20 @@ final class CustomFieldController
         }
         $label = self::inputString($request, 'label');
         $sortInput = self::inputString($request, 'sort_order');
+        // Une définition créée sur une base non migrée porte un type vide : l'administrateur
+        // peut lui redonner un type connu ici, plutôt que de devoir la recréer.
+        $repairType = '';
+        if (!CustomFieldService::isKnownType((string) $field['field_type'])
+            && $request->input('field_type') !== null
+        ) {
+            $typeInput = self::inputString($request, 'field_type');
+            if (CustomFieldService::isKnownType($typeInput)) {
+                $repairType = $typeInput;
+            } else {
+                Session::flash('custom_fields.errors', ['field_type' => __('custom_fields.invalid')]);
+                return Response::redirect(url('/settings/custom-fields'));
+            }
+        }
         $required = in_array($request->input('is_required'), ['1', 1, true, 'on'], true);
         $errors = [];
         if (mb_strlen($label, 'UTF-8') < 2 || mb_strlen($label, 'UTF-8') > 120) {
@@ -102,7 +128,17 @@ final class CustomFieldController
             Session::flash('custom_fields.errors', $errors);
             return Response::redirect(url('/settings/custom-fields'));
         }
+        if ($repairType !== '') {
+            $acceptedTypes = $repository->acceptedTypes();
+            if ($acceptedTypes !== null && !in_array($repairType, $acceptedTypes, true)) {
+                Session::flash('custom_fields.errors', ['field_type' => __('custom_fields.type_requires_migration')]);
+                return Response::redirect(url('/settings/custom-fields'));
+            }
+        }
         try {
+            if ($repairType !== '') {
+                $repository->updateType((int) $fieldId, $repairType);
+            }
             $repository->updateDetails((int) $fieldId, $label, $required, (int) $sortInput);
         } catch (Throwable $error) {
             error_log((string) $error);
@@ -111,6 +147,7 @@ final class CustomFieldController
         }
         (new AuditLogger())->record('custom_fields.updated', 'custom_field', (int) $fieldId, [
             'entity_type' => (string) $field['entity_type'],
+            'field_type' => $repairType !== '' ? $repairType : (string) $field['field_type'],
             'is_required' => $required,
         ], Auth::id());
         Session::flash('custom_fields.notice', __('custom_fields.updated'));
