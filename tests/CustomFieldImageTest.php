@@ -181,9 +181,10 @@ final class CustomFieldImageTest extends TestCase
         $settings = self::file('/app/Views/pages/settings/custom-fields.php');
         self::assertStringContainsString('CustomFieldService::TYPES', $settings);
         self::assertStringContainsString("custom_fields.type.", $settings);
-        // Le rappel est construit à partir du type : images ou plans AutoCAD.
-        self::assertStringContainsString("=== 'file' ? 'files' : 'images') . '_after_save'", $settings);
-        self::assertStringContainsString("=== 'file' ? 'file' : 'image') . '_not_required'", $settings);
+        // Le rappel et le sélecteur de type vivent dans la carte partagée des définitions.
+        $card = self::file('/app/Views/partials/custom-field-definition.php');
+        self::assertStringContainsString("=== 'file' ? 'files' : 'images') . '_after_save'", $card);
+        self::assertStringContainsString("=== 'file' ? 'file' : 'image') . '_not_required'", $card);
     }
 
     /** Un CSV ne transporte pas de binaire : les champs image en sont écartés. */

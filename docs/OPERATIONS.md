@@ -81,6 +81,25 @@ Choix d'implémentation et conséquences :
   `projects.file.deleted`) avec l'identifiant du projet, la clé du champ et l'extension, jamais le
   nom ni le contenu.
 
+## Modifier ou supprimer un champ personnalisé
+
+Chaque carte de `/settings/custom-fields` est éditable : libellé, ordre d'affichage, caractère
+obligatoire, type et, pour une liste de choix, les options.
+
+- **La clé technique et le type de fiche ne changent jamais** : ils portent le stockage (clé du
+  JSON `custom_fields`, jointure des images et des fichiers).
+- **Le type est verrouillé dès que le champ contient des données.** Les valeurs d'un type
+  (nombre, date, liste…) ne sont pas converties : basculer un champ alimenté rendrait ses
+  valeurs illisibles. L'interface le signale et le serveur refuse l'opération ; il faut
+  supprimer le champ puis en créer un nouveau.
+- **La suppression est définitive** et emporte le contenu : fichiers privés puis métadonnées
+  (`project_images` / `project_files`) pour les types à téléversement, valeurs retirées du JSON
+  de chaque fiche pour les autres types, puis la définition elle-même. L'ordre évite qu'une
+  panne laisse un fichier sans métadonnées ; les métadonnées restantes seraient rejouables.
+- La carte affiche le contenu actuel (« 14 valeur(s), 3 image(s), 0 fichier(s) ») et la
+  confirmation reprend ces nombres avant l'action. Chaque suppression est journalisée
+  (`custom_fields.deleted`) avec les compteurs, jamais le contenu.
+
 ## Base de démonstration
 
 Une base de démonstration se prépare avec `php bin/migrate.php` puis `php bin/seed-demo.php`. Le script

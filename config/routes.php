@@ -109,6 +109,8 @@ return function (Router $router): void {
     $router->post('/settings/custom-fields', [CustomFieldController::class, 'create'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/settings/custom-fields/{id}', [CustomFieldController::class, 'update'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/settings/custom-fields/{id}/toggle', [CustomFieldController::class, 'toggle'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    // Suppression définitive : définition, valeurs saisies et fichiers privés rattachés.
+    $router->post('/settings/custom-fields/{id}/delete', [CustomFieldController::class, 'destroy'], [AuthMiddleware::class, CsrfMiddleware::class]);
 
     $router->get('/settings/modules', [ModuleController::class, 'index'], [AuthMiddleware::class, AdminMiddleware::class]);
     $router->post('/settings/modules/install', [ModuleController::class, 'install'], [AuthMiddleware::class, AdminMiddleware::class, CsrfMiddleware::class]);

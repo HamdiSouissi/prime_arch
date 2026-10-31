@@ -131,6 +131,31 @@ final class ProjectFileRepository
         return is_array($row) ? self::normalize($row) : null;
     }
 
+    /**
+     * Tous les fichiers d'une clé de champ, tous projets confondus (suppression d'une définition).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function allForCustomField(string $fieldKey): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, project_id, stored_name, original_name, custom_field_key
+             FROM project_files WHERE custom_field_key = :field_key ORDER BY project_id, id'
+        );
+        $statement->execute(['field_key' => $fieldKey]);
+
+        return array_map(self::normalize(...), $statement->fetchAll());
+    }
+
+    /** Supprime les métadonnées des fichiers d'une clé de champ ; renvoie le nombre de lignes. */
+    public function deleteForCustomField(string $fieldKey): int
+    {
+        $statement = $this->pdo->prepare('DELETE FROM project_files WHERE custom_field_key = :field_key');
+        $statement->execute(['field_key' => $fieldKey]);
+
+        return $statement->rowCount();
+    }
+
     public function delete(int $projectId, int $fileId): bool
     {
         $statement = $this->pdo->prepare(

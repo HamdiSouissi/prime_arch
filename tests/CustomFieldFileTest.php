@@ -290,8 +290,10 @@ final class CustomFieldFileTest extends TestCase
         self::assertStringContainsString('CustomFieldService::TYPES', $settings);
         self::assertStringContainsString("custom_fields.type.", $settings);
         self::assertStringContainsString('custom_fields.file_help', $settings);
-        self::assertStringContainsString("=== 'file' ? 'file' : 'image') . '_not_required'", $settings);
-        self::assertStringContainsString("=== 'file' ? 'files' : 'images') . '_after_save'", $settings);
+        // Les rappels et le sélecteur de type vivent désormais dans la carte partagée.
+        $card = self::file('/app/Views/partials/custom-field-definition.php');
+        self::assertStringContainsString("=== 'file' ? 'file' : 'image') . '_not_required'", $card);
+        self::assertStringContainsString("=== 'file' ? 'files' : 'images') . '_after_save'", $card);
     }
 
     /** Le diagnostic d'installation nomme les objets manquants de la fiche projet. */
@@ -358,8 +360,8 @@ final class CustomFieldFileTest extends TestCase
         $repository = self::file('/app/Models/CustomFieldRepository.php');
         self::assertStringContainsString('function acceptedTypes', $repository);
         self::assertStringContainsString("information_schema.COLUMNS", $repository);
-        self::assertStringContainsString('function updateType', $repository, 'Un type vide peut être corrigé.');
-        self::assertStringContainsString("UPDATE custom_field_definitions SET field_type = :field_type", $repository);
+        self::assertStringContainsString('function updateDefinition', $repository, 'Un type vide peut être corrigé depuis la modification.');
+        self::assertStringContainsString('field_type = :field_type', $repository);
 
         $controller = self::file('/app/Controllers/CustomFieldController.php');
         self::assertStringContainsString('->acceptedTypes()', $controller);
@@ -390,10 +392,10 @@ final class CustomFieldFileTest extends TestCase
         self::assertStringContainsString('CustomFieldService::VALUE_TYPES', $show);
         self::assertStringContainsString('$invalidFieldTypes', $show, 'Les définitions cassées sont signalées.');
 
-        $settings = self::file('/app/Views/pages/settings/custom-fields.php');
-        self::assertStringContainsString('CustomFieldService::isKnownType', $settings);
-        self::assertStringContainsString('custom_fields.type_invalid', $settings);
-        self::assertStringContainsString('name="field_type"', $settings, 'Le type peut être corrigé depuis les réglages.');
+        $card = self::file('/app/Views/partials/custom-field-definition.php');
+        self::assertStringContainsString('CustomFieldService::isKnownType', $card);
+        self::assertStringContainsString('custom_fields.type_invalid', $card);
+        self::assertStringContainsString('name="field_type"', $card, 'Le type peut être corrigé depuis les réglages.');
 
         $preflight = self::file('/bin/preflight.php');
         self::assertStringContainsString("'Champs personnalisés'", $preflight, 'Le diagnostic liste les champs cassés.');

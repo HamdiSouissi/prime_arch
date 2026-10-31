@@ -75,22 +75,6 @@ final class CustomFieldRepository
         return (int) $this->pdo->lastInsertId();
     }
 
-    public function updateDetails(int $id, string $label, bool $required, int $sortOrder): bool
-    {
-        $statement = $this->pdo->prepare(
-            'UPDATE custom_field_definitions
-             SET label = :label, is_required = :is_required, sort_order = :sort_order
-             WHERE id = :id'
-        );
-        $statement->execute([
-            'label' => $label,
-            'is_required' => $required ? 1 : 0,
-            'sort_order' => $sortOrder,
-            'id' => $id,
-        ]);
-        return $statement->rowCount() > 0 || $this->findById($id) !== null;
-    }
-
     /**
      * Valeurs acceptées par l'ENUM `field_type`, ou null si la colonne est absente.
      *
@@ -121,15 +105,82 @@ final class CustomFieldRepository
         return array_values(array_unique(array_map('strtolower', $matches[1])));
     }
 
-    /** Corrige le type d'une définition créée avant la migration 0015 (type vide). */
-    public function updateType(int $id, string $type): bool
+    /**
+     * Met à jour une définition : libellé, type, options, caractère obligatoire et ordre.
+     *
+     * La clé technique et le type de fiche ne changent jamais : ils servent de clé de stockage
+     * dans la colonne JSON des fiches (et de jointure pour les images et les fichiers).
+     *
+     * @param array{label:string,field_type:string,options:array<int,string>,is_required:bool,sort_order:int} $data
+     */
+    public function updateDefinition(int $id, array $data): bool
     {
         $statement = $this->pdo->prepare(
-            'UPDATE custom_field_definitions SET field_type = :field_type WHERE id = :id'
+            'UPDATE custom_field_definitions
+             SET label = :label, field_type = :field_type, options_json = :options_json,
+                 is_required = :is_required, sort_order = :sort_order
+             WHERE id = :id'
         );
-        $statement->execute(['field_type' => $type, 'id' => $id]);
+        $statement->execute([
+            'label' => $data['label'],
+            'field_type' => $data['field_type'],
+            'options_json' => $data['options'] === []
+                ? null
+                : json_encode($data['options'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            'is_required' => $data['is_required'] ? 1 : 0,
+            'sort_order' => $data['sort_order'],
+            'id' => $id,
+        ]);
+
+        return $statement->rowCount() > 0 || $this->findById($id) !== null;
+    }
+
+    public function delete(int $id): bool
+    {
+        $statement = $this->pdo->prepare('DELETE FROM custom_field_definitions WHERE id = :id');
+        $statement->execute(['id' => $id]);
 
         return $statement->rowCount() > 0;
+    }
+
+    /**
+     * Nombre de fiches portant une valeur pour cette clé.
+     *
+     * Les valeurs des types saisis vivent dans la colonne JSON `custom_fields` de chaque fiche :
+     * supprimer une définition sans les retirer laisserait des données orphelines, visibles
+     * nulle part et jamais purgées.
+     */
+    public function countStoredValues(string $entityType, string $fieldKey): int
+    {
+        $table = self::valueTable($entityType);
+        if ($table === null || !self::isSafeKey($fieldKey)) {
+            return 0;
+        }
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM ' . $table . " WHERE JSON_CONTAINS_PATH(custom_fields, 'one', :path)"
+        );
+        $statement->execute(['path' => self::jsonPath($fieldKey)]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /** Retire la valeur de cette clé de toutes les fiches ; renvoie le nombre de fiches modifiées. */
+    public function removeStoredValues(string $entityType, string $fieldKey): int
+    {
+        $table = self::valueTable($entityType);
+        if ($table === null || !self::isSafeKey($fieldKey)) {
+            return 0;
+        }
+        $statement = $this->pdo->prepare(
+            "UPDATE " . $table . " SET custom_fields = JSON_REMOVE(custom_fields, :path)
+             WHERE JSON_CONTAINS_PATH(custom_fields, 'one', :presence)"
+        );
+        $statement->execute([
+            'path' => self::jsonPath($fieldKey),
+            'presence' => self::jsonPath($fieldKey),
+        ]);
+
+        return $statement->rowCount();
     }
 
     public function setActive(int $id, bool $active): bool
@@ -138,7 +189,29 @@ final class CustomFieldRepository
             'UPDATE custom_field_definitions SET is_active = :is_active WHERE id = :id'
         );
         $statement->execute(['is_active' => $active ? 1 : 0, 'id' => $id]);
+
         return $statement->rowCount() > 0 || $this->findById($id) !== null;
+    }
+
+    /** Table des fiches qui porte la colonne JSON, ou null pour un type inconnu. */
+    private static function valueTable(string $entityType): ?string
+    {
+        return match ($entityType) {
+            'client' => 'clients',
+            'project' => 'projects',
+            default => null,
+        };
+    }
+
+    /** Les clés sont validées à la création ; cette garde protège le chemin JSON construit. */
+    private static function isSafeKey(string $fieldKey): bool
+    {
+        return preg_match('/^[a-z][a-z0-9_]{1,79}$/', $fieldKey) === 1;
+    }
+
+    private static function jsonPath(string $fieldKey): string
+    {
+        return '$."' . $fieldKey . '"';
     }
 
     private static function normalize(array $row): array

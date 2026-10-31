@@ -1146,7 +1146,19 @@ form.is-submitting [type="submit"] { cursor: progress; animation: submit-pulse 6
 .custom-definition__toggle { display: flex; justify-content: flex-end; }
 /* Avertissement d'un champ au type invalide : pleine largeur, au-dessus des actions. */
 .custom-definition__edit > .field__hint,
-.custom-definition__edit > .custom-definition__repair { grid-column: 1 / -1; }
+.custom-definition__edit > .custom-definition__repair,
+.custom-definition__edit > .custom-definition__wide { grid-column: 1 / -1; }
+/* Pied de carte : activation d'un côté, suppression de l'autre. */
+.custom-definition__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-start: var(--space-3);
+}
+.custom-definition__footer form { margin: 0; }
+
 .field__control--display { display: flex; align-items: center; color: var(--color-ink-secondary); }
 .field--align-end { align-self: end; }
 
