@@ -21,6 +21,7 @@ use App\Controllers\ProjectFileController;
 use App\Controllers\ProjectImageController;
 use App\Controllers\TimeEntryController;
 use App\Controllers\ProjectPhaseController;
+use App\Controllers\RecordCustomFieldController;
 use App\Controllers\SearchController;
 use App\Controllers\SettingsController;
 use App\Controllers\UserController;
@@ -54,6 +55,9 @@ return function (Router $router): void {
     $router->post('/clients/{id}/contacts', [ClientController::class, 'createContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/clients/{id}/contacts/{contactId}', [ClientController::class, 'updateContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/clients/{id}/contacts/{contactId}/delete', [ClientController::class, 'deleteContact'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    // Champs personnalisés pilotés depuis la fiche client : création rapide et réactivation.
+    $router->post('/clients/{id}/custom-fields', [RecordCustomFieldController::class, 'storeClient'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/clients/{id}/custom-fields/{fieldId}/activate', [RecordCustomFieldController::class, 'activateClient'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/clients/{id}', [ClientController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/projects', [ProjectController::class, 'index'], [AuthMiddleware::class]);
@@ -77,6 +81,9 @@ return function (Router $router): void {
     $router->post('/projects/{id}/custom-fields/{field}/files', [ProjectFileController::class, 'upload'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/custom-fields/{field}/files/{fileId}/delete', [ProjectFileController::class, 'delete'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}/files/{fileId}', [ProjectFileController::class, 'download'], [AuthMiddleware::class]);
+    // Champs personnalisés pilotés depuis la fiche projet : création rapide et réactivation.
+    $router->post('/projects/{id}/custom-fields', [RecordCustomFieldController::class, 'storeProject'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/custom-fields/{fieldId}/activate', [RecordCustomFieldController::class, 'activateProject'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/documents', [DocumentController::class, 'index'], [AuthMiddleware::class]);

@@ -14,6 +14,11 @@ $phaseSummaries = is_array($phaseSummaries ?? null) ? $phaseSummaries : [];
 $projectImages = is_array($projectImages ?? null) ? $projectImages : [];
 $imageErrors = is_array($imageErrors ?? null) ? $imageErrors : [];
 $customFields = is_array($customFields ?? null) ? $customFields : [];
+// Définitions créées puis désactivées : rappelées dans le bloc des champs personnalisés pour
+// être activées sans quitter la fiche.
+$availableFields = is_array($availableFields ?? null) ? $availableFields : [];
+$customFieldNotice = is_string($customFieldNotice ?? null) ? $customFieldNotice : '';
+$customFieldErrors = is_array($customFieldErrors ?? null) ? $customFieldErrors : [];
 // Un champ « image » possède sa propre carte (galerie + envoi), un champ « fichier » sa propre
 // liste de plans AutoCAD : aucun des deux n'apparaît dans la liste de valeurs, où il n'aurait
 // qu'une case vide faute de valeur JSON.
@@ -259,17 +264,31 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                 <p class="field__hint"><?= e(__('finance.profitability')) ?></p>
             </section>
         <?php endif; ?>
-        <?php if ($valueFields !== [] || $invalidFieldTypes !== []): ?>
-            <section class="card" aria-labelledby="project-custom-title"><div class="card-header"><h2 class="card-header__title" id="project-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canConfigure)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div>
+        <?php if ($valueFields !== [] || $invalidFieldTypes !== [] || !empty($canConfigure)): ?>
+            <section class="card custom-fields-card" aria-labelledby="project-custom-title"><div class="card-header"><h2 class="card-header__title" id="project-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canConfigure)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div>
                 <?php foreach ($invalidFieldTypes as $invalidField): ?>
                     <p class="form-feedback form-feedback--error" role="alert"><?= e(__('custom_fields.type_invalid_field', ['label' => $invalidField['label']])) ?></p>
                 <?php endforeach; ?>
-                <dl class="detail-list">
-                <?php foreach ($valueFields as $field): ?>
-                    <?php $value = $project['custom_fields'][$field['field_key']] ?? null; ?>
-                    <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
-                <?php endforeach; ?>
-            </dl></section>
+                <?php if ($valueFields !== []): ?>
+                    <dl class="detail-list">
+                    <?php foreach ($valueFields as $field): ?>
+                        <?php $value = $project['custom_fields'][$field['field_key']] ?? null; ?>
+                        <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
+                    <?php endforeach; ?>
+                    </dl>
+                <?php endif; ?>
+                <?php if (!empty($canConfigure)): ?>
+                    <?php View::partial('partials/custom-field-picker', [
+                        'entityType' => 'project',
+                        'recordId' => (int) ($project['id'] ?? 0),
+                        'availableFields' => $availableFields,
+                        'canManage' => true,
+                        'notice' => $customFieldNotice,
+                        'errors' => $customFieldErrors,
+                        'activeCount' => count($customFields),
+                    ]) ?>
+                <?php endif; ?>
+            </section>
         <?php endif; ?>
     </aside>
 </div>

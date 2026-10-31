@@ -100,6 +100,30 @@ obligatoire, type et, pour une liste de choix, les options.
   confirmation reprend ces nombres avant l'action. Chaque suppression est journalisée
   (`custom_fields.deleted`) avec les compteurs, jamais le contenu.
 
+## Champs rappelés depuis une fiche client ou projet
+
+Le bloc « Champs personnalisés » d'une fiche client ou projet liste les définitions du même type
+de fiche **créées mais non activées**, avec un bouton « Activer ». Un champ désactivé depuis les
+réglages ne disparaît donc plus du terrain : il reste visible là où on en a besoin.
+
+- **Activation** : `POST /clients/{id}/custom-fields/{fieldId}/activate` ou
+  `POST /projects/{id}/custom-fields/{fieldId}/activate`, un clic, jeton CSRF. La définition doit
+  appartenir au type de fiche de la page (sinon 404) et l'utilisateur doit détenir
+  `clients.manage` (client) ou `projects.configure` (projet) ; sinon 403.
+- **Création rapide** : un formulaire replié sous la liste demande le libellé, le type, les
+  choix éventuels et le caractère obligatoire. La **clé technique est calculée à partir du
+  libellé** (`Typologie du projet` → `typologie_du_projet`), rendue unique par un suffixe
+  `_2`, `_3`… et remplacée par `champ` pour un libellé sans caractère latin (arabe). L'ordre
+  d'affichage place le nouveau champ après les existants (dernier ordre + 10). Le reste des
+  règles est celui des réglages : liste de choix sans option refusée, champ à téléversement
+  réservé aux projets et jamais obligatoire, type absent de la base refusé avec le rappel de la
+  migration 0015.
+- La création active immédiatement le champ, puis journalise `custom_fields.created`
+  (`source = record`) ; l'activation journalise `custom_fields.toggled`. Les deux reviennent sur
+  la fiche, au bloc des champs personnalisés, avec un message de confirmation ou d'erreur.
+- Le bloc apparaît même quand aucun champ n'est encore défini, pour les profils qui peuvent
+  configurer : c'est le chemin le plus court vers un premier champ.
+
 ## Base de démonstration
 
 Une base de démonstration se prépare avec `php bin/migrate.php` puis `php bin/seed-demo.php`. Le script

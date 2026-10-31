@@ -155,6 +155,7 @@ final class ClientController
         $context = (new ViewContext())->authenticated((string) $client['display_name'], 'clients');
         // Passerelles vers les modules liés à ce client (portail, CRM, GED…).
         $sections = HookManager::applyFilters('client.detail.sections', [], $client);
+        $clientFields = (new CustomFieldRepository())->all('client');
         $canViewDocuments = Auth::can('documents.view') || Auth::can('documents.manage')
             || Auth::can('documents.issue') || Auth::can('documents.create')
             || Auth::can('documents.payments.manage') || Auth::can('documents.templates.manage')
@@ -169,7 +170,12 @@ final class ClientController
             'projects' => Auth::can('projects.view') ? $repository->projects((int) $client['id']) : [],
             'canManageProjects' => Auth::can('projects.manage'),
             'canViewProjects' => Auth::can('projects.view'),
-            'customFields' => (new CustomFieldRepository())->all('client', true),
+            // Champs actifs et champs créés puis désactivés : la fiche rappelle les seconds pour
+            // qu'on puisse les activer ou en créer un sans passer par les réglages.
+            'customFields' => array_values(array_filter($clientFields, static fn (array $field): bool => (bool) $field['is_active'])),
+            'availableFields' => array_values(array_filter($clientFields, static fn (array $field): bool => !$field['is_active'])),
+            'customFieldNotice' => Session::pullFlash('clients.custom_field_notice'),
+            'customFieldErrors' => Session::pullFlash('clients.custom_field_errors', []),
             'errors' => Session::pullFlash('clients.errors', []),
             'contactValues' => Session::pullFlash('clients.contact_values', []),
             'notice' => Session::pullFlash('clients.notice'),

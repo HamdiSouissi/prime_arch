@@ -9,6 +9,11 @@ $contacts = is_array($contacts ?? null) ? $contacts : [];
 $projects = is_array($projects ?? null) ? $projects : [];
 $documents = is_array($documents ?? null) ? $documents : [];
 $errors = is_array($errors ?? null) ? $errors : [];
+// Champs créés puis désactivés : rappelés dans le bloc des champs personnalisés pour être
+// activés, ou complétés par une création rapide, sans quitter la fiche client.
+$availableFields = is_array($availableFields ?? null) ? $availableFields : [];
+$customFieldNotice = is_string($customFieldNotice ?? null) ? $customFieldNotice : '';
+$customFieldErrors = is_array($customFieldErrors ?? null) ? $customFieldErrors : [];
 $contactValues = is_array($contactValues ?? null) ? $contactValues : [];
 $contactErrors = is_array($errors['contact'] ?? null) ? $errors['contact'] : [];
 $contactErrorId = (int) ($errors['contact_id'] ?? 0);
@@ -119,13 +124,30 @@ $addressParts = array_filter([
                     </section>
                 <?php endif; ?>
 
-                <?php if ($customFields !== []): ?>
-                    <section class="card client-associated-card client-custom-fields-card" aria-labelledby="client-custom-title"><div class="card-header"><h2 class="card-header__title" id="client-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canManage)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div><dl class="detail-list">
-                        <?php foreach ($customFields as $field): ?>
-                            <?php $value = $client['custom_fields'][$field['field_key']] ?? null; ?>
-                            <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
-                        <?php endforeach; ?>
-                    </dl></section>
+                <?php // Sans droit de gestion, le bloc garde son rôle de lecture : il n'apparaît que s'il a des valeurs. ?>
+                <?php if ($customFields !== [] || !empty($canManage)): ?>
+                    <section class="card client-associated-card client-custom-fields-card" aria-labelledby="client-custom-title">
+                        <div class="card-header"><h2 class="card-header__title" id="client-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canManage)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div>
+                        <?php if ($customFields !== []): ?>
+                            <dl class="detail-list">
+                            <?php foreach ($customFields as $field): ?>
+                                <?php $value = $client['custom_fields'][$field['field_key']] ?? null; ?>
+                                <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
+                            <?php endforeach; ?>
+                            </dl>
+                        <?php endif; ?>
+                        <?php if (!empty($canManage)): ?>
+                            <?php View::partial('partials/custom-field-picker', [
+                                'entityType' => 'client',
+                                'recordId' => (int) ($client['id'] ?? 0),
+                                'availableFields' => $availableFields,
+                                'canManage' => true,
+                                'notice' => $customFieldNotice,
+                                'errors' => $customFieldErrors,
+                                'activeCount' => count($customFields),
+                            ]) ?>
+                        <?php endif; ?>
+                    </section>
                 <?php endif; ?>
         </div>
     </div>

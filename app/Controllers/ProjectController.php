@@ -205,6 +205,7 @@ final class ProjectController
         // Passerelles vers les modules qui traitent de ce projet : chaque module décide de sa
         // propre visibilité et vérifie ses droits, le noyau ne fait que rendre la liste.
         $sections = HookManager::applyFilters('project.detail.sections', [], $project);
+        $projectFields = (new CustomFieldRepository())->all('project');
         return Response::html(View::render('pages/projects/show', $context + [
             'project' => $project,
             'sections' => is_array($sections) ? array_values($sections) : [],
@@ -223,7 +224,12 @@ final class ProjectController
             'phases' => $repository->phaseAssignments((int) $project['id']),
             'phaseSummaries' => $phaseSummaries,
             'timeSummary' => $timeSummary,
-            'customFields' => (new CustomFieldRepository())->all('project', true),
+            // Définitions actives sur la fiche, et celles créées puis désactivées : la fiche
+            // rappelle les secondes pour qu'on puisse les activer sans passer par les réglages.
+            'customFields' => array_values(array_filter($projectFields, static fn (array $field): bool => (bool) $field['is_active'])),
+            'availableFields' => array_values(array_filter($projectFields, static fn (array $field): bool => !$field['is_active'])),
+            'customFieldNotice' => Session::pullFlash('projects.custom_field_notice'),
+            'customFieldErrors' => Session::pullFlash('projects.custom_field_errors', []),
             'errors' => Session::pullFlash('projects.errors', []),
             'planValues' => Session::pullFlash('projects.plan_values', []),
             'notice' => Session::pullFlash('projects.notice'),

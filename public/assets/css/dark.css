@@ -203,6 +203,8 @@
     .contact-new-form,
     .phase-settings-row,
     .custom-definition,
+    .custom-picker__item,
+    .custom-quick-add,
     .document-summary-grid > div {
         border-color: var(--color-border);
         color: var(--color-ink);
@@ -306,6 +308,8 @@
         .contact-new-form,
         .phase-settings-row,
         .custom-definition,
+        .custom-picker__item,
+        .custom-quick-add,
         .document-summary-grid > div,
         .page-header,
         .toast,
