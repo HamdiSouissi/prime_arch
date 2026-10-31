@@ -13,6 +13,19 @@ $phaseSummaries = is_array($phaseSummaries ?? null) ? $phaseSummaries : [];
 $projectImages = is_array($projectImages ?? null) ? $projectImages : [];
 $imageErrors = is_array($imageErrors ?? null) ? $imageErrors : [];
 $customFields = is_array($customFields ?? null) ? $customFields : [];
+// Un champ « image » possède sa propre carte (galerie + envoi) : il ne s'affiche pas dans la
+// liste de valeurs, où il n'aurait qu'une case vide faute de valeur JSON.
+$imageFields = array_values(array_filter(
+    $customFields,
+    static fn (array $field): bool => ($field['field_type'] ?? '') === 'image'
+));
+$valueFields = array_values(array_filter(
+    $customFields,
+    static fn (array $field): bool => ($field['field_type'] ?? '') !== 'image'
+));
+$customImages = is_array($customImages ?? null) ? $customImages : [];
+$customImageNotices = is_array($customImageNotices ?? null) ? $customImageNotices : [];
+$customImageErrors = is_array($customImageErrors ?? null) ? $customImageErrors : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $timeSummary = is_array($timeSummary ?? null) ? $timeSummary : null;
 $planValues = is_array($planValues ?? null) ? $planValues : [];
@@ -130,6 +143,17 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
             <?php endif; ?>
         </section>
 
+        <?php if ($imageFields !== []): ?>
+            <?php View::partial('partials/project-custom-images', [
+                'project' => $project,
+                'imageFields' => $imageFields,
+                'customImages' => $customImages,
+                'customImageNotices' => $customImageNotices,
+                'customImageErrors' => $customImageErrors,
+                'canManage' => !empty($canManage),
+            ]) ?>
+        <?php endif; ?>
+
         <?php if ($canEditPlan): ?>
             <section class="card stack-md" aria-labelledby="project-plan-title">
                 <div class="card-header"><div><h2 class="card-header__title" id="project-plan-title"><?= e(__('projects.plan_title')) ?></h2><p class="section-heading__note"><?= e(__('projects.plan_help')) ?></p></div></div>
@@ -209,9 +233,9 @@ $canEditPlan = !empty($canManage) && !in_array($projectStatus, ['completed', 'ca
                 <p class="field__hint"><?= e(__('finance.profitability')) ?></p>
             </section>
         <?php endif; ?>
-        <?php if ($customFields !== []): ?>
+        <?php if ($valueFields !== []): ?>
             <section class="card" aria-labelledby="project-custom-title"><div class="card-header"><h2 class="card-header__title" id="project-custom-title"><?= e(__('custom_fields.title')) ?></h2><?php if (!empty($canConfigure)): ?><a class="card-header__action" href="<?= e(url('/settings/custom-fields')) ?>"><?= e(__('custom_fields.manage_link')) ?></a><?php endif; ?></div><dl class="detail-list">
-                <?php foreach ($customFields as $field): ?>
+                <?php foreach ($valueFields as $field): ?>
                     <?php $value = $project['custom_fields'][$field['field_key']] ?? null; ?>
                     <?php if ($value !== null && $value !== ''): ?><div class="detail-list__item"><dt><?= e($field['label']) ?></dt><dd><?= e(is_bool($value) ? ($value ? __('common.yes') : __('common.no')) : (is_scalar($value) ? (string) $value : '')) ?></dd></div><?php endif; ?>
                 <?php endforeach; ?>

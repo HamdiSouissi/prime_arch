@@ -7,6 +7,9 @@ declare(strict_types=1);
 $customPrefix = (string) ($customPrefix ?? 'custom');
 $customValues = is_array($values['custom_fields'] ?? null) ? $values['custom_fields'] : [];
 $customErrors = is_array($errors['custom_fields'] ?? null) ? $errors['custom_fields'] : [];
+// Un champ « image » s'alimente depuis la fiche enregistrée : le formulaire de la fiche ne
+// transporte pas de fichiers (il n'est pas en multipart) et le projet peut ne pas exister.
+$customProjectId = (int) ($customProjectId ?? 0);
 ?>
 <?php if ($customFields !== []): ?>
     <div class="form-grid">
@@ -17,8 +20,16 @@ $customErrors = is_array($errors['custom_fields'] ?? null) ? $errors['custom_fie
             $value = $customValues[$key] ?? '';
             $error = $customErrors[$key] ?? '';
             ?>
-            <div class="field<?= $field['field_type'] === 'checkbox' ? ' form-grid__full' : '' ?>">
-                <?php if ($field['field_type'] === 'checkbox'): ?>
+            <div class="field<?= in_array($field['field_type'], ['checkbox', 'image'], true) ? ' form-grid__full' : '' ?>">
+                <?php if ($field['field_type'] === 'image'): ?>
+                    <span class="field__label"><?= e($field['label']) ?></span>
+                    <p class="field__hint">
+                        <?= e(__('custom_fields.images_after_save')) ?>
+                        <?php if ($customProjectId > 0): ?>
+                            <a href="<?= e(url('/projects/' . $customProjectId) . '#custom-field-' . $key) ?>"><?= e(__('custom_fields.images_open_project')) ?></a>
+                        <?php endif; ?>
+                    </p>
+                <?php elseif ($field['field_type'] === 'checkbox'): ?>
                     <label class="check-label" for="<?= e($fieldId) ?>">
                         <input id="<?= e($fieldId) ?>" type="checkbox" name="custom_fields[<?= e($key) ?>]" value="1" <?= !empty($value) ? 'checked' : '' ?> <?= $field['is_required'] ? 'required' : '' ?>>
                         <?= e($field['label']) ?><?= $field['is_required'] ? ' *' : '' ?>

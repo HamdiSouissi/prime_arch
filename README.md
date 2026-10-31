@@ -67,7 +67,7 @@ ce qui permet de l'enchaîner à `bin/migrate.php` dans une procédure de mise �
 
 ### Phase 2 — Clients et projets
 
-- Fiches clients, contacts, adresses, projets associés, phases configurables, recherche, filtres, champs personnalisés typés et pages de détail.
+- Fiches clients, contacts, adresses, projets associés, phases configurables, recherche, filtres, champs personnalisés typés (texte, nombre, date, liste, case à cocher, et images pour les projets) et pages de détail.
 
 ### Phase 3 — Temps, coûts et avancement
 

@@ -194,6 +194,10 @@ final class ProjectController
             'projectImages' => (new ProjectImageRepository())->forProject((int) $project['id']),
             'imageErrors' => Session::pullFlash('projects.image_errors', []),
             'imageNotice' => Session::pullFlash('projects.image_notice'),
+            // Champs personnalisés de type image : galeries et formulaires d'envoi dédiés.
+            'customImages' => (new ProjectImageRepository())->groupedByCustomField((int) $project['id']),
+            'customImageNotices' => Session::pullFlash('projects.custom_image_notices', []),
+            'customImageErrors' => Session::pullFlash('projects.custom_image_errors', []),
             'phases' => $repository->phaseAssignments((int) $project['id']),
             'phaseSummaries' => ($canViewCosts || $canViewTime)
                 ? $timeRepository->projectPhaseSummaries((int) $project['id'], $canViewCosts)

@@ -68,6 +68,9 @@ return function (Router $router): void {
     $router->post('/projects/{id}/phases/{assignmentId}', [ProjectController::class, 'updatePhase'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->post('/projects/{id}/images', [ProjectImageController::class, 'upload'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}/images/{imageId}', [ProjectImageController::class, 'show'], [AuthMiddleware::class]);
+    // Images d'un champ personnalisé de type « image » : formulaire propre à la fiche projet.
+    $router->post('/projects/{id}/custom-fields/{field}/images', [ProjectImageController::class, 'uploadForField'], [AuthMiddleware::class, CsrfMiddleware::class]);
+    $router->post('/projects/{id}/custom-fields/{field}/images/{imageId}/delete', [ProjectImageController::class, 'deleteForField'], [AuthMiddleware::class, CsrfMiddleware::class]);
     $router->get('/projects/{id}', [ProjectController::class, 'show'], [AuthMiddleware::class]);
 
     $router->get('/documents', [DocumentController::class, 'index'], [AuthMiddleware::class]);

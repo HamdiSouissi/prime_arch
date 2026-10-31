@@ -98,6 +98,7 @@ $formAction = $isEdit ? url('/projects/' . $projectId) : url('/projects');
             'errors' => $errors,
             'customPrefix' => 'project-field',
             'canConfigureFields' => !empty($canConfigureFields),
+            'customProjectId' => $projectId,
         ]) ?>
     </section>
 

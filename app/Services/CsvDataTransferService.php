@@ -43,7 +43,14 @@ final class CsvDataTransferService
     /** @return array<int,array<string,mixed>> */
     public function customFieldsFor(string $entity): array
     {
-        return $this->customFields->all($entity === 'clients' ? 'client' : 'project', true);
+        $fields = $this->customFields->all($entity === 'clients' ? 'client' : 'project', true);
+
+        // Les champs « image » sont écartés : un CSV ne transporte que du texte, et une image
+        // ne peut pas être importée. Les fichiers restent consultables sur la fiche projet.
+        return array_values(array_filter(
+            $fields,
+            static fn (array $field): bool => ($field['field_type'] ?? '') !== 'image'
+        ));
     }
 
     /** @param array<int,array<string,mixed>> $customFields */

@@ -57,6 +57,33 @@ foreach (['pdo', 'pdo_mysql', 'mbstring', 'fileinfo', 'json', 'zip'] as $extensi
 $gd = extension_loaded('gd');
 check($gd ? 'OK' : 'ATTENTION', 'Extension gd', $gd ? '' : 'recommandée pour les images');
 
+/** Convertit une taille « 24M », « 512K » ou un nombre d'octets en octets. */
+function ini_bytes(string $value): int
+{
+    $value = trim($value);
+    if ($value === '') {
+        return 0;
+    }
+    $number = (int) $value;
+    return match (strtolower(substr($value, -1))) {
+        'g' => $number * 1024 * 1024 * 1024,
+        'm' => $number * 1024 * 1024,
+        'k' => $number * 1024,
+        default => $number,
+    };
+}
+
+// Images de projet et images des champs personnalisés : 20 Mio par fichier.
+$uploadMax = ini_bytes((string) ini_get('upload_max_filesize'));
+$postMax = ini_bytes((string) ini_get('post_max_size'));
+$uploadOk = $uploadMax >= 20 * 1048576 && $postMax >= 24 * 1048576;
+check(
+    $uploadOk ? 'OK' : 'ATTENTION',
+    'Limites de téléversement',
+    sprintf('upload_max_filesize=%s · post_max_size=%s', ini_get('upload_max_filesize'), ini_get('post_max_size'))
+    . ($uploadOk ? '' : ' — prévoir 20M et 28M dans php.ini pour les images')
+);
+
 $argon = in_array('argon2id', password_algos(), true);
 check($argon ? 'OK' : 'ERREUR', 'Argon2id', $argon ? '' : 'hachage des mots de passe indisponible sur ce PHP');
 

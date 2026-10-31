@@ -18,6 +18,35 @@ Le journal est consultable à `/admin/audit` par un administrateur. Il conserve 
 
 Les utilisateurs autorisés à gérer les projets peuvent téléverser une image JPEG, PNG ou WebP par envoi, jusqu’à 20 Mio, 10 000 pixels par côté et 40 mégapixels. Configurer PHP avec `upload_max_filesize=20M` et `post_max_size=24M` au minimum. Le serveur vérifie le MIME réel et les dimensions, attribue un nom aléatoire et conserve le fichier sous `storage/uploads/projects/`, hors de `public/`. L’affichage passe par une route authentifiée qui vérifie l’accès `projects.view` ; les images ne sont pas exposées comme fichiers statiques. La sauvegarde inclut ces fichiers via `storage/uploads/`.
 
+## Champs personnalisés de type image
+
+Un administrateur qui configure les projets peut créer un champ personnalisé de type **Images**
+(`/settings/custom-fields`, fiche concernée : projets). Le champ apparaît alors sur la fiche du
+projet avec sa propre galerie et son formulaire d'envoi : de **une à vingt images** par champ,
+**dix fichiers maximum par envoi**, JPEG/PNG/WebP jusqu'à 20 Mio chacun (mêmes contrôles de MIME
+réel, de dimensions et de taille que les images de projet).
+
+Choix d'implémentation et conséquences :
+
+- Les fichiers sont stockés dans `storage/uploads/projects/<id>/`, hors racine web, et déclarés
+  dans `project_images` avec la colonne `custom_field_key` (migration `0014`). La clé technique du
+  champ est la seule jointure : la colonne JSON `custom_fields` du projet ne conserve **aucune**
+  valeur pour ce type, il n'existe donc pas de seconde source de vérité à resynchroniser.
+- La carte « Images du projet » ne montre que les images générales (`custom_field_key` NULL) ; les
+  images d'un champ restent dans le bloc de ce champ, avec leur propre bouton de retrait.
+- Lecture : `projects.view` (route d'image existante). Envoi et retrait : `projects.manage` —
+  aucune permission nouvelle n'est introduite.
+- Un champ image ne peut pas être rendu obligatoire : il est créé avant le projet, les fichiers ne
+  peuvent donc arriver qu'après l'enregistrement. Le libellé et le bloc restent informatifs.
+- Désactiver le champ masque son bloc et ses images, sans supprimer les fichiers ; supprimer le
+  projet supprime les métadonnées (clé étrangère en cascade). La sauvegarde inclut les fichiers via
+  `storage/uploads/`.
+- Les champs image sont **exclus de l'export/import CSV** : un CSV ne transporte pas de binaire.
+  Les fichiers restent consultables et imprimables depuis la fiche du projet.
+- Chaque envoi et chaque retrait est journalisé (`projects.image.uploaded`,
+  `projects.image.deleted`) avec l'identifiant du projet et la clé du champ, jamais le contenu ni
+  le nom du fichier.
+
 ## Base de démonstration
 
 Une base de démonstration se prépare avec `php bin/migrate.php` puis `php bin/seed-demo.php`. Le script

@@ -11,7 +11,11 @@ use DateTimeImmutable;
  */
 final class CustomFieldService
 {
-    private const TYPES = ['text', 'number', 'date', 'select', 'checkbox'];
+    /** Types proposés dans les réglages. « image » n'existe que pour les fiches projets. */
+    public const TYPES = ['text', 'number', 'date', 'select', 'checkbox', 'image'];
+    /** Un champ « image » accepte plusieurs fichiers : bornes appliquées côté serveur. */
+    public const IMAGE_MAX_PER_UPLOAD = 10;
+    public const IMAGE_MAX_PER_FIELD = 20;
 
     public function __construct(private ?CustomFieldRepository $fields = null)
     {
@@ -29,6 +33,14 @@ final class CustomFieldService
 
         foreach ($this->fields->all($entityType, true) as $field) {
             $key = $field['field_key'];
+            if ($field['field_type'] === 'image') {
+                // Les fichiers image ont leur propre formulaire sur la fiche projet : ils sont
+                // stockés dans `project_images` et rattachés au champ par sa clé. Aucune valeur
+                // n'est donc conservée dans la colonne JSON, qui resterait une seconde source
+                // de vérité toujours désynchronisée.
+                unset($values[$key]);
+                continue;
+            }
             if ($field['field_type'] === 'checkbox') {
                 $value = in_array($submitted[$key] ?? null, ['1', 1, true, 'on'], true);
                 if ($field['is_required'] && !$value) {
@@ -120,6 +132,15 @@ final class CustomFieldService
         }
         if (!in_array($fieldType, self::TYPES, true)) {
             $errors['field_type'] = __('custom_fields.invalid');
+        } elseif ($fieldType === 'image' && $entityType !== 'project') {
+            // Un téléversement d'images n'a de sens que sur une fiche projet : les images sont
+            // stockées dans l'espace privé du projet et suivent sa suppression.
+            $errors['field_type'] = __('custom_fields.image_projects_only');
+        }
+        if ($fieldType === 'image') {
+            // Les images s'ajoutent une fois le projet créé : rendre le champ obligatoire
+            // bloquerait toute création de projet. Le libellé reste informatif.
+            $required = false;
         }
         if (!ctype_digit($sortInput) || (int) $sortInput > 9999) {
             $errors['sort_order'] = __('custom_fields.invalid');
