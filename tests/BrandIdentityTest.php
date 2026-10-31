@@ -126,11 +126,17 @@ final class BrandIdentityTest extends TestCase
     {
         $layout = self::file('/public/assets/css/layout.css');
 
-        self::assertStringContainsString('flex: 1 1 auto', self::lastRule($layout, '.app-content'), 'Le contenu pousse le pied de page en bas.');
+        // La règle de base porte le flex ; les media queries suivantes ne règlent que
+        // les marges intérieures, d'où la recherche sur la première occurrence.
+        self::assertMatchesRegularExpression(
+            '/\.app-content\s*\{[^}]*flex:\s*1 1 auto/s',
+            $layout,
+            'Le contenu pousse le pied de page en bas.'
+        );
 
-        $footer = self::lastRule($layout, '.app-footer');
-        self::assertStringContainsString('flex-wrap: wrap', $footer);
-        self::assertStringContainsString('padding-inline', $footer);
+        // Le repli vient de la règle de base ; la media query mobile n'ajoute que les marges.
+        self::assertMatchesRegularExpression('/\.app-footer\s*\{[^}]*flex-wrap:\s*wrap/s', $layout);
+        self::assertStringContainsString('padding-inline', self::lastRule($layout, '.app-footer'));
 
         // Sur mobile, le dernier élément de la colonne dégage la barre d'onglets fixe.
         self::assertMatchesRegularExpression(
@@ -183,7 +189,8 @@ final class BrandIdentityTest extends TestCase
             }
             // « Prime Architecture » contient « Prime Arch » : on retire le nom complet avant
             // de chercher l'ancien, qui n'apparaît que suivi d'une virgule ou entre guillemets.
-            $needle = str_replace('Prime Architecture', '', $file->getContents());
+            $contents = (string) file_get_contents($file->getPathname());
+            $needle = str_replace('Prime Architecture', '', $contents);
             if (str_contains($needle, 'Prime Arch,') || str_contains($needle, "'Prime Arch'")) {
                 $legacy[] = $file->getPathname();
             }

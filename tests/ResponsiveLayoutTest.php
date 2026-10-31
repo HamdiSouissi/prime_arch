@@ -48,7 +48,10 @@ final class ResponsiveLayoutTest extends TestCase
         self::assertNotSame('', $actions, 'Le bloc mobile de .topbar__actions doit exister.');
         self::assertStringNotContainsString('flex: 1;', $actions, 'Les actions ne doivent pas absorber la largeur disponible.');
         self::assertStringContainsString('flex: 1 1 auto', $actions);
-        self::assertStringContainsString('flex-wrap: wrap', $actions, 'Les actions passent à la ligne plutôt que d’être rognées.');
+        // `nowrap` est délibéré : le bloc se resserre (flex: 1 1 auto + min-inline-size: 0)
+        // plutôt que de passer à la ligne et de repousser la barre de recherche sous la ligne.
+        self::assertStringContainsString('flex-wrap: nowrap', $actions, 'Les actions se resserrent au lieu de déborder.');
+        self::assertStringContainsString('min-inline-size: 0', $actions, 'Sans largeur minimale nulle, le bloc refuserait de se resserrer.');
         self::assertStringContainsString('justify-content: flex-end', $actions);
     }
 
@@ -99,7 +102,9 @@ final class ResponsiveLayoutTest extends TestCase
         $context = self::file('/app/Services/ViewContext.php');
         $layout = self::file('/app/Views/layouts/app.php');
 
-        self::assertStringContainsString("'profileUrl' => \$settingsAvailable ? \$settingsUrl : url('/dashboard')", $context);
+        // La bulle d'initiales ouvre les réglages accessibles au rôle, sinon le tableau de bord :
+        // `settingsDestination()` renvoie null quand aucun écran de réglages n'est ouvert.
+        self::assertStringContainsString("'profileUrl' => \$settingsUrl ?? url('/dashboard')", $context);
         self::assertStringContainsString("'profileUrl' => \$profileUrl", $layout);
         self::assertStringContainsString('new ViewContext()', $layout, 'Les pages sans navigation héritent du menu standard.');
         self::assertStringContainsString('Auth::check()', $layout);
